@@ -146,7 +146,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
 
     // Consumables
-    const consumablesTotal = Object.values(pricing.consumables).reduce((a: number, b: number) => a + b, 0);
+    const consumablesTotal = Object.values(pricing.consumables).reduce((a, b) => (a as number) + (b as number), 0) as number;
     b.extras += consumablesTotal; // lump into extras for cost
   }
 
