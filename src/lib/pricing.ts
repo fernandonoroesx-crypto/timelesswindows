@@ -1,71 +1,46 @@
-import type { WindowType, InstallationType, ExtraType, QuoteLineItem, ProjectSettings, QuoteSummary, CostBreakdown } from './types';
+import type { QuoteLineItem, ProjectSettings, QuoteSummary } from './types';
 
-// === SELLING PRICES ===
-export const INSTALLATION_SELLING: Record<InstallationType, { installation: number; intMkg: number; extMkg: number }> = {
-  Internal: { installation: 0, intMkg: 12.50, extMkg: 16.00 },
-  External: { installation: 0, intMkg: 8.00, extMkg: 12.00 },
-};
+// Load editable pricing from localStorage
+function loadPricing() {
+  const saved = localStorage.getItem('quote-pricing');
+  return saved ? JSON.parse(saved) : null;
+}
 
-export const INSTALLATION_COST: Record<InstallationType, { installation: number; intMkg: number; extMkg: number }> = {
-  Internal: { installation: 0, intMkg: 7.00, extMkg: 8.00 },
-  External: { installation: 0, intMkg: 4.00, extMkg: 6.00 },
-};
+function p() {
+  const saved = loadPricing();
+  return {
+    installationSelling: saved?.installationSelling ?? {
+      'Casement': 90, 'Casement Flag': 50, 'Box Sash': 150, 'Fix Sash': 125,
+      'Spring Sash': 125, 'Door': 125, 'Door + Top Light': 175, 'French Door': 175, 'Patio Door': 175,
+    },
+    installationCost: saved?.installationCost ?? {
+      'Casement': 45, 'Casement Flag': 25, 'Box Sash': 75, 'Fix Sash': 62.5,
+      'Spring Sash': 62.5, 'Door': 62.5, 'Door + Top Light': 87.5, 'French Door': 87.5, 'Patio Door': 87.5,
+    },
+    makingGoodSelling: saved?.makingGoodSelling ?? { intMkgInternal: 12.50, extMkgInternal: 16.00, intMkgExternal: 8.00, extMkgExternal: 12.00 },
+    makingGoodCost: saved?.makingGoodCost ?? { intMkgInternal: 7.00, extMkgInternal: 8.00, intMkgExternal: 4.00, extMkgExternal: 6.00 },
+    architraveSelling: saved?.architraveSelling ?? 6.50,
+    architraveCost: saved?.architraveCost ?? 4.50,
+    trimsSelling: saved?.trimsSelling ?? 4.00,
+    trimsCost: saved?.trimsCost ?? 1.00,
+    mdfSelling: saved?.mdfSelling ?? { narrow: 17.50, wide: 35.00 },
+    mdfCost: saved?.mdfCost ?? { narrow: 9.00, wide: 18.00 },
+    extras: saved?.extras ?? { 'Recess of reveal': 75, 'Shutters': 100, 'Cut Out of work top': 125 },
+    consumables: saved?.consumables ?? {
+      'Survey': 15.00, 'Delivery Stock': 40.00, 'Carpet protection': 6.40, 'Correx': 5.25,
+      'Dust Sheets': 1.20, 'Masking tape': 0.75, 'Blue paper': 0.76, 'Rubbish bag': 0.50,
+      'Screws for Brackets': 0.64, 'Screws for Windows': 0.30, 'Packer': 0.70, 'Plugs': 1.15,
+      'Foam': 4.20, 'DPC': 0.15, 'Silicone': 0.45, 'Caulk': 1.17,
+    },
+    wasteDisposal: saved?.wasteDisposal ?? 35.00,
+    overheadPerDay: saved?.overheadPerDay ?? 2000.00,
+  };
+}
 
-export const WINDOW_INSTALLATION_SELLING: Record<WindowType, number> = {
-  'Casement': 90,
-  'Casement Flag': 50,
-  'Box Sash': 150,
-  'Fix Sash': 125,
-  'Spring Sash': 125,
-  'Door': 125,
-  'Door + Top Light': 175,
-  'French Door': 175,
-  'Patio Door': 175,
-};
-
-export const TRIMS_SELLING = 4.00;
-export const TRIMS_COST = 1.00;
-
-export const MDF_SELLING = { narrow: 17.50, wide: 35.00 };
-export const MDF_COST = { narrow: 9.00, wide: 18.00 };
-
-export const EXTRAS_SELLING: Record<ExtraType, number> = {
-  'Recess of reveal': 75,
-  'Shutters': 100,
-  'Cut Out of work top': 125,
-};
-export const EXTRAS_COST: Record<ExtraType, number> = {
-  'Recess of reveal': 75,
-  'Shutters': 100,
-  'Cut Out of work top': 125,
-};
-
-export const ARCHITRAVE_SELLING = 6.50;
-export const ARCHITRAVE_COST = 4.50;
-
-export const WASTE_DISPOSAL = 35.00;
-export const OVERHEAD_PER_DAY = 2000.00;
-
-export const CONSUMABLES: Record<string, number> = {
-  'Survey': 15.00,
-  'Delivery Stock': 40.00,
-  'Carpet protection': 6.40,
-  'Correx': 5.25,
-  'Dust Sheets': 1.20,
-  'Masking tape': 0.75,
-  'Blue paper': 0.76,
-  'Rubbish bag': 0.50,
-  'Screws for Brackets': 0.64,
-  'Screws for Windows': 0.30,
-  'Packer': 0.70,
-  'Plugs': 1.15,
-  'Foam': 4.20,
-  'DPC': 0.15,
-  'Silicone': 0.45,
-  'Caulk': 1.17,
-};
-
-export const CONSUMABLES_TOTAL_PER_ITEM = Object.values(CONSUMABLES).reduce((a, b) => a + b, 0);
+// Re-export for settings page
+export const WINDOW_INSTALLATION_SELLING = p().installationSelling;
+export const CONSUMABLES = p().consumables;
+export const OVERHEAD_PER_DAY = p().overheadPerDay;
 
 export function calculateSm(widthMm: number, heightMm: number): number {
   return (widthMm / 1000) * (heightMm / 1000);
@@ -75,93 +50,119 @@ export function calculateLm(widthMm: number, heightMm: number): number {
   return ((widthMm + heightMm) * 2) / 1000;
 }
 
-export function calculateItemSelling(item: QuoteLineItem, settings: ProjectSettings): number {
-  const sm = calculateSm(item.widthMm, item.heightMm);
-  let total = 0;
+export interface PriceBreakdown {
+  material: number;
+  installation: number;
+  internalMakingGood: number;
+  externalMakingGood: number;
+  architrave: number;
+  trims: number;
+  mdfReveal: number;
+  wasteDisposal: number;
+  extras: number;
+  unitTotal: number;
+  total: number;
+}
 
-  // Material (manufacture price converted + uplift)
+export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSettings): PriceBreakdown {
+  const pricing = p();
+  const b: PriceBreakdown = {
+    material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
+    architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, extras: 0, unitTotal: 0, total: 0,
+  };
+
+  // Material
   const materialGbp = item.manufactureCurrency === 'EUR'
     ? item.manufacturePrice * settings.eurToGbpRate
     : item.manufacturePrice;
-  total += materialGbp * (1 + item.uplift / 100);
+  b.material = materialGbp * (1 + item.uplift / 100);
 
   if (!settings.supplyOnly) {
-    // Installation
-    total += WINDOW_INSTALLATION_SELLING[item.type] || 0;
+    b.installation = pricing.installationSelling[item.type] || 0;
 
-    // Making good
     if (settings.includeInternalMakingGood) {
-      total += INSTALLATION_SELLING[item.installationType].intMkg;
+      const key = item.installationType === 'Internal' ? 'intMkgInternal' : 'intMkgExternal';
+      b.internalMakingGood = pricing.makingGoodSelling[key];
     }
     if (settings.includeExternalMakingGood) {
-      total += INSTALLATION_SELLING[item.installationType].extMkg;
+      const key = item.installationType === 'Internal' ? 'extMkgInternal' : 'extMkgExternal';
+      b.externalMakingGood = pricing.makingGoodSelling[key];
     }
 
-    // Architrave
-    if (item.includeArchitrave) {
-      total += ARCHITRAVE_SELLING;
-    }
-
-    // Trims
-    if (item.includeTrims) {
-      total += TRIMS_SELLING;
-    }
-
-    // MDF Reveal
+    if (item.includeArchitrave) b.architrave = pricing.architraveSelling;
+    if (item.includeTrims) b.trims = pricing.trimsSelling;
     if (item.includeMdfReveal && item.mdfRevealType !== 'none') {
-      total += MDF_SELLING[item.mdfRevealType];
+      b.mdfReveal = pricing.mdfSelling[item.mdfRevealType];
     }
 
-    // Extras
     for (const extra of item.extras) {
-      total += EXTRAS_SELLING[extra];
+      b.extras += pricing.extras[extra] || 0;
     }
 
-    // Waste disposal
-    if (settings.includeWasteDisposal) {
-      total += WASTE_DISPOSAL;
-    }
+    if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
   }
 
-  return total * item.qty;
+  b.unitTotal = b.material + b.installation + b.internalMakingGood + b.externalMakingGood
+    + b.architrave + b.trims + b.mdfReveal + b.wasteDisposal + b.extras;
+  b.total = b.unitTotal * item.qty;
+
+  return b;
+}
+
+export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSettings): PriceBreakdown {
+  const pricing = p();
+  const b: PriceBreakdown = {
+    material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
+    architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, extras: 0, unitTotal: 0, total: 0,
+  };
+
+  const materialGbp = item.manufactureCurrency === 'EUR'
+    ? item.manufacturePrice * settings.eurToGbpRate
+    : item.manufacturePrice;
+  b.material = materialGbp;
+
+  if (!settings.supplyOnly) {
+    b.installation = pricing.installationCost[item.type] || 0;
+
+    if (settings.includeInternalMakingGood) {
+      const key = item.installationType === 'Internal' ? 'intMkgInternal' : 'intMkgExternal';
+      b.internalMakingGood = pricing.makingGoodCost[key];
+    }
+    if (settings.includeExternalMakingGood) {
+      const key = item.installationType === 'Internal' ? 'extMkgInternal' : 'extMkgExternal';
+      b.externalMakingGood = pricing.makingGoodCost[key];
+    }
+
+    if (item.includeArchitrave) b.architrave = pricing.architraveCost;
+    if (item.includeTrims) b.trims = pricing.trimsCost;
+    if (item.includeMdfReveal && item.mdfRevealType !== 'none') {
+      b.mdfReveal = pricing.mdfCost[item.mdfRevealType];
+    }
+
+    for (const extra of item.extras) {
+      b.extras += pricing.extras[extra] || 0;
+    }
+
+    if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
+
+    // Consumables
+    const consumablesTotal = Object.values(pricing.consumables).reduce((a: number, b: number) => a + b, 0);
+    b.extras += consumablesTotal; // lump into extras for cost
+  }
+
+  b.unitTotal = b.material + b.installation + b.internalMakingGood + b.externalMakingGood
+    + b.architrave + b.trims + b.mdfReveal + b.wasteDisposal + b.extras;
+  b.total = b.unitTotal * item.qty;
+
+  return b;
+}
+
+export function calculateItemSelling(item: QuoteLineItem, settings: ProjectSettings): number {
+  return getItemSellingBreakdown(item, settings).total;
 }
 
 export function calculateItemCost(item: QuoteLineItem, settings: ProjectSettings): number {
-  let total = 0;
-
-  const materialGbp = item.manufactureCurrency === 'EUR'
-    ? item.manufacturePrice * settings.eurToGbpRate
-    : item.manufacturePrice;
-  total += materialGbp;
-
-  if (!settings.supplyOnly) {
-    // Installation cost (use same as selling for now — adjust if you have cost data)
-    total += (WINDOW_INSTALLATION_SELLING[item.type] || 0) * 0.5; // assume 50% margin on installation
-
-    if (settings.includeInternalMakingGood) {
-      total += INSTALLATION_COST[item.installationType].intMkg;
-    }
-    if (settings.includeExternalMakingGood) {
-      total += INSTALLATION_COST[item.installationType].extMkg;
-    }
-
-    if (item.includeArchitrave) total += ARCHITRAVE_COST;
-    if (item.includeTrims) total += TRIMS_COST;
-    if (item.includeMdfReveal && item.mdfRevealType !== 'none') {
-      total += MDF_COST[item.mdfRevealType];
-    }
-
-    for (const extra of item.extras) {
-      total += EXTRAS_COST[extra];
-    }
-
-    if (settings.includeWasteDisposal) total += WASTE_DISPOSAL;
-
-    // Consumables per item
-    total += CONSUMABLES_TOTAL_PER_ITEM;
-  }
-
-  return total * item.qty;
+  return getItemCostBreakdown(item, settings).total;
 }
 
 export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectSettings): QuoteSummary {
@@ -175,8 +176,8 @@ export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectS
     totalSm += calculateSm(item.widthMm, item.heightMm) * item.qty;
   }
 
-  // Add overhead
-  const overhead = settings.overheadDays * OVERHEAD_PER_DAY;
+  const pricing = p();
+  const overhead = settings.overheadDays * pricing.overheadPerDay;
   totalCost += overhead;
 
   const profit = totalSelling - totalCost;
@@ -201,8 +202,5 @@ export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectS
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-  }).format(amount);
+  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
 }

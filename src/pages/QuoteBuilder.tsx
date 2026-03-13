@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem } from '@/lib/context';
-import { calculateItemSelling, calculateQuoteSummary, formatCurrency, WINDOW_INSTALLATION_SELLING } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType } from '@/lib/types';
+import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings } from '@/lib/types';
+import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Save, FileDown, Copy } from 'lucide-react';
+import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 
 const WINDOW_TYPES: WindowType[] = [
@@ -164,7 +165,7 @@ export default function QuoteBuilder() {
             <SummaryCard label="Selling Price" value={formatCurrency(summary.sellingPrice.total)} highlight />
             <SummaryCard label="Cost" value={formatCurrency(summary.costPrice.total)} />
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
             <SummaryCard label="Profit" value={formatCurrency(summary.profit)} highlight={summary.profit > 0} />
             <SummaryCard label="Margin" value={`${summary.margin.toFixed(1)}%`} highlight={summary.margin > 0} />
           </div>
@@ -179,13 +180,16 @@ function LineItemCard({
 }: {
   item: QuoteLineItem;
   index: number;
-  settings: any;
+  settings: ProjectSettings;
   onUpdate: (updates: Partial<QuoteLineItem>) => void;
   onRemove: () => void;
   onDuplicate: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
-  const itemTotal = calculateItemSelling(item, settings);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
+  const sellingBreakdown = getItemSellingBreakdown(item, settings);
+  const costBreakdown = getItemCostBreakdown(item, settings);
 
   return (
     <div className="border rounded-xl p-4 bg-card transition-all">
@@ -193,9 +197,13 @@ function LineItemCard({
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2 text-left flex-1">
           <span className="text-xs font-mono text-muted-foreground">#{index + 1}</span>
           <span className="font-medium text-sm">{item.type} — {item.widthMm}×{item.heightMm}mm</span>
-          <span className="text-sm font-semibold text-primary ml-auto mr-4">{formatCurrency(itemTotal)}</span>
+          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+          <span className="text-sm font-semibold text-primary ml-auto mr-4">{formatCurrency(sellingBreakdown.total)}</span>
         </button>
         <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setShowBreakdown(!showBreakdown)} title="Show formula">
+            <Calculator className="w-3.5 h-3.5" />
+          </Button>
           <Button variant="ghost" size="sm" onClick={onDuplicate}><Copy className="w-3.5 h-3.5" /></Button>
           <Button variant="ghost" size="sm" onClick={onRemove} className="text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
@@ -280,6 +288,107 @@ function LineItemCard({
           </div>
         </div>
       )}
+
+      {/* Formula breakdown */}
+      {showBreakdown && (
+        <div className="mt-4 pt-4 border-t bg-muted/30 rounded-lg p-4">
+          <h4 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+            <Calculator className="w-3.5 h-3.5" /> Price Breakdown (per unit)
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Selling side */}
+            <div>
+              <p className="text-xs font-semibold text-accent mb-2">Selling Price</p>
+              <div className="space-y-1 text-xs">
+                <FormulaRow label="Material" value={sellingBreakdown.material}
+                  formula={item.manufactureCurrency === 'EUR'
+                    ? `${formatCurrency(item.manufacturePrice)} × ${settings.eurToGbpRate} × (1 + ${item.uplift}%)`
+                    : `${formatCurrency(item.manufacturePrice)} × (1 + ${item.uplift}%)`}
+                />
+                {!settings.supplyOnly && (
+                  <>
+                    <FormulaRow label="Installation" value={sellingBreakdown.installation} />
+                    {sellingBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={sellingBreakdown.internalMakingGood} />}
+                    {sellingBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={sellingBreakdown.externalMakingGood} />}
+                    {sellingBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={sellingBreakdown.architrave} />}
+                    {sellingBreakdown.trims > 0 && <FormulaRow label="Trims" value={sellingBreakdown.trims} />}
+                    {sellingBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={sellingBreakdown.mdfReveal} />}
+                    {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
+                    {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} />}
+                  </>
+                )}
+                <div className="border-t pt-1 mt-1 flex justify-between font-semibold">
+                  <span>Unit Total</span>
+                  <span>{formatCurrency(sellingBreakdown.unitTotal)}</span>
+                </div>
+                {item.qty > 1 && (
+                  <div className="flex justify-between font-bold text-accent">
+                    <span>× {item.qty} = Total</span>
+                    <span>{formatCurrency(sellingBreakdown.total)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Cost side */}
+            <div>
+              <p className="text-xs font-semibold text-destructive mb-2">Cost Price</p>
+              <div className="space-y-1 text-xs">
+                <FormulaRow label="Material" value={costBreakdown.material}
+                  formula={item.manufactureCurrency === 'EUR'
+                    ? `${formatCurrency(item.manufacturePrice)} × ${settings.eurToGbpRate}`
+                    : `${formatCurrency(item.manufacturePrice)}`}
+                />
+                {!settings.supplyOnly && (
+                  <>
+                    <FormulaRow label="Installation" value={costBreakdown.installation} />
+                    {costBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={costBreakdown.internalMakingGood} />}
+                    {costBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={costBreakdown.externalMakingGood} />}
+                    {costBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={costBreakdown.architrave} />}
+                    {costBreakdown.trims > 0 && <FormulaRow label="Trims" value={costBreakdown.trims} />}
+                    {costBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={costBreakdown.mdfReveal} />}
+                    {costBreakdown.extras > 0 && <FormulaRow label="Extras + Consumables" value={costBreakdown.extras} />}
+                    {costBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={costBreakdown.wasteDisposal} />}
+                  </>
+                )}
+                <div className="border-t pt-1 mt-1 flex justify-between font-semibold">
+                  <span>Unit Total</span>
+                  <span>{formatCurrency(costBreakdown.unitTotal)}</span>
+                </div>
+                {item.qty > 1 && (
+                  <div className="flex justify-between font-bold">
+                    <span>× {item.qty} = Total</span>
+                    <span>{formatCurrency(costBreakdown.total)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Profit per item */}
+          <div className="mt-3 pt-3 border-t flex justify-between text-sm font-bold">
+            <span>Item Profit</span>
+            <span className={sellingBreakdown.total - costBreakdown.total > 0 ? 'text-accent' : 'text-destructive'}>
+              {formatCurrency(sellingBreakdown.total - costBreakdown.total)}
+              <span className="text-xs font-normal text-muted-foreground ml-2">
+                ({sellingBreakdown.total > 0 ? ((sellingBreakdown.total - costBreakdown.total) / sellingBreakdown.total * 100).toFixed(1) : '0'}% margin)
+              </span>
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FormulaRow({ label, value, formula }: { label: string; value: number; formula?: string }) {
+  return (
+    <div className="flex justify-between items-start gap-2">
+      <div>
+        <span>{label}</span>
+        {formula && <span className="block text-[10px] text-muted-foreground font-mono">{formula}</span>}
+      </div>
+      <span className="font-medium whitespace-nowrap">{formatCurrency(value)}</span>
     </div>
   );
 }
