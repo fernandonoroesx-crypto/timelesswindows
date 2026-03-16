@@ -1,4 +1,4 @@
-import { useApp } from '@/lib/context';
+import { useApp, getProjectPricing } from '@/lib/context';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
