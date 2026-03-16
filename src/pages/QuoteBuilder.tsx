@@ -128,7 +128,17 @@ export default function QuoteBuilder() {
           </div>
           <div>
             <Label>Client</Label>
-            <Input value={project.client} onChange={e => updateProject({ client: e.target.value })} placeholder="Client name" />
+            {clients.length > 0 ? (
+              <Select value={project.clientId || '_none'} onValueChange={selectClient}>
+                <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— No client —</SelectItem>
+                  {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input value={project.client} onChange={e => updateProject({ client: e.target.value })} placeholder="Client name" />
+            )}
           </div>
           <div>
             <Label>Project Ref</Label>
