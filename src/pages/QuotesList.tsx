@@ -38,7 +38,7 @@ export default function QuotesList() {
       ) : (
         <div className="grid gap-4">
           {projects.slice().reverse().map(project => {
-            const summary = calculateQuoteSummary(project.lineItems, project.settings);
+            const summary = calculateQuoteSummary(project.lineItems, project.settings, getProjectPricing(project));
             return (
               <div key={project.id} className="elevated-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1 min-w-0">
