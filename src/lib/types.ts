@@ -47,9 +47,11 @@ export interface Project {
   id: string;
   date: string;
   client: string;
+  clientId?: string;
   projectRef: string;
   settings: ProjectSettings;
   lineItems: QuoteLineItem[];
+  pricing?: PricingData;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   createdAt: string;
   updatedAt: string;
