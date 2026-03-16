@@ -132,12 +132,12 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
   return b;
 }
 
-export function calculateItemSelling(item: QuoteLineItem, settings: ProjectSettings): number {
-  return getItemSellingBreakdown(item, settings).total;
+export function calculateItemSelling(item: QuoteLineItem, settings: ProjectSettings, quotePricing?: PricingData): number {
+  return getItemSellingBreakdown(item, settings, quotePricing).total;
 }
 
-export function calculateItemCost(item: QuoteLineItem, settings: ProjectSettings): number {
-  return getItemCostBreakdown(item, settings).total;
+export function calculateItemCost(item: QuoteLineItem, settings: ProjectSettings, quotePricing?: PricingData): number {
+  return getItemCostBreakdown(item, settings, quotePricing).total;
 }
 
 export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectSettings): QuoteSummary {
