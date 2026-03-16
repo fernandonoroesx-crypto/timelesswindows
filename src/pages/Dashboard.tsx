@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useApp, createNewProject } from '@/lib/context';
+import { useApp, createNewProject, getProjectPricing } from '@/lib/context';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import { Plus, FileText, TrendingUp, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
