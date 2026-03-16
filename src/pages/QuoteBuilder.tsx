@@ -21,7 +21,7 @@ const WINDOW_TYPES: WindowType[] = [
 const EXTRA_TYPES: ExtraType[] = ['Recess of reveal', 'Shutters', 'Cut Out of work top'];
 
 export default function QuoteBuilder() {
-  const { currentProject, setCurrentProject, projects, setProjects } = useApp();
+  const { currentProject, setCurrentProject, projects, setProjects, clients } = useApp();
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project>(() => currentProject || createNewProject());
