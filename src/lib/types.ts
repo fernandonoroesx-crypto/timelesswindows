@@ -78,3 +78,30 @@ export interface QuoteSummary {
   totalItems: number;
   totalSm: number;
 }
+
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+}
+
+export interface PricingData {
+  installationSelling: Record<string, number>;
+  installationCost: Record<string, number>;
+  makingGoodSelling: { intMkgInternal: number; extMkgInternal: number; intMkgExternal: number; extMkgExternal: number };
+  makingGoodCost: { intMkgInternal: number; extMkgInternal: number; intMkgExternal: number; extMkgExternal: number };
+  architraveSelling: number;
+  architraveCost: number;
+  trimsSelling: number;
+  trimsCost: number;
+  mdfSelling: { narrow: number; wide: number };
+  mdfCost: { narrow: number; wide: number };
+  extras: Record<string, number>;
+  consumables: Record<string, number>;
+  wasteDisposal: number;
+  overheadPerDay: number;
+}
