@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportQuotePdf } from '@/lib/pdf-export';
 
 const WINDOW_TYPES: WindowType[] = [
   'Casement', 'Casement Flag', 'Box Sash', 'Fix Sash', 'Spring Sash',
@@ -112,7 +113,11 @@ export default function QuoteBuilder() {
           <Button onClick={saveProject} className="bg-primary text-primary-foreground">
             <Save className="w-4 h-4 mr-2" /> Save
           </Button>
-          <Button variant="outline" onClick={() => toast.info('PDF export coming soon')}>
+          <Button variant="outline" onClick={() => {
+            const client = clients.find(c => c.id === project.clientId);
+            exportQuotePdf(project, client?.address);
+            toast.success('PDF exported');
+          }}>
             <FileDown className="w-4 h-4 mr-2" /> Export PDF
           </Button>
         </div>
