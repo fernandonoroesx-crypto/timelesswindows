@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, createNewProject, createNewLineItem } from '@/lib/context';
+import { useApp, createNewProject, createNewLineItem, getProjectPricing } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings } from '@/lib/types';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 
 const WINDOW_TYPES: WindowType[] = [
@@ -20,7 +21,7 @@ const WINDOW_TYPES: WindowType[] = [
 const EXTRA_TYPES: ExtraType[] = ['Recess of reveal', 'Shutters', 'Cut Out of work top'];
 
 export default function QuoteBuilder() {
-  const { currentProject, setCurrentProject, projects, setProjects } = useApp();
+  const { currentProject, setCurrentProject, projects, setProjects, clients } = useApp();
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project>(() => currentProject || createNewProject());
@@ -35,6 +36,27 @@ export default function QuoteBuilder() {
 
   const updateSettings = (key: string, value: any) => {
     updateProject({ settings: { ...project.settings, [key]: value } });
+  };
+
+  const updatePricing = (path: string, value: number) => {
+    const currentPricing = project.pricing || getProjectPricing(project);
+    const next = JSON.parse(JSON.stringify(currentPricing));
+    const keys = path.split('.');
+    let obj = next;
+    for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+    obj[keys[keys.length - 1]] = value;
+    updateProject({ pricing: next });
+  };
+
+  const selectClient = (clientId: string) => {
+    if (clientId === '_none') {
+      updateProject({ clientId: undefined, client: '' });
+      return;
+    }
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      updateProject({ clientId: client.id, client: client.name });
+    }
   };
 
   const addLineItem = () => {
@@ -74,7 +96,8 @@ export default function QuoteBuilder() {
     toast.success('Quote saved successfully');
   };
 
-  const summary = calculateQuoteSummary(project.lineItems, project.settings);
+  const quotePricing = project.pricing || getProjectPricing(project);
+  const summary = calculateQuoteSummary(project.lineItems, project.settings, quotePricing);
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -105,7 +128,17 @@ export default function QuoteBuilder() {
           </div>
           <div>
             <Label>Client</Label>
-            <Input value={project.client} onChange={e => updateProject({ client: e.target.value })} placeholder="Client name" />
+            {clients.length > 0 ? (
+              <Select value={project.clientId || '_none'} onValueChange={selectClient}>
+                <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— No client —</SelectItem>
+                  {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input value={project.client} onChange={e => updateProject({ client: e.target.value })} placeholder="Client name" />
+            )}
           </div>
           <div>
             <Label>Project Ref</Label>
@@ -125,62 +158,154 @@ export default function QuoteBuilder() {
         </div>
       </div>
 
-      {/* Line items */}
-      <div className="elevated-card rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading text-lg font-semibold">Line Items ({project.lineItems.length})</h2>
-          <Button onClick={addLineItem} size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-            <Plus className="w-4 h-4 mr-2" /> Add Item
-          </Button>
-        </div>
+      <Tabs defaultValue="items" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="items">Line Items ({project.lineItems.length})</TabsTrigger>
+          <TabsTrigger value="pricing" className="gap-1.5"><SlidersHorizontal className="w-3.5 h-3.5" /> Quote Pricing</TabsTrigger>
+        </TabsList>
 
-        {project.lineItems.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No items yet. Click "Add Item" to start building your quote.</p>
+        <TabsContent value="items" className="space-y-6">
+          {/* Line items */}
+          <div className="elevated-card rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-lg font-semibold">Line Items</h2>
+              <Button onClick={addLineItem} size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                <Plus className="w-4 h-4 mr-2" /> Add Item
+              </Button>
+            </div>
+
+            {project.lineItems.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No items yet. Click "Add Item" to start building your quote.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {project.lineItems.map((item, index) => (
+                  <LineItemCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    settings={project.settings}
+                    quotePricing={quotePricing}
+                    onUpdate={(updates) => updateLineItem(item.id, updates)}
+                    onRemove={() => removeLineItem(item.id)}
+                    onDuplicate={() => duplicateLineItem(item.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            {project.lineItems.map((item, index) => (
-              <LineItemCard
-                key={item.id}
-                item={item}
-                index={index}
-                settings={project.settings}
-                onUpdate={(updates) => updateLineItem(item.id, updates)}
-                onRemove={() => removeLineItem(item.id)}
-                onDuplicate={() => duplicateLineItem(item.id)}
-              />
-            ))}
-          </div>
-        )}
+
+          {/* Summary */}
+          {project.lineItems.length > 0 && (
+            <div className="elevated-card rounded-xl p-6 border-l-4 border-l-secondary">
+              <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
+                <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
+                <SummaryCard label="Selling Price" value={formatCurrency(summary.sellingPrice.total)} highlight />
+                <SummaryCard label="Cost" value={formatCurrency(summary.costPrice.total)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                <SummaryCard label="Profit" value={formatCurrency(summary.profit)} highlight={summary.profit > 0} />
+                <SummaryCard label="Margin" value={`${summary.margin.toFixed(1)}%`} highlight={summary.margin > 0} />
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-6">
+          <QuotePricingEditor pricing={quotePricing} onUpdate={updatePricing} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function QuotePricingEditor({ pricing, onUpdate }: { pricing: PricingData; onUpdate: (path: string, value: number) => void }) {
+  const EditRow = ({ label, value, path }: { label: string; value: number; path: string }) => (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm flex-1">{label}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground">£</span>
+        <Input type="number" step="0.01" className="h-8 w-24 text-xs text-right" value={value}
+          onChange={e => onUpdate(path, parseFloat(e.target.value) || 0)} />
       </div>
+    </div>
+  );
 
-      {/* Summary */}
-      {project.lineItems.length > 0 && (
-        <div className="elevated-card rounded-xl p-6 border-l-4 border-l-secondary">
-          <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
-            <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
-            <SummaryCard label="Selling Price" value={formatCurrency(summary.sellingPrice.total)} highlight />
-            <SummaryCard label="Cost" value={formatCurrency(summary.costPrice.total)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
-            <SummaryCard label="Profit" value={formatCurrency(summary.profit)} highlight={summary.profit > 0} />
-            <SummaryCard label="Margin" value={`${summary.margin.toFixed(1)}%`} highlight={summary.margin > 0} />
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Installation — Selling</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.installationSelling).map(([type, price]) => (
+            <EditRow key={type} label={type} value={price} path={`installationSelling.${type}`} />
+          ))}
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Installation — Cost</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.installationCost).map(([type, price]) => (
+            <EditRow key={type} label={type} value={price} path={`installationCost.${type}`} />
+          ))}
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Making Good — Selling</h3>
+        <div className="space-y-2">
+          <EditRow label="Internal → Int. Mkg" value={pricing.makingGoodSelling.intMkgInternal} path="makingGoodSelling.intMkgInternal" />
+          <EditRow label="Internal → Ext. Mkg" value={pricing.makingGoodSelling.extMkgInternal} path="makingGoodSelling.extMkgInternal" />
+          <EditRow label="External → Int. Mkg" value={pricing.makingGoodSelling.intMkgExternal} path="makingGoodSelling.intMkgExternal" />
+          <EditRow label="External → Ext. Mkg" value={pricing.makingGoodSelling.extMkgExternal} path="makingGoodSelling.extMkgExternal" />
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Making Good — Cost</h3>
+        <div className="space-y-2">
+          <EditRow label="Internal → Int. Mkg" value={pricing.makingGoodCost.intMkgInternal} path="makingGoodCost.intMkgInternal" />
+          <EditRow label="Internal → Ext. Mkg" value={pricing.makingGoodCost.extMkgInternal} path="makingGoodCost.extMkgInternal" />
+          <EditRow label="External → Int. Mkg" value={pricing.makingGoodCost.intMkgExternal} path="makingGoodCost.intMkgExternal" />
+          <EditRow label="External → Ext. Mkg" value={pricing.makingGoodCost.extMkgExternal} path="makingGoodCost.extMkgExternal" />
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Add-ons & Extras</h3>
+        <div className="space-y-2">
+          <EditRow label="Architrave (selling)" value={pricing.architraveSelling} path="architraveSelling" />
+          <EditRow label="Architrave (cost)" value={pricing.architraveCost} path="architraveCost" />
+          <EditRow label="Trims (selling)" value={pricing.trimsSelling} path="trimsSelling" />
+          <EditRow label="Trims (cost)" value={pricing.trimsCost} path="trimsCost" />
+          <EditRow label="MDF Narrow (selling)" value={pricing.mdfSelling.narrow} path="mdfSelling.narrow" />
+          <EditRow label="MDF Narrow (cost)" value={pricing.mdfCost.narrow} path="mdfCost.narrow" />
+          <EditRow label="MDF Wide (selling)" value={pricing.mdfSelling.wide} path="mdfSelling.wide" />
+          <EditRow label="MDF Wide (cost)" value={pricing.mdfCost.wide} path="mdfCost.wide" />
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Other Costs</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.extras).map(([name, price]) => (
+            <EditRow key={name} label={name} value={price} path={`extras.${name}`} />
+          ))}
+          <div className="pt-2 border-t space-y-2">
+            <EditRow label="Waste Disposal" value={pricing.wasteDisposal} path="wasteDisposal" />
+            <EditRow label="Overhead / day" value={pricing.overheadPerDay} path="overheadPerDay" />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 function LineItemCard({
-  item, index, settings, onUpdate, onRemove, onDuplicate,
+  item, index, settings, quotePricing, onUpdate, onRemove, onDuplicate,
 }: {
   item: QuoteLineItem;
   index: number;
   settings: ProjectSettings;
+  quotePricing: PricingData;
   onUpdate: (updates: Partial<QuoteLineItem>) => void;
   onRemove: () => void;
   onDuplicate: () => void;
@@ -188,8 +313,8 @@ function LineItemCard({
   const [expanded, setExpanded] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
-  const sellingBreakdown = getItemSellingBreakdown(item, settings);
-  const costBreakdown = getItemCostBreakdown(item, settings);
+  const sellingBreakdown = getItemSellingBreakdown(item, settings, quotePricing);
+  const costBreakdown = getItemCostBreakdown(item, settings, quotePricing);
 
   return (
     <div className="border rounded-xl p-4 bg-card transition-all">

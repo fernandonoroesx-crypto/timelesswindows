@@ -47,9 +47,11 @@ export interface Project {
   id: string;
   date: string;
   client: string;
+  clientId?: string;
   projectRef: string;
   settings: ProjectSettings;
   lineItems: QuoteLineItem[];
+  pricing?: PricingData;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   createdAt: string;
   updatedAt: string;
@@ -77,4 +79,31 @@ export interface QuoteSummary {
   margin: number;
   totalItems: number;
   totalSm: number;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+}
+
+export interface PricingData {
+  installationSelling: Record<string, number>;
+  installationCost: Record<string, number>;
+  makingGoodSelling: { intMkgInternal: number; extMkgInternal: number; intMkgExternal: number; extMkgExternal: number };
+  makingGoodCost: { intMkgInternal: number; extMkgInternal: number; intMkgExternal: number; extMkgExternal: number };
+  architraveSelling: number;
+  architraveCost: number;
+  trimsSelling: number;
+  trimsCost: number;
+  mdfSelling: { narrow: number; wide: number };
+  mdfCost: { narrow: number; wide: number };
+  extras: Record<string, number>;
+  consumables: Record<string, number>;
+  wasteDisposal: number;
+  overheadPerDay: number;
 }

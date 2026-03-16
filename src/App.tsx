@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import QuoteBuilder from "./pages/QuoteBuilder";
 import QuotesList from "./pages/QuotesList";
 import SettingsPage from "./pages/SettingsPage";
+import ClientsPage from "./pages/ClientsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
           <AppLayout>
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/clients" element={<ClientsPage />} />
               <Route path="/quotes" element={<QuotesList />} />
               <Route path="/quotes/new" element={<QuoteBuilder />} />
               <Route path="/settings" element={<SettingsPage />} />
