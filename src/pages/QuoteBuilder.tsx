@@ -96,7 +96,8 @@ export default function QuoteBuilder() {
     toast.success('Quote saved successfully');
   };
 
-  const summary = calculateQuoteSummary(project.lineItems, project.settings);
+  const quotePricing = project.pricing || getProjectPricing(project);
+  const summary = calculateQuoteSummary(project.lineItems, project.settings, quotePricing);
 
   return (
     <div className="space-y-6 animate-slide-in">
