@@ -19,7 +19,7 @@ export default function Dashboard() {
   const activeQuotes = projects.filter(p => p.status === 'draft' || p.status === 'sent').length;
   const totalRevenue = projects
     .filter(p => p.status === 'accepted')
-    .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings).sellingPrice.total, 0);
+    .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings, getProjectPricing(p)).sellingPrice.total, 0);
   const totalItems = projects.reduce((sum, p) => sum + p.lineItems.reduce((s, i) => s + i.qty, 0), 0);
 
   return (
