@@ -158,52 +158,66 @@ export default function QuoteBuilder() {
         </div>
       </div>
 
-      {/* Line items */}
-      <div className="elevated-card rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading text-lg font-semibold">Line Items ({project.lineItems.length})</h2>
-          <Button onClick={addLineItem} size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-            <Plus className="w-4 h-4 mr-2" /> Add Item
-          </Button>
-        </div>
+      <Tabs defaultValue="items" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="items">Line Items ({project.lineItems.length})</TabsTrigger>
+          <TabsTrigger value="pricing" className="gap-1.5"><SlidersHorizontal className="w-3.5 h-3.5" /> Quote Pricing</TabsTrigger>
+        </TabsList>
 
-        {project.lineItems.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No items yet. Click "Add Item" to start building your quote.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {project.lineItems.map((item, index) => (
-              <LineItemCard
-                key={item.id}
-                item={item}
-                index={index}
-                settings={project.settings}
-                onUpdate={(updates) => updateLineItem(item.id, updates)}
-                onRemove={() => removeLineItem(item.id)}
-                onDuplicate={() => duplicateLineItem(item.id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+        <TabsContent value="items" className="space-y-6">
+          {/* Line items */}
+          <div className="elevated-card rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-lg font-semibold">Line Items</h2>
+              <Button onClick={addLineItem} size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                <Plus className="w-4 h-4 mr-2" /> Add Item
+              </Button>
+            </div>
 
-      {/* Summary */}
-      {project.lineItems.length > 0 && (
-        <div className="elevated-card rounded-xl p-6 border-l-4 border-l-secondary">
-          <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
-            <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
-            <SummaryCard label="Selling Price" value={formatCurrency(summary.sellingPrice.total)} highlight />
-            <SummaryCard label="Cost" value={formatCurrency(summary.costPrice.total)} />
+            {project.lineItems.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No items yet. Click "Add Item" to start building your quote.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {project.lineItems.map((item, index) => (
+                  <LineItemCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    settings={project.settings}
+                    quotePricing={quotePricing}
+                    onUpdate={(updates) => updateLineItem(item.id, updates)}
+                    onRemove={() => removeLineItem(item.id)}
+                    onDuplicate={() => duplicateLineItem(item.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
-            <SummaryCard label="Profit" value={formatCurrency(summary.profit)} highlight={summary.profit > 0} />
-            <SummaryCard label="Margin" value={`${summary.margin.toFixed(1)}%`} highlight={summary.margin > 0} />
-          </div>
-        </div>
-      )}
+
+          {/* Summary */}
+          {project.lineItems.length > 0 && (
+            <div className="elevated-card rounded-xl p-6 border-l-4 border-l-secondary">
+              <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
+                <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
+                <SummaryCard label="Selling Price" value={formatCurrency(summary.sellingPrice.total)} highlight />
+                <SummaryCard label="Cost" value={formatCurrency(summary.costPrice.total)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                <SummaryCard label="Profit" value={formatCurrency(summary.profit)} highlight={summary.profit > 0} />
+                <SummaryCard label="Margin" value={`${summary.margin.toFixed(1)}%`} highlight={summary.margin > 0} />
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-6">
+          <QuotePricingEditor pricing={quotePricing} onUpdate={updatePricing} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
