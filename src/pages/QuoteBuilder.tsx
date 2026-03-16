@@ -222,12 +222,90 @@ export default function QuoteBuilder() {
   );
 }
 
+function QuotePricingEditor({ pricing, onUpdate }: { pricing: PricingData; onUpdate: (path: string, value: number) => void }) {
+  const EditRow = ({ label, value, path }: { label: string; value: number; path: string }) => (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm flex-1">{label}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground">£</span>
+        <Input type="number" step="0.01" className="h-8 w-24 text-xs text-right" value={value}
+          onChange={e => onUpdate(path, parseFloat(e.target.value) || 0)} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Installation — Selling</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.installationSelling).map(([type, price]) => (
+            <EditRow key={type} label={type} value={price} path={`installationSelling.${type}`} />
+          ))}
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Installation — Cost</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.installationCost).map(([type, price]) => (
+            <EditRow key={type} label={type} value={price} path={`installationCost.${type}`} />
+          ))}
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Making Good — Selling</h3>
+        <div className="space-y-2">
+          <EditRow label="Internal → Int. Mkg" value={pricing.makingGoodSelling.intMkgInternal} path="makingGoodSelling.intMkgInternal" />
+          <EditRow label="Internal → Ext. Mkg" value={pricing.makingGoodSelling.extMkgInternal} path="makingGoodSelling.extMkgInternal" />
+          <EditRow label="External → Int. Mkg" value={pricing.makingGoodSelling.intMkgExternal} path="makingGoodSelling.intMkgExternal" />
+          <EditRow label="External → Ext. Mkg" value={pricing.makingGoodSelling.extMkgExternal} path="makingGoodSelling.extMkgExternal" />
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Making Good — Cost</h3>
+        <div className="space-y-2">
+          <EditRow label="Internal → Int. Mkg" value={pricing.makingGoodCost.intMkgInternal} path="makingGoodCost.intMkgInternal" />
+          <EditRow label="Internal → Ext. Mkg" value={pricing.makingGoodCost.extMkgInternal} path="makingGoodCost.extMkgInternal" />
+          <EditRow label="External → Int. Mkg" value={pricing.makingGoodCost.intMkgExternal} path="makingGoodCost.intMkgExternal" />
+          <EditRow label="External → Ext. Mkg" value={pricing.makingGoodCost.extMkgExternal} path="makingGoodCost.extMkgExternal" />
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Add-ons & Extras</h3>
+        <div className="space-y-2">
+          <EditRow label="Architrave (selling)" value={pricing.architraveSelling} path="architraveSelling" />
+          <EditRow label="Architrave (cost)" value={pricing.architraveCost} path="architraveCost" />
+          <EditRow label="Trims (selling)" value={pricing.trimsSelling} path="trimsSelling" />
+          <EditRow label="Trims (cost)" value={pricing.trimsCost} path="trimsCost" />
+          <EditRow label="MDF Narrow (selling)" value={pricing.mdfSelling.narrow} path="mdfSelling.narrow" />
+          <EditRow label="MDF Narrow (cost)" value={pricing.mdfCost.narrow} path="mdfCost.narrow" />
+          <EditRow label="MDF Wide (selling)" value={pricing.mdfSelling.wide} path="mdfSelling.wide" />
+          <EditRow label="MDF Wide (cost)" value={pricing.mdfCost.wide} path="mdfCost.wide" />
+        </div>
+      </div>
+      <div className="elevated-card rounded-xl p-6">
+        <h3 className="font-heading text-base font-semibold mb-3">Other Costs</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.extras).map(([name, price]) => (
+            <EditRow key={name} label={name} value={price} path={`extras.${name}`} />
+          ))}
+          <div className="pt-2 border-t space-y-2">
+            <EditRow label="Waste Disposal" value={pricing.wasteDisposal} path="wasteDisposal" />
+            <EditRow label="Overhead / day" value={pricing.overheadPerDay} path="overheadPerDay" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LineItemCard({
-  item, index, settings, onUpdate, onRemove, onDuplicate,
+  item, index, settings, quotePricing, onUpdate, onRemove, onDuplicate,
 }: {
   item: QuoteLineItem;
   index: number;
   settings: ProjectSettings;
+  quotePricing: PricingData;
   onUpdate: (updates: Partial<QuoteLineItem>) => void;
   onRemove: () => void;
   onDuplicate: () => void;
@@ -235,8 +313,8 @@ function LineItemCard({
   const [expanded, setExpanded] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
-  const sellingBreakdown = getItemSellingBreakdown(item, settings);
-  const costBreakdown = getItemCostBreakdown(item, settings);
+  const sellingBreakdown = getItemSellingBreakdown(item, settings, quotePricing);
+  const costBreakdown = getItemCostBreakdown(item, settings, quotePricing);
 
   return (
     <div className="border rounded-xl p-4 bg-card transition-all">
