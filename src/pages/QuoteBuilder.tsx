@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, createNewProject, createNewLineItem } from '@/lib/context';
+import { useApp, createNewProject, createNewLineItem, getProjectPricing } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings } from '@/lib/types';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 
 const WINDOW_TYPES: WindowType[] = [
