@@ -39,8 +39,8 @@ export interface PriceBreakdown {
   total: number;
 }
 
-export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSettings): PriceBreakdown {
-  const pricing = p();
+export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSettings, quotePricing?: PricingData): PriceBreakdown {
+  const pricing = p(quotePricing);
   const b: PriceBreakdown = {
     material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
     architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, extras: 0, unitTotal: 0, total: 0,
