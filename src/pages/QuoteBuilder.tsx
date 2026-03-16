@@ -38,6 +38,27 @@ export default function QuoteBuilder() {
     updateProject({ settings: { ...project.settings, [key]: value } });
   };
 
+  const updatePricing = (path: string, value: number) => {
+    const currentPricing = project.pricing || getProjectPricing(project);
+    const next = JSON.parse(JSON.stringify(currentPricing));
+    const keys = path.split('.');
+    let obj = next;
+    for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+    obj[keys[keys.length - 1]] = value;
+    updateProject({ pricing: next });
+  };
+
+  const selectClient = (clientId: string) => {
+    if (clientId === '_none') {
+      updateProject({ clientId: undefined, client: '' });
+      return;
+    }
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      updateProject({ clientId: client.id, client: client.name });
+    }
+  };
+
   const addLineItem = () => {
     const newItem = createNewLineItem();
     newItem.itemRef = `${project.projectRef || 'ITEM'}-${project.lineItems.length + 1}`;
