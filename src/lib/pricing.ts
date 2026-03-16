@@ -13,9 +13,9 @@ function p(quotePricing?: PricingData): PricingData {
 }
 
 // Re-export for settings page
-export const WINDOW_INSTALLATION_SELLING = p().installationSelling;
-export const CONSUMABLES = p().consumables;
-export const OVERHEAD_PER_DAY = p().overheadPerDay;
+export const WINDOW_INSTALLATION_SELLING = loadGlobalPricing().installationSelling;
+export const CONSUMABLES = loadGlobalPricing().consumables;
+export const OVERHEAD_PER_DAY = loadGlobalPricing().overheadPerDay;
 
 export function calculateSm(widthMm: number, heightMm: number): number {
   return (widthMm / 1000) * (heightMm / 1000);
