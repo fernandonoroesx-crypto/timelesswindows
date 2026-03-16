@@ -140,18 +140,18 @@ export function calculateItemCost(item: QuoteLineItem, settings: ProjectSettings
   return getItemCostBreakdown(item, settings, quotePricing).total;
 }
 
-export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectSettings): QuoteSummary {
+export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectSettings, quotePricing?: PricingData): QuoteSummary {
   let totalSelling = 0;
   let totalCost = 0;
   let totalSm = 0;
 
   for (const item of items) {
-    totalSelling += calculateItemSelling(item, settings);
-    totalCost += calculateItemCost(item, settings);
+    totalSelling += calculateItemSelling(item, settings, quotePricing);
+    totalCost += calculateItemCost(item, settings, quotePricing);
     totalSm += calculateSm(item.widthMm, item.heightMm) * item.qty;
   }
 
-  const pricing = p();
+  const pricing = p(quotePricing);
   const overhead = settings.overheadDays * pricing.overheadPerDay;
   totalCost += overhead;
 
