@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, createNewProject, createNewLineItem, getProjectPricing } from '@/lib/context';
+import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
 import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
@@ -51,12 +51,13 @@ export default function QuoteBuilder() {
 
   const selectClient = (clientId: string) => {
     if (clientId === '_none') {
-      updateProject({ clientId: undefined, client: '' });
+      updateProject({ clientId: undefined, client: '', projectRef: '' });
       return;
     }
     const client = clients.find(c => c.id === clientId);
     if (client) {
-      updateProject({ clientId: client.id, client: client.name });
+      const ref = generateQuoteRef(client.name, projects);
+      updateProject({ clientId: client.id, client: client.name, projectRef: ref });
     }
   };
 
