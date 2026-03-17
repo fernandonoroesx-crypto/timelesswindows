@@ -55,6 +55,17 @@ export function getProjectPricing(project: Project): PricingData {
   return saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : DEFAULT_PRICING;
 }
 
+export function generateQuoteRef(clientName: string, existingProjects: Project[]): string {
+  const cleaned = clientName.replace(/[^a-zA-Z]/g, '');
+  const prefix = (cleaned.length >= 3 ? cleaned.slice(0, 3) : cleaned.padEnd(3, 'X')).toUpperCase() || 'QTE';
+  const existing = existingProjects.filter(p => p.projectRef.startsWith(prefix + '-'));
+  const maxNum = existing.reduce((max, p) => {
+    const num = parseInt(p.projectRef.split('-')[1], 10);
+    return isNaN(num) ? max : Math.max(max, num);
+  }, 0);
+  return `${prefix}-${String(maxNum + 1).padStart(6, '0')}`;
+}
+
 export function createNewProject(): Project {
   const id = crypto.randomUUID();
   const saved = localStorage.getItem('quote-pricing');

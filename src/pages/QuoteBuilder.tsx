@@ -51,12 +51,13 @@ export default function QuoteBuilder() {
 
   const selectClient = (clientId: string) => {
     if (clientId === '_none') {
-      updateProject({ clientId: undefined, client: '' });
+      updateProject({ clientId: undefined, client: '', projectRef: '' });
       return;
     }
     const client = clients.find(c => c.id === clientId);
     if (client) {
-      updateProject({ clientId: client.id, client: client.name });
+      const ref = generateQuoteRef(client.name, projects);
+      updateProject({ clientId: client.id, client: client.name, projectRef: ref });
     }
   };
 
