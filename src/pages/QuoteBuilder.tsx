@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, createNewProject, createNewLineItem, getProjectPricing } from '@/lib/context';
+import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
 import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
