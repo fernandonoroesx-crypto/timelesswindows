@@ -81,6 +81,13 @@ export interface QuoteSummary {
   totalSm: number;
 }
 
+export interface ProjectManager {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -88,6 +95,7 @@ export interface Client {
   phone: string;
   address: string;
   notes: string;
+  projectManagers: ProjectManager[];
   createdAt: string;
 }
 
