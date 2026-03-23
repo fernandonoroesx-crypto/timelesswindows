@@ -51,13 +51,27 @@ export default function QuoteBuilder() {
 
   const selectClient = (clientId: string) => {
     if (clientId === '_none') {
-      updateProject({ clientId: undefined, client: '', projectRef: '' });
+      updateProject({ clientId: undefined, client: '', projectRef: '', projectManagerId: undefined, projectManagerName: '' });
       return;
     }
     const client = clients.find(c => c.id === clientId);
     if (client) {
       const ref = generateQuoteRef(client.name, projects);
-      updateProject({ clientId: client.id, client: client.name, projectRef: ref });
+      updateProject({ clientId: client.id, client: client.name, projectRef: ref, projectManagerId: undefined, projectManagerName: '' });
+    }
+  };
+
+  const selectedClient = clients.find(c => c.id === project.clientId);
+  const clientPMs: ProjectManager[] = selectedClient?.projectManagers || [];
+
+  const selectPM = (pmId: string) => {
+    if (pmId === '_none') {
+      updateProject({ projectManagerId: undefined, projectManagerName: '' });
+      return;
+    }
+    const pm = clientPMs.find(p => p.id === pmId);
+    if (pm) {
+      updateProject({ projectManagerId: pm.id, projectManagerName: pm.name });
     }
   };
 
