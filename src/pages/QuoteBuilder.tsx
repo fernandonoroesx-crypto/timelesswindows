@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData } from '@/lib/types';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,13 +51,27 @@ export default function QuoteBuilder() {
 
   const selectClient = (clientId: string) => {
     if (clientId === '_none') {
-      updateProject({ clientId: undefined, client: '', projectRef: '' });
+      updateProject({ clientId: undefined, client: '', projectRef: '', projectManagerId: undefined, projectManagerName: '' });
       return;
     }
     const client = clients.find(c => c.id === clientId);
     if (client) {
       const ref = generateQuoteRef(client.name, projects);
-      updateProject({ clientId: client.id, client: client.name, projectRef: ref });
+      updateProject({ clientId: client.id, client: client.name, projectRef: ref, projectManagerId: undefined, projectManagerName: '' });
+    }
+  };
+
+  const selectedClient = clients.find(c => c.id === project.clientId);
+  const clientPMs: ProjectManager[] = selectedClient?.projectManagers || [];
+
+  const selectPM = (pmId: string) => {
+    if (pmId === '_none') {
+      updateProject({ projectManagerId: undefined, projectManagerName: '' });
+      return;
+    }
+    const pm = clientPMs.find(p => p.id === pmId);
+    if (pm) {
+      updateProject({ projectManagerId: pm.id, projectManagerName: pm.name });
     }
   };
 
@@ -144,6 +158,20 @@ export default function QuoteBuilder() {
               </Select>
             ) : (
               <Input value={project.client} onChange={e => updateProject({ client: e.target.value })} placeholder="Client name" />
+            )}
+          </div>
+          <div>
+            <Label>Project Manager</Label>
+            {clientPMs.length > 0 ? (
+              <Select value={project.projectManagerId || '_none'} onValueChange={selectPM}>
+                <SelectTrigger><SelectValue placeholder="Select PM" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— None —</SelectItem>
+                  {clientPMs.map(pm => <SelectItem key={pm.id} value={pm.id}>{pm.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input disabled placeholder={project.clientId ? 'No PMs registered' : 'Select client first'} />
             )}
           </div>
           <div>

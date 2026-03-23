@@ -48,6 +48,8 @@ export interface Project {
   date: string;
   client: string;
   clientId?: string;
+  projectManagerId?: string;
+  projectManagerName?: string;
   projectRef: string;
   settings: ProjectSettings;
   lineItems: QuoteLineItem[];
