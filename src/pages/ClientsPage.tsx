@@ -1,23 +1,39 @@
 import { useState } from 'react';
 import { useApp } from '@/lib/context';
-import type { Client } from '@/lib/types';
+import type { Client, ProjectManager } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, UserPlus, Users, Edit2, X, Check } from 'lucide-react';
+import { Plus, Trash2, UserPlus, Users, Edit2, X, Check, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ClientsPage() {
   const { clients, setClients } = useApp();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', notes: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', notes: '', projectManagers: [] as ProjectManager[] });
+  const [pmForm, setPmForm] = useState({ name: '', email: '', phone: '' });
 
   const resetForm = () => {
-    setForm({ name: '', email: '', phone: '', address: '', notes: '' });
+    setForm({ name: '', email: '', phone: '', address: '', notes: '', projectManagers: [] });
+    setPmForm({ name: '', email: '', phone: '' });
     setShowForm(false);
     setEditingId(null);
+  };
+
+  const handleAddPM = () => {
+    if (!pmForm.name.trim()) {
+      toast.error('Manager name is required');
+      return;
+    }
+    const pm: ProjectManager = { id: crypto.randomUUID(), ...pmForm };
+    setForm(f => ({ ...f, projectManagers: [...f.projectManagers, pm] }));
+    setPmForm({ name: '', email: '', phone: '' });
+  };
+
+  const handleRemovePM = (id: string) => {
+    setForm(f => ({ ...f, projectManagers: f.projectManagers.filter(pm => pm.id !== id) }));
   };
 
   const handleSave = () => {
@@ -44,7 +60,14 @@ export default function ClientsPage() {
   };
 
   const handleEdit = (client: Client) => {
-    setForm({ name: client.name, email: client.email, phone: client.phone, address: client.address, notes: client.notes });
+    setForm({
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      address: client.address,
+      notes: client.notes,
+      projectManagers: client.projectManagers || [],
+    });
     setEditingId(client.id);
     setShowForm(true);
   };
@@ -94,6 +117,53 @@ export default function ClientsPage() {
               <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Any notes..." rows={2} />
             </div>
           </div>
+
+          {/* Project Managers Section */}
+          <div className="mt-6 border-t border-border pt-4">
+            <h3 className="font-heading text-sm font-semibold flex items-center gap-2 mb-3">
+              <UserCog className="w-4 h-4 text-muted-foreground" /> Project Managers
+            </h3>
+
+            {form.projectManagers.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {form.projectManagers.map(pm => (
+                  <div key={pm.id} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 text-sm">
+                    <span className="font-medium flex-1 truncate">{pm.name}</span>
+                    <span className="text-muted-foreground truncate hidden sm:inline">{pm.email}</span>
+                    <span className="text-muted-foreground truncate hidden sm:inline">{pm.phone}</span>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemovePM(pm.id)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                value={pmForm.name}
+                onChange={e => setPmForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Manager name"
+                className="flex-1"
+              />
+              <Input
+                value={pmForm.email}
+                onChange={e => setPmForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="Email"
+                className="flex-1"
+              />
+              <Input
+                value={pmForm.phone}
+                onChange={e => setPmForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="Phone"
+                className="flex-1"
+              />
+              <Button variant="outline" size="sm" onClick={handleAddPM} className="shrink-0">
+                <Plus className="w-4 h-4 mr-1" /> Add
+              </Button>
+            </div>
+          </div>
+
           <div className="flex justify-end mt-4">
             <Button onClick={handleSave} className="bg-primary text-primary-foreground">
               <Check className="w-4 h-4 mr-2" /> {editingId ? 'Update' : 'Save'}
@@ -110,25 +180,33 @@ export default function ClientsPage() {
         </div>
       ) : (
         <div className="grid gap-3">
-          {clients.map(client => (
-            <div key={client.id} className="elevated-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-heading font-semibold truncate">{client.name}</p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {[client.email, client.phone].filter(Boolean).join(' · ') || 'No contact info'}
-                </p>
-                {client.address && <p className="text-xs text-muted-foreground/70 truncate">{client.address}</p>}
+          {clients.map(client => {
+            const pms = client.projectManagers || [];
+            return (
+              <div key={client.id} className="elevated-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-heading font-semibold truncate">{client.name}</p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {[client.email, client.phone].filter(Boolean).join(' · ') || 'No contact info'}
+                  </p>
+                  {client.address && <p className="text-xs text-muted-foreground/70 truncate">{client.address}</p>}
+                  {pms.length > 0 && (
+                    <p className="text-xs text-accent-foreground/70 mt-1 flex items-center gap-1">
+                      <UserCog className="w-3 h-3" /> PM: {pms.map(pm => pm.name).join(', ')}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(client)}>
+                    <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(client.id)}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2 shrink-0">
-                <Button size="sm" variant="outline" onClick={() => handleEdit(client)}>
-                  <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
-                </Button>
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(client.id)}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
