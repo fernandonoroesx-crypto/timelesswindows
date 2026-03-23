@@ -1,22 +1,38 @@
 
 
-## Plan: Add Project Managers to Client Registration
+## Plan: Persist Data with Supabase Cloud Database
 
-### What Changes
+### Problem
+All clients, quotes, and settings are stored in **browser localStorage** — data is lost when clearing browser data, switching devices, or browsers.
 
-Add a **Project Managers** section inside the client form where users can add multiple project managers (name, email, phone) per client. The client card in the list will also show the assigned project managers.
+### Solution
+Connect Lovable Cloud (Supabase) to store clients and projects in a real database, synced across all devices.
 
-### Technical Changes
+### Technical Steps
 
-1. **`src/lib/types.ts`** — Add a `ProjectManager` interface (`id`, `name`, `email`, `phone`) and add `projectManagers: ProjectManager[]` to the `Client` interface.
+1. **Enable Lovable Cloud** — Set up Supabase integration with database tables.
 
-2. **`src/pages/ClientsPage.tsx`**:
-   - Add `projectManagers` array to the form state (default `[]`)
-   - Inside the client form, below the existing fields, add a "Project Managers" sub-section:
-     - Small inline form (name, email, phone) with an "Add" button
-     - List of already added managers with delete buttons
-   - When editing a client, load existing project managers into the form
-   - Display project manager names in the client list cards (e.g., "PM: John, Sarah")
+2. **Create database tables** via migrations:
+   - `clients` — id, name, email, phone, address, notes, created_at
+   - `project_managers` — id, client_id (FK), name, email, phone
+   - `projects` — id, date, client, client_id, project_ref, settings (jsonb), pricing (jsonb), status, created_at, updated_at
+   - `line_items` — id, project_id (FK), all line item fields
 
-3. **`src/lib/context.tsx`** — Update `resetForm` defaults to include `projectManagers: []`. No other context changes needed since `setClients` already handles the full client object.
+3. **Create a Supabase client** — `src/integrations/supabase/client.ts`
+
+4. **Update `src/lib/context.tsx`**:
+   - Replace `localStorage.getItem/setItem` calls with Supabase queries
+   - Load clients and projects from database on app start
+   - Save changes to database when `setClients` or `setProjects` are called
+   - Keep localStorage as offline fallback/cache
+
+5. **Add RLS policies** — Enable row-level security (initially open, tighten when auth is added later)
+
+### What Stays the Same
+- All UI components unchanged
+- All pricing calculation logic unchanged
+- Same app flow — just backed by a real database
+
+### Result
+Data persists permanently, accessible from any device/browser.
 
