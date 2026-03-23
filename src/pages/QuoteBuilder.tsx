@@ -161,6 +161,20 @@ export default function QuoteBuilder() {
             )}
           </div>
           <div>
+            <Label>Project Manager</Label>
+            {clientPMs.length > 0 ? (
+              <Select value={project.projectManagerId || '_none'} onValueChange={selectPM}>
+                <SelectTrigger><SelectValue placeholder="Select PM" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— None —</SelectItem>
+                  {clientPMs.map(pm => <SelectItem key={pm.id} value={pm.id}>{pm.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input disabled placeholder={project.clientId ? 'No PMs registered' : 'Select client first'} />
+            )}
+          </div>
+          <div>
             <Label>Project Ref</Label>
             <Input value={project.projectRef} onChange={e => updateProject({ projectRef: e.target.value })} placeholder="AD123 - Address" />
           </div>
