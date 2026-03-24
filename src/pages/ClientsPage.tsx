@@ -42,6 +42,26 @@ export default function ClientsPage() {
   const handleRemovePM = (id: string) => {
     setForm(f => ({ ...f, projectManagers: f.projectManagers.filter(pm => pm.id !== id) }));
     if (editingPricingPmId === id) setEditingPricingPmId(null);
+    if (editingPmId === id) setEditingPmId(null);
+  };
+
+  const handleStartEditPM = (pm: ProjectManager) => {
+    setEditingPmId(pm.id);
+    setEditPmForm({ name: pm.name, email: pm.email, phone: pm.phone });
+  };
+
+  const handleSaveEditPM = (pmId: string) => {
+    if (!editPmForm.name.trim()) {
+      toast.error('Manager name is required');
+      return;
+    }
+    setForm(f => ({
+      ...f,
+      projectManagers: f.projectManagers.map(pm =>
+        pm.id === pmId ? { ...pm, name: editPmForm.name, email: editPmForm.email, phone: editPmForm.phone } : pm
+      ),
+    }));
+    setEditingPmId(null);
   };
 
   const handleTogglePMPricing = (pmId: string) => {
