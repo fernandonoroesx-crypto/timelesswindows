@@ -17,6 +17,8 @@ export default function ClientsPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', notes: '', projectManagers: [] as ProjectManager[] });
   const [pmForm, setPmForm] = useState({ name: '', email: '', phone: '' });
   const [editingPricingPmId, setEditingPricingPmId] = useState<string | null>(null);
+  const [editingPmId, setEditingPmId] = useState<string | null>(null);
+  const [editPmForm, setEditPmForm] = useState({ name: '', email: '', phone: '' });
 
   const resetForm = () => {
     setForm({ name: '', email: '', phone: '', address: '', notes: '', projectManagers: [] });
