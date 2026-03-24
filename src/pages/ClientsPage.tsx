@@ -196,21 +196,40 @@ export default function ClientsPage() {
                 {form.projectManagers.map(pm => (
                   <div key={pm.id}>
                     <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 text-sm">
-                      <span className="font-medium flex-1 truncate">{pm.name}</span>
-                      <span className="text-muted-foreground truncate hidden sm:inline">{pm.email}</span>
-                      <span className="text-muted-foreground truncate hidden sm:inline">{pm.phone}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-7 w-7 p-0 ${pm.pricing ? 'text-primary' : 'text-muted-foreground'}`}
-                        onClick={() => pm.pricing ? handleTogglePMPricing(pm.id) : handleEnablePMPricing(pm.id)}
-                        title={pm.pricing ? 'Edit pricing' : 'Add custom pricing'}
-                      >
-                        <SlidersHorizontal className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemovePM(pm.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      {editingPmId === pm.id ? (
+                        <>
+                          <Input value={editPmForm.name} onChange={e => setEditPmForm(f => ({ ...f, name: e.target.value }))} placeholder="Name" className="h-7 text-sm flex-1" />
+                          <Input value={editPmForm.email} onChange={e => setEditPmForm(f => ({ ...f, email: e.target.value }))} placeholder="Email" className="h-7 text-sm flex-1 hidden sm:block" />
+                          <Input value={editPmForm.phone} onChange={e => setEditPmForm(f => ({ ...f, phone: e.target.value }))} placeholder="Phone" className="h-7 text-sm flex-1 hidden sm:block" />
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-primary" onClick={() => handleSaveEditPM(pm.id)}>
+                            <Check className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setEditingPmId(null)}>
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-medium flex-1 truncate">{pm.name}</span>
+                          <span className="text-muted-foreground truncate hidden sm:inline">{pm.email}</span>
+                          <span className="text-muted-foreground truncate hidden sm:inline">{pm.phone}</span>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" onClick={() => handleStartEditPM(pm)} title="Edit PM">
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-7 w-7 p-0 ${pm.pricing ? 'text-primary' : 'text-muted-foreground'}`}
+                            onClick={() => pm.pricing ? handleTogglePMPricing(pm.id) : handleEnablePMPricing(pm.id)}
+                            title={pm.pricing ? 'Edit pricing' : 'Add custom pricing'}
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemovePM(pm.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
+                      )}
                     </div>
 
                     {/* PM Pricing Editor */}
