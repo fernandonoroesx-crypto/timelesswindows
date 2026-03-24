@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useApp } from '@/lib/context';
-import type { Client, ProjectManager } from '@/lib/types';
+import { DEFAULT_PRICING } from '@/lib/context';
+import type { Client, ProjectManager, PricingData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, UserPlus, Users, Edit2, X, Check, UserCog } from 'lucide-react';
+import { Plus, Trash2, UserPlus, Users, Edit2, X, Check, UserCog, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import PricingEditor from '@/components/PricingEditor';
 
 export default function ClientsPage() {
   const { clients, setClients } = useApp();
@@ -14,12 +16,14 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', notes: '', projectManagers: [] as ProjectManager[] });
   const [pmForm, setPmForm] = useState({ name: '', email: '', phone: '' });
+  const [editingPricingPmId, setEditingPricingPmId] = useState<string | null>(null);
 
   const resetForm = () => {
     setForm({ name: '', email: '', phone: '', address: '', notes: '', projectManagers: [] });
     setPmForm({ name: '', email: '', phone: '' });
     setShowForm(false);
     setEditingId(null);
+    setEditingPricingPmId(null);
   };
 
   const handleAddPM = () => {
@@ -34,6 +38,46 @@ export default function ClientsPage() {
 
   const handleRemovePM = (id: string) => {
     setForm(f => ({ ...f, projectManagers: f.projectManagers.filter(pm => pm.id !== id) }));
+    if (editingPricingPmId === id) setEditingPricingPmId(null);
+  };
+
+  const handleTogglePMPricing = (pmId: string) => {
+    setEditingPricingPmId(prev => prev === pmId ? null : pmId);
+  };
+
+  const handleEnablePMPricing = (pmId: string) => {
+    setForm(f => ({
+      ...f,
+      projectManagers: f.projectManagers.map(pm =>
+        pm.id === pmId && !pm.pricing ? { ...pm, pricing: { ...DEFAULT_PRICING } } : pm
+      ),
+    }));
+    setEditingPricingPmId(pmId);
+  };
+
+  const handleClearPMPricing = (pmId: string) => {
+    setForm(f => ({
+      ...f,
+      projectManagers: f.projectManagers.map(pm =>
+        pm.id === pmId ? { ...pm, pricing: undefined } : pm
+      ),
+    }));
+    setEditingPricingPmId(null);
+  };
+
+  const handleUpdatePMPricing = (pmId: string, path: string, value: number) => {
+    setForm(f => ({
+      ...f,
+      projectManagers: f.projectManagers.map(pm => {
+        if (pm.id !== pmId || !pm.pricing) return pm;
+        const next = JSON.parse(JSON.stringify(pm.pricing));
+        const keys = path.split('.');
+        let obj = next;
+        for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+        obj[keys[keys.length - 1]] = value;
+        return { ...pm, pricing: next };
+      }),
+    }));
   };
 
   const handleSave = () => {
@@ -127,13 +171,49 @@ export default function ClientsPage() {
             {form.projectManagers.length > 0 && (
               <div className="space-y-2 mb-3">
                 {form.projectManagers.map(pm => (
-                  <div key={pm.id} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 text-sm">
-                    <span className="font-medium flex-1 truncate">{pm.name}</span>
-                    <span className="text-muted-foreground truncate hidden sm:inline">{pm.email}</span>
-                    <span className="text-muted-foreground truncate hidden sm:inline">{pm.phone}</span>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemovePM(pm.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                  <div key={pm.id}>
+                    <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 text-sm">
+                      <span className="font-medium flex-1 truncate">{pm.name}</span>
+                      <span className="text-muted-foreground truncate hidden sm:inline">{pm.email}</span>
+                      <span className="text-muted-foreground truncate hidden sm:inline">{pm.phone}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-7 w-7 p-0 ${pm.pricing ? 'text-primary' : 'text-muted-foreground'}`}
+                        onClick={() => pm.pricing ? handleTogglePMPricing(pm.id) : handleEnablePMPricing(pm.id)}
+                        title={pm.pricing ? 'Edit pricing' : 'Add custom pricing'}
+                      >
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemovePM(pm.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+
+                    {/* PM Pricing Editor */}
+                    {editingPricingPmId === pm.id && (
+                      <div className="mt-2 ml-4 border-l-2 border-l-primary/30 pl-4 pb-2">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                            <SlidersHorizontal className="w-3 h-3" />
+                            Custom Pricing for {pm.name}
+                          </h4>
+                          <div className="flex gap-1">
+                            {pm.pricing && (
+                              <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={() => handleClearPMPricing(pm.id)}>
+                                Remove Pricing
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setEditingPricingPmId(null)}>
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                        {pm.pricing && (
+                          <PricingEditor pricing={pm.pricing} onUpdate={(path, value) => handleUpdatePMPricing(pm.id, path, value)} compact />
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -192,7 +272,11 @@ export default function ClientsPage() {
                   {client.address && <p className="text-xs text-muted-foreground/70 truncate">{client.address}</p>}
                   {pms.length > 0 && (
                     <p className="text-xs text-accent-foreground/70 mt-1 flex items-center gap-1">
-                      <UserCog className="w-3 h-3" /> PM: {pms.map(pm => pm.name).join(', ')}
+                      <UserCog className="w-3 h-3" /> PM: {pms.map(pm => (
+                        <span key={pm.id}>
+                          {pm.name}{pm.pricing ? ' ⚙' : ''}
+                        </span>
+                      )).reduce((prev, curr, i) => i === 0 ? [curr] : [...prev, ', ', curr], [] as React.ReactNode[])}
                     </p>
                   )}
                 </div>
