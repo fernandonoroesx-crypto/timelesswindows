@@ -88,6 +88,7 @@ export interface ProjectManager {
   name: string;
   email: string;
   phone: string;
+  pricing?: PricingData;
 }
 
 export interface Client {
