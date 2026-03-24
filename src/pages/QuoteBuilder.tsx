@@ -71,7 +71,11 @@ export default function QuoteBuilder() {
     }
     const pm = clientPMs.find(p => p.id === pmId);
     if (pm) {
-      updateProject({ projectManagerId: pm.id, projectManagerName: pm.name });
+      const updates: Partial<Project> = { projectManagerId: pm.id, projectManagerName: pm.name };
+      if (pm.pricing) {
+        updates.pricing = { ...pm.pricing };
+      }
+      updateProject(updates);
     }
   };
 
