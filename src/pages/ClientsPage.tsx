@@ -26,6 +26,7 @@ export default function ClientsPage() {
     setShowForm(false);
     setEditingId(null);
     setEditingPricingPmId(null);
+    setEditingPmId(null);
   };
 
   const handleAddPM = () => {
