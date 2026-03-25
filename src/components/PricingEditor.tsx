@@ -8,6 +8,19 @@ interface PricingEditorProps {
   sellingOnly?: boolean;
 }
 
+function EditRow({ label, value, path, onUpdate }: { label: string; value: number; path: string; onUpdate: (path: string, value: number) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm flex-1">{label}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground">£</span>
+        <Input type="number" step="0.01" className="h-8 w-24 text-xs text-right" value={value}
+          onChange={e => onUpdate(path, parseFloat(e.target.value) || 0)} />
+      </div>
+    </div>
+  );
+}
+
 export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly }: PricingEditorProps) {
   const cardClass = compact ? "border rounded-lg p-4" : "elevated-card rounded-xl p-6";
 
