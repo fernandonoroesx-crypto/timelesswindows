@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef } from '@/lib/context';
+import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
 import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
@@ -67,7 +67,10 @@ export default function QuoteBuilder() {
 
   const selectPM = (pmId: string) => {
     if (pmId === '_none') {
-      updateProject({ projectManagerId: undefined, projectManagerName: '' });
+      // Revert to global default pricing from Settings
+      const saved = localStorage.getItem('quote-pricing');
+      const defaultPricing = saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : { ...DEFAULT_PRICING };
+      updateProject({ projectManagerId: undefined, projectManagerName: '', pricing: defaultPricing });
       return;
     }
     const pm = clientPMs.find(p => p.id === pmId);
