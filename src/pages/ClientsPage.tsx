@@ -252,7 +252,7 @@ export default function ClientsPage() {
                           </div>
                         </div>
                         {pm.pricing && (
-                          <PricingEditor pricing={pm.pricing} onUpdate={(path, value) => handleUpdatePMPricing(pm.id, path, value)} compact />
+                          <PricingEditor pricing={pm.pricing} onUpdate={(path, value) => handleUpdatePMPricing(pm.id, path, value)} compact sellingOnly />
                         )}
                       </div>
                     )}
