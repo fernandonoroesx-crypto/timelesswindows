@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportQuotePdf } from '@/lib/pdf-export';
+import PricingEditor from '@/components/PricingEditor';
 
 const WINDOW_TYPES: WindowType[] = [
   'Casement', 'Casement Flag', 'Box Sash', 'Fix Sash', 'Spring Sash',
