@@ -67,7 +67,10 @@ export default function QuoteBuilder() {
 
   const selectPM = (pmId: string) => {
     if (pmId === '_none') {
-      updateProject({ projectManagerId: undefined, projectManagerName: '' });
+      // Revert to global default pricing from Settings
+      const saved = localStorage.getItem('quote-pricing');
+      const defaultPricing = saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : { ...DEFAULT_PRICING };
+      updateProject({ projectManagerId: undefined, projectManagerName: '', pricing: defaultPricing });
       return;
     }
     const pm = clientPMs.find(p => p.id === pmId);
