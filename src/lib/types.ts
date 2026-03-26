@@ -110,6 +110,17 @@ export interface Client {
   createdAt: string;
 }
 
+export interface Supplier {
+  id: string;
+  name: string;
+  currency: Currency;
+  contactName: string;
+  email: string;
+  phone: string;
+  notes: string;
+  createdAt: string;
+}
+
 export interface ArchitravePricing {
   single: number;
   baySide: number;

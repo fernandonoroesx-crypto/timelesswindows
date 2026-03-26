@@ -1,5 +1,5 @@
 import { useState, createContext, useContext } from 'react';
-import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData } from '@/lib/types';
+import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier } from '@/lib/types';
 
 export const DEFAULT_PRICING: PricingData = {
   installationSelling: {
