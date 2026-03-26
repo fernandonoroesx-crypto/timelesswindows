@@ -129,17 +129,45 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Add-ons */}
+        {/* Architrave */}
+        <div className="elevated-card rounded-xl p-6">
+          <h2 className="font-heading text-lg font-semibold mb-4">Architrave (per LM)</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground font-medium pb-1 border-b">
+              <span>Type</span><span className="text-right">Selling</span><span className="text-right">Cost</span>
+            </div>
+            <DualEditRow label="Single" selling={pricing.architraveSelling.single} cost={pricing.architraveCost.single}
+              onSelling={v => update('architraveSelling.single', v)} onCost={v => update('architraveCost.single', v)} />
+            <DualEditRow label="Bay Side" selling={pricing.architraveSelling.baySide} cost={pricing.architraveCost.baySide}
+              onSelling={v => update('architraveSelling.baySide', v)} onCost={v => update('architraveCost.baySide', v)} />
+            <DualEditRow label="Bay Central" selling={pricing.architraveSelling.bayCentral} cost={pricing.architraveCost.bayCentral}
+              onSelling={v => update('architraveSelling.bayCentral', v)} onCost={v => update('architraveCost.bayCentral', v)} />
+          </div>
+        </div>
+
+        {/* Trims */}
+        <div className="elevated-card rounded-xl p-6">
+          <h2 className="font-heading text-lg font-semibold mb-4">Trims (per item)</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground font-medium pb-1 border-b">
+              <span>Type</span><span className="text-right">Selling</span><span className="text-right">Cost</span>
+            </div>
+            <DualEditRow label="Single" selling={pricing.trimsSelling.single} cost={pricing.trimsCost.single}
+              onSelling={v => update('trimsSelling.single', v)} onCost={v => update('trimsCost.single', v)} />
+            <DualEditRow label="Bay Side" selling={pricing.trimsSelling.baySide} cost={pricing.trimsCost.baySide}
+              onSelling={v => update('trimsSelling.baySide', v)} onCost={v => update('trimsCost.baySide', v)} />
+            <DualEditRow label="Bay Central" selling={pricing.trimsSelling.bayCentral} cost={pricing.trimsCost.bayCentral}
+              onSelling={v => update('trimsSelling.bayCentral', v)} onCost={v => update('trimsCost.bayCentral', v)} />
+          </div>
+        </div>
+
+        {/* Add-ons & Logistics */}
         <div className="elevated-card rounded-xl p-6">
           <h2 className="font-heading text-lg font-semibold mb-4">Add-ons & Logistics</h2>
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground font-medium pb-1 border-b">
               <span>Item</span><span className="text-right">Selling</span><span className="text-right">Cost</span>
             </div>
-            <DualEditRow label="Architrave (per LM)" selling={pricing.architraveSelling} cost={pricing.architraveCost}
-              onSelling={v => update('architraveSelling', v)} onCost={v => update('architraveCost', v)} />
-            <DualEditRow label="Trims (per item)" selling={pricing.trimsSelling} cost={pricing.trimsCost}
-              onSelling={v => update('trimsSelling', v)} onCost={v => update('trimsCost', v)} />
             <DualEditRow label="Delivery/Stock (per SM)" selling={pricing.deliveryStockSelling} cost={pricing.deliveryStockCost}
               onSelling={v => update('deliveryStockSelling', v)} onCost={v => update('deliveryStockCost', v)} />
             <DualEditRow label="Fensa/Survey (per item)" selling={pricing.fensaSurveySelling} cost={pricing.fensaSurveyCost}

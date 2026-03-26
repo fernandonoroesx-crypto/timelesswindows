@@ -13,7 +13,11 @@ export type InstallationType = 'Internal' | 'External';
 
 export type Currency = 'GBP' | 'EUR';
 
-export type MdfRevealType = 'singleNarrow' | 'sideNarrow' | 'centralNarrow' | 'singleWide' | 'sideWide' | 'centralWide' | 'none';
+export type ArchitraveType = 'none' | 'single' | 'baySide' | 'bayCentral';
+export type TrimsType = 'none' | 'single' | 'baySide' | 'bayCentral';
+export type MdfRevealType = 'none' | 'narrow' | 'wide';
+
+export type ExtraType = 'Recess of reveal' | 'Shutters' | 'Cut Out of work top';
 
 export interface QuoteLineItem {
   id: string;
@@ -27,14 +31,14 @@ export interface QuoteLineItem {
   manufacturePrice: number;
   uplift: number;
   installationType: InstallationType;
-  includeArchitrave: boolean;
-  includeTrims: boolean;
-  includeMdfReveal: boolean;
+  installationOverride?: number;
+  architraveType: ArchitraveType;
+  trimsType: TrimsType;
   mdfRevealType: MdfRevealType;
-  extras: ExtraType[];
+  extra1: ExtraType | 'none';
+  extra2: ExtraType | 'none';
+  customExtra: number;
 }
-
-export type ExtraType = 'Recess of reveal' | 'Shutters' | 'Cut Out of work top';
 
 export interface ProjectSettings {
   eurToGbpRate: number;
@@ -106,20 +110,28 @@ export interface Client {
   createdAt: string;
 }
 
+export interface ArchitravePricing {
+  single: number;
+  baySide: number;
+  bayCentral: number;
+}
+
+export interface TrimsPricing {
+  single: number;
+  baySide: number;
+  bayCentral: number;
+}
+
 export interface MdfPricing {
-  singleNarrow: number;
-  sideNarrow: number;
-  centralNarrow: number;
-  singleWide: number;
-  sideWide: number;
-  centralWide: number;
+  narrow: number;
+  wide: number;
 }
 
 export interface MakingGoodPricing {
-  intMkgInternal: number;  // Internal MG when Internal install
-  extMkgInternal: number;  // External MG when Internal install
-  intMkgExternal: number;  // Internal MG when External install
-  extMkgExternal: number;  // External MG when External install
+  intMkgInternal: number;
+  extMkgInternal: number;
+  intMkgExternal: number;
+  extMkgExternal: number;
 }
 
 export interface PricingData {
@@ -127,10 +139,10 @@ export interface PricingData {
   installationCost: Record<string, number>;
   makingGoodSelling: MakingGoodPricing;
   makingGoodCost: MakingGoodPricing;
-  architraveSelling: number;
-  architraveCost: number;
-  trimsSelling: number;
-  trimsCost: number;
+  architraveSelling: ArchitravePricing;
+  architraveCost: ArchitravePricing;
+  trimsSelling: TrimsPricing;
+  trimsCost: TrimsPricing;
   mdfSelling: MdfPricing;
   mdfCost: MdfPricing;
   extras: Record<string, number>;
