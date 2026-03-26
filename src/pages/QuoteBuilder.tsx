@@ -363,10 +363,10 @@ function LineItemCard({
           <div>
             <Label className="text-xs">Uplift</Label>
             <Input type="number" step="0.1" className="h-9 text-xs"
-              value={item.uplift != null && item.uplift !== 0 ? item.uplift : (quotePricing.uplift[item.type] || 1)}
+              value={item.uplift != null && item.uplift !== 0 ? item.uplift : (safeUplift[item.type] || 1)}
               onChange={e => {
                 const val = parseFloat(e.target.value) || 1;
-                const defaultVal = quotePricing.uplift[item.type] || 1;
+                const defaultVal = safeUplift[item.type] || 1;
                 onUpdate({ uplift: val === defaultVal ? 0 : val });
               }}
               placeholder="Auto"
