@@ -330,7 +330,25 @@ function LineItemCard({
           </div>
           <div>
             <Label className="text-xs">Supplier</Label>
-            <Input className="h-9 text-xs" value={item.supplier} onChange={e => onUpdate({ supplier: e.target.value })} placeholder="Supplier" />
+            <Select
+              value={item.supplier || '__none__'}
+              onValueChange={v => {
+                if (v === '__none__') {
+                  onUpdate({ supplier: '', manufactureCurrency: 'GBP' });
+                } else {
+                  const found = suppliers.find(s => s.name === v);
+                  onUpdate({ supplier: v, manufactureCurrency: found?.currency || 'GBP' });
+                }
+              }}
+            >
+              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select supplier" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— No supplier —</SelectItem>
+                {suppliers.map(s => (
+                  <SelectItem key={s.id} value={s.name}>{s.name} ({s.currency})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-xs">Price</Label>
