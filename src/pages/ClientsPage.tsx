@@ -93,10 +93,13 @@ export default function ClientsPage() {
       ...f,
       projectManagers: f.projectManagers.map(pm => {
         if (pm.id !== pmId || !pm.pricing) return pm;
-        const next = JSON.parse(JSON.stringify(pm.pricing));
+        const next = JSON.parse(JSON.stringify({ ...DEFAULT_PRICING, ...pm.pricing }));
         const keys = path.split('.');
         let obj = next;
-        for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (obj[keys[i]] === undefined) obj[keys[i]] = {};
+          obj = obj[keys[i]];
+        }
         obj[keys[keys.length - 1]] = value;
         return { ...pm, pricing: next };
       }),
