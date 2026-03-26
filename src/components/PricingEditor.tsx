@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/input';
+import { DEFAULT_PRICING } from '@/lib/context';
 import type { PricingData } from '@/lib/types';
 
 interface PricingEditorProps {
