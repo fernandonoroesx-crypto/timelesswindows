@@ -40,6 +40,8 @@ interface AppContextType {
   setCurrentProject: (project: Project | null) => void;
   clients: Client[];
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
+  suppliers: Supplier[];
+  setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
