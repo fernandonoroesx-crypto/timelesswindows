@@ -288,6 +288,7 @@ function LineItemCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const safeUplift = quotePricing.uplift || DEFAULT_PRICING.uplift;
 
   const sellingBreakdown = getItemSellingBreakdown(item, settings, quotePricing);
   const costBreakdown = getItemCostBreakdown(item, settings, quotePricing);
