@@ -4,20 +4,25 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, FileText } from 'lucide-react';
 import { createNewProject } from '@/lib/context';
+import { toast } from 'sonner';
 
 export default function QuotesList() {
-  const { projects, setProjects, setCurrentProject } = useApp();
+  const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
   const navigate = useNavigate();
 
   const handleNew = () => {
     const project = createNewProject();
-    setProjects(prev => [...prev, project]);
     setCurrentProject(project);
     navigate('/quotes/new');
   };
 
-  const handleDelete = (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProjectFromDb(id);
+      toast.success('Quote deleted');
+    } catch {
+      toast.error('Failed to delete quote');
+    }
   };
 
   return (

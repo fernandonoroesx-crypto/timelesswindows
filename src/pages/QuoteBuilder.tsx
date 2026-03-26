@@ -24,7 +24,7 @@ const WINDOW_TYPES: WindowType[] = [
 const EXTRA_TYPES: ExtraType[] = ['Recess of reveal', 'Shutters', 'Cut Out of work top'];
 
 export default function QuoteBuilder() {
-  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers } = useApp();
+  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers, saveProjectToDb } = useApp();
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project>(() => currentProject || createNewProject());
@@ -112,15 +112,15 @@ export default function QuoteBuilder() {
     }
   };
 
-  const saveProject = () => {
-    const exists = projects.find(p => p.id === project.id);
-    if (exists) {
-      setProjects(prev => prev.map(p => p.id === project.id ? project : p));
-    } else {
-      setProjects(prev => [...prev, project]);
+  const saveProject = async () => {
+    try {
+      await saveProjectToDb(project);
+      setCurrentProject(project);
+      toast.success('Quote saved successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save quote');
     }
-    setCurrentProject(project);
-    toast.success('Quote saved successfully');
   };
 
   const quotePricing = project.pricing || getProjectPricing(project);

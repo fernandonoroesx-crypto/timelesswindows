@@ -20,7 +20,7 @@ const EMPTY_SUPPLIER: Omit<Supplier, 'id' | 'createdAt'> = {
 };
 
 export default function SuppliersPage() {
-  const { suppliers, setSuppliers } = useApp();
+  const { suppliers, saveSupplierToDb, deleteSupplierFromDb } = useApp();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState(EMPTY_SUPPLIER);
@@ -44,33 +44,38 @@ export default function SuppliersPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) {
       toast.error('Supplier name is required');
       return;
     }
 
-    if (editing) {
-      setSuppliers(prev =>
-        prev.map(s => s.id === editing.id ? { ...s, ...form } : s)
-      );
-      toast.success('Supplier updated');
-    } else {
-      const newSupplier: Supplier = {
-        ...form,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-      };
-      setSuppliers(prev => [...prev, newSupplier]);
-      toast.success('Supplier added');
+    try {
+      if (editing) {
+        await saveSupplierToDb({ ...editing, ...form });
+        toast.success('Supplier updated');
+      } else {
+        const newSupplier: Supplier = {
+          ...form,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+        };
+        await saveSupplierToDb(newSupplier);
+        toast.success('Supplier added');
+      }
+      setDialogOpen(false);
+    } catch {
+      toast.error('Failed to save supplier');
     }
-
-    setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setSuppliers(prev => prev.filter(s => s.id !== id));
-    toast.success('Supplier removed');
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteSupplierFromDb(id);
+      toast.success('Supplier removed');
+    } catch {
+      toast.error('Failed to delete supplier');
+    }
   };
 
   return (

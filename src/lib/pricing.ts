@@ -1,15 +1,9 @@
 import type { QuoteLineItem, ProjectSettings, QuoteSummary, PricingData } from './types';
 import { DEFAULT_PRICING } from './context';
 
-function loadGlobalPricing(): PricingData {
-  const saved = localStorage.getItem('quote-pricing');
-  return saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : DEFAULT_PRICING;
-}
-
 function p(quotePricing?: PricingData): PricingData {
-  return quotePricing
-    ? { ...DEFAULT_PRICING, ...quotePricing, uplift: quotePricing.uplift || DEFAULT_PRICING.uplift }
-    : loadGlobalPricing();
+  if (!quotePricing) return DEFAULT_PRICING;
+  return { ...DEFAULT_PRICING, ...quotePricing, uplift: quotePricing.uplift || DEFAULT_PRICING.uplift };
 }
 
 export function calculateSm(widthMm: number, heightMm: number): number {

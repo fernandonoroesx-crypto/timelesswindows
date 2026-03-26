@@ -1,5 +1,7 @@
-import { useState, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier } from '@/lib/types';
+import { fetchClients, upsertClient, deleteClient as dbDeleteClient, fetchSuppliers, upsertSupplier, deleteSupplier as dbDeleteSupplier, fetchProjects, upsertProject, deleteProject as dbDeleteProject, fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
+import { toast } from 'sonner';
 
 export const DEFAULT_PRICING: PricingData = {
   uplift: {
@@ -46,6 +48,13 @@ interface AppContextType {
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
   suppliers: Supplier[];
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
+  loading: boolean;
+  saveProjectToDb: (project: Project) => Promise<void>;
+  deleteProjectFromDb: (id: string) => Promise<void>;
+  saveClientToDb: (client: Client) => Promise<void>;
+  deleteClientFromDb: (id: string) => Promise<void>;
+  saveSupplierToDb: (supplier: Supplier) => Promise<void>;
+  deleteSupplierFromDb: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -61,8 +70,7 @@ const DEFAULT_SETTINGS: ProjectSettings = {
 
 export function getProjectPricing(project: Project): PricingData {
   if (project.pricing) return { ...DEFAULT_PRICING, ...project.pricing, uplift: project.pricing.uplift || DEFAULT_PRICING.uplift };
-  const saved = localStorage.getItem('quote-pricing');
-  return saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : DEFAULT_PRICING;
+  return DEFAULT_PRICING;
 }
 
 export function generateQuoteRef(clientName: string, existingProjects: Project[]): string {
@@ -78,8 +86,6 @@ export function generateQuoteRef(clientName: string, existingProjects: Project[]
 
 export function createNewProject(): Project {
   const id = crypto.randomUUID();
-  const saved = localStorage.getItem('quote-pricing');
-  const pricing = saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : { ...DEFAULT_PRICING };
   return {
     id,
     date: new Date().toISOString().split('T')[0],
@@ -88,7 +94,7 @@ export function createNewProject(): Project {
     projectRef: '',
     settings: { ...DEFAULT_SETTINGS },
     lineItems: [],
-    pricing,
+    pricing: { ...DEFAULT_PRICING },
     status: 'draft',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -119,46 +125,82 @@ export function createNewLineItem(): QuoteLineItem {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [projects, setProjects] = useState<Project[]>(() => {
-    const saved = localStorage.getItem('quote-projects');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [clients, setClients] = useState<Client[]>(() => {
-    const saved = localStorage.getItem('quote-clients');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
-    const saved = localStorage.getItem('quote-suppliers');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [clients, setClients] = useState<Client[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const saveProjects = (newProjects: Project[] | ((prev: Project[]) => Project[])) => {
+  // Load all data from Supabase on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [dbClients, dbSuppliers, dbProjects] = await Promise.all([
+          fetchClients(),
+          fetchSuppliers(),
+          fetchProjects(),
+        ]);
+        setClients(dbClients);
+        setSuppliers(dbSuppliers);
+        setProjects(dbProjects);
+      } catch (err) {
+        console.error('Failed to load data from cloud:', err);
+        toast.error('Failed to load data from cloud');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // DB operations that also update local state
+  const saveProjectToDb = useCallback(async (project: Project) => {
+    await upsertProject(project);
     setProjects(prev => {
-      const result = typeof newProjects === 'function' ? newProjects(prev) : newProjects;
-      localStorage.setItem('quote-projects', JSON.stringify(result));
-      return result;
+      const exists = prev.find(p => p.id === project.id);
+      return exists ? prev.map(p => p.id === project.id ? project : p) : [...prev, project];
     });
-  };
+  }, []);
 
-  const saveClients = (newClients: Client[] | ((prev: Client[]) => Client[])) => {
+  const deleteProjectFromDb = useCallback(async (id: string) => {
+    await dbDeleteProject(id);
+    setProjects(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  const saveClientToDb = useCallback(async (client: Client) => {
+    await upsertClient(client);
     setClients(prev => {
-      const result = typeof newClients === 'function' ? newClients(prev) : newClients;
-      localStorage.setItem('quote-clients', JSON.stringify(result));
-      return result;
+      const exists = prev.find(c => c.id === client.id);
+      return exists ? prev.map(c => c.id === client.id ? client : c) : [...prev, client];
     });
-  };
+  }, []);
 
-  const saveSuppliers = (newSuppliers: Supplier[] | ((prev: Supplier[]) => Supplier[])) => {
+  const deleteClientFromDb = useCallback(async (id: string) => {
+    await dbDeleteClient(id);
+    setClients(prev => prev.filter(c => c.id !== id));
+  }, []);
+
+  const saveSupplierToDb = useCallback(async (supplier: Supplier) => {
+    await upsertSupplier(supplier);
     setSuppliers(prev => {
-      const result = typeof newSuppliers === 'function' ? newSuppliers(prev) : newSuppliers;
-      localStorage.setItem('quote-suppliers', JSON.stringify(result));
-      return result;
+      const exists = prev.find(s => s.id === supplier.id);
+      return exists ? prev.map(s => s.id === supplier.id ? supplier : s) : [...prev, supplier];
     });
-  };
+  }, []);
+
+  const deleteSupplierFromDb = useCallback(async (id: string) => {
+    await dbDeleteSupplier(id);
+    setSuppliers(prev => prev.filter(s => s.id !== id));
+  }, []);
 
   return (
-    <AppContext.Provider value={{ projects, setProjects: saveProjects, currentProject, setCurrentProject, clients, setClients: saveClients, suppliers, setSuppliers: saveSuppliers }}>
+    <AppContext.Provider value={{
+      projects, setProjects, currentProject, setCurrentProject,
+      clients, setClients, suppliers, setSuppliers, loading,
+      saveProjectToDb, deleteProjectFromDb,
+      saveClientToDb, deleteClientFromDb,
+      saveSupplierToDb, deleteSupplierFromDb,
+    }}>
       {children}
     </AppContext.Provider>
   );
