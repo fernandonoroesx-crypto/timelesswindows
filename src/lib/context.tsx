@@ -3,8 +3,8 @@ import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supp
 
 export const DEFAULT_PRICING: PricingData = {
   uplift: {
-    'Casement': 0, 'Casement Flag': 0, 'Box Sash': 0, 'Fix Sash': 0,
-    'Spring Sash': 0, 'Door': 0, 'Door + Top Light': 0, 'French Door': 0, 'Patio Door': 0,
+    'Casement': 1, 'Casement Flag': 1, 'Box Sash': 1, 'Fix Sash': 1,
+    'Spring Sash': 1, 'Door': 1, 'Door + Top Light': 1, 'French Door': 1, 'Patio Door': 1,
   },
   installationSelling: {
     'Casement': 90, 'Casement Flag': 50, 'Box Sash': 150, 'Fix Sash': 125,
