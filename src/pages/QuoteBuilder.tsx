@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, MdfRevealType } from '@/lib/types';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, ArchitraveType, TrimsType, MdfRevealType } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,7 +67,6 @@ export default function QuoteBuilder() {
 
   const selectPM = (pmId: string) => {
     if (pmId === '_none') {
-      // Revert to global default pricing from Settings
       const saved = localStorage.getItem('quote-pricing');
       const defaultPricing = saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : { ...DEFAULT_PRICING };
       updateProject({ projectManagerId: undefined, projectManagerName: '', pricing: defaultPricing });
@@ -207,7 +206,6 @@ export default function QuoteBuilder() {
         </TabsList>
 
         <TabsContent value="items" className="space-y-6">
-          {/* Line items */}
           <div className="elevated-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-lg font-semibold">Line Items</h2>
@@ -349,6 +347,18 @@ function LineItemCard({
             <Input type="number" step="1" className="h-9 text-xs" value={item.uplift} onChange={e => onUpdate({ uplift: parseFloat(e.target.value) || 0 })} />
           </div>
           <div>
+            <Label className="text-xs">Install Price</Label>
+            <Input type="number" step="0.01" className="h-9 text-xs"
+              value={item.installationOverride ?? quotePricing.installationSelling[item.type] ?? 0}
+              onChange={e => {
+                const val = parseFloat(e.target.value);
+                const defaultVal = quotePricing.installationSelling[item.type] || 0;
+                onUpdate({ installationOverride: val === defaultVal ? undefined : val });
+              }}
+              placeholder="Auto"
+            />
+          </div>
+          <div>
             <Label className="text-xs">Install Type</Label>
             <Select value={item.installationType} onValueChange={(v: 'Internal' | 'External') => onUpdate({ installationType: v })}>
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
@@ -359,30 +369,63 @@ function LineItemCard({
             </Select>
           </div>
           <div>
-            <Label className="text-xs">MDF Reveal</Label>
-            <Select value={item.mdfRevealType} onValueChange={(v: string) => onUpdate({ mdfRevealType: v as any, includeMdfReveal: v !== 'none' })}>
+            <Label className="text-xs">Architrave</Label>
+            <Select value={item.architraveType} onValueChange={(v: ArchitraveType) => onUpdate({ architraveType: v })}>
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                <SelectItem value="singleNarrow">Single · Narrow</SelectItem>
-                <SelectItem value="sideNarrow">Side · Narrow</SelectItem>
-                <SelectItem value="centralNarrow">Central · Narrow</SelectItem>
-                <SelectItem value="singleWide">Single · Wide</SelectItem>
-                <SelectItem value="sideWide">Side · Wide</SelectItem>
-                <SelectItem value="centralWide">Central · Wide</SelectItem>
+                <SelectItem value="single">Single</SelectItem>
+                <SelectItem value="baySide">Bay Side</SelectItem>
+                <SelectItem value="bayCentral">Bay Central</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          <div className="col-span-2 flex flex-wrap gap-4 items-center">
-            <label className="flex items-center gap-2 text-xs">
-              <Switch checked={item.includeArchitrave} onCheckedChange={v => onUpdate({ includeArchitrave: v })} />
-              Architrave
-            </label>
-            <label className="flex items-center gap-2 text-xs">
-              <Switch checked={item.includeTrims} onCheckedChange={v => onUpdate({ includeTrims: v })} />
-              Trims
-            </label>
+          <div>
+            <Label className="text-xs">Trims</Label>
+            <Select value={item.trimsType} onValueChange={(v: TrimsType) => onUpdate({ trimsType: v })}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="single">Single</SelectItem>
+                <SelectItem value="baySide">Bay Side</SelectItem>
+                <SelectItem value="bayCentral">Bay Central</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">MDF Reveal</Label>
+            <Select value={item.mdfRevealType} onValueChange={(v: MdfRevealType) => onUpdate({ mdfRevealType: v })}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="narrow">Narrow</SelectItem>
+                <SelectItem value="wide">Wide</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Extras 01</Label>
+            <Select value={item.extra1 || 'none'} onValueChange={(v: string) => onUpdate({ extra1: v as any })}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {EXTRA_TYPES.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Extras 02</Label>
+            <Select value={item.extra2 || 'none'} onValueChange={(v: string) => onUpdate({ extra2: v as any })}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {EXTRA_TYPES.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Extra (£)</Label>
+            <Input type="number" step="0.01" className="h-9 text-xs" value={item.customExtra || 0} onChange={e => onUpdate({ customExtra: parseFloat(e.target.value) || 0 })} />
           </div>
         </div>
       )}
@@ -405,16 +448,17 @@ function LineItemCard({
                 />
                 {!settings.supplyOnly && (
                   <>
-                    <FormulaRow label="Installation" value={sellingBreakdown.installation} />
-                    {sellingBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={sellingBreakdown.internalMakingGood} formula={`Qty × rate`} />}
-                    {sellingBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={sellingBreakdown.externalMakingGood} formula={`Qty × rate`} />}
-                    {sellingBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={sellingBreakdown.architrave} formula={`(${item.widthMm} + 2×${item.heightMm}) / 1000 × rate`} />}
-                    {sellingBreakdown.trims > 0 && <FormulaRow label="Trims" value={sellingBreakdown.trims} formula="Qty × rate" />}
-                    {sellingBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={sellingBreakdown.mdfReveal} formula="Qty × rate" />}
+                    <FormulaRow label="Installation" value={sellingBreakdown.installation}
+                      formula={item.installationOverride != null ? 'Override' : `Rate for ${item.type}`} />
+                    {sellingBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={sellingBreakdown.internalMakingGood} />}
+                    {sellingBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={sellingBreakdown.externalMakingGood} />}
+                    {sellingBreakdown.architrave > 0 && <FormulaRow label={`Architrave (${item.architraveType})`} value={sellingBreakdown.architrave} formula={`LM × rate`} />}
+                    {sellingBreakdown.trims > 0 && <FormulaRow label={`Trims (${item.trimsType})`} value={sellingBreakdown.trims} />}
+                    {sellingBreakdown.mdfReveal > 0 && <FormulaRow label={`MDF Reveal (${item.mdfRevealType})`} value={sellingBreakdown.mdfReveal} />}
                     {sellingBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={sellingBreakdown.deliveryStock} formula="Area SM × rate" />}
-                    {sellingBreakdown.fensaSurvey > 0 && <FormulaRow label="Fensa/Survey" value={sellingBreakdown.fensaSurvey} formula="Qty × rate" />}
+                    {sellingBreakdown.fensaSurvey > 0 && <FormulaRow label="Fensa/Survey" value={sellingBreakdown.fensaSurvey} />}
                     {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
-                    {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} formula="Qty × rate" />}
+                    {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} />}
                   </>
                 )}
                 <div className="border-t pt-1 mt-1 flex justify-between font-semibold">

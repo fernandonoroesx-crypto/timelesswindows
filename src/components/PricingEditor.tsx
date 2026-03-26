@@ -21,13 +21,15 @@ function EditRow({ label, value, path, onUpdate, unit }: { label: string; value:
   );
 }
 
+const ARCH_TRIM_LABELS: Record<string, string> = {
+  single: 'Single',
+  baySide: 'Bay Side',
+  bayCentral: 'Bay Central',
+};
+
 const MDF_LABELS: Record<string, string> = {
-  singleNarrow: 'Single · Narrow',
-  sideNarrow: 'Side · Narrow',
-  centralNarrow: 'Central · Narrow',
-  singleWide: 'Single · Wide',
-  sideWide: 'Side · Wide',
-  centralWide: 'Central · Wide',
+  narrow: 'Narrow',
+  wide: 'Wide',
 };
 
 export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly }: PricingEditorProps) {
@@ -85,6 +87,46 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
         </div>
       )}
 
+      {/* Architrave */}
+      <div className={cardClass}>
+        <h3 className="font-heading text-sm font-semibold mb-3">Architrave (per LM){sellingOnly ? '' : ' — Selling'}</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.architraveSelling).map(([key, price]) => (
+            <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`architraveSelling.${key}`} onUpdate={onUpdate} />
+          ))}
+        </div>
+      </div>
+      {!sellingOnly && (
+        <div className={cardClass}>
+          <h3 className="font-heading text-sm font-semibold mb-3">Architrave (per LM) — Cost</h3>
+          <div className="space-y-2">
+            {Object.entries(pricing.architraveCost).map(([key, price]) => (
+              <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`architraveCost.${key}`} onUpdate={onUpdate} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Trims */}
+      <div className={cardClass}>
+        <h3 className="font-heading text-sm font-semibold mb-3">Trims (per item){sellingOnly ? '' : ' — Selling'}</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.trimsSelling).map(([key, price]) => (
+            <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`trimsSelling.${key}`} onUpdate={onUpdate} />
+          ))}
+        </div>
+      </div>
+      {!sellingOnly && (
+        <div className={cardClass}>
+          <h3 className="font-heading text-sm font-semibold mb-3">Trims (per item) — Cost</h3>
+          <div className="space-y-2">
+            {Object.entries(pricing.trimsCost).map(([key, price]) => (
+              <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`trimsCost.${key}`} onUpdate={onUpdate} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* MDF Reveal */}
       <div className={cardClass}>
         <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal{sellingOnly ? '' : ' — Selling'}</h3>
@@ -109,16 +151,10 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
       <div className={cardClass}>
         <h3 className="font-heading text-sm font-semibold mb-3">Add-ons & Logistics</h3>
         <div className="space-y-2">
-          <EditRow label="Architrave (per LM)" value={pricing.architraveSelling} path="architraveSelling" onUpdate={onUpdate} />
-          {!sellingOnly && <EditRow label="Architrave cost (per LM)" value={pricing.architraveCost} path="architraveCost" onUpdate={onUpdate} />}
-          <EditRow label="Trims (per item)" value={pricing.trimsSelling} path="trimsSelling" onUpdate={onUpdate} />
-          {!sellingOnly && <EditRow label="Trims cost (per item)" value={pricing.trimsCost} path="trimsCost" onUpdate={onUpdate} />}
-          <div className="pt-2 border-t space-y-2">
-            <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockSelling} path="deliveryStockSelling" onUpdate={onUpdate} />
-            {!sellingOnly && <EditRow label="Delivery/Stock cost (per SM)" value={pricing.deliveryStockCost} path="deliveryStockCost" onUpdate={onUpdate} />}
-            <EditRow label="Fensa/Survey (per item)" value={pricing.fensaSurveySelling} path="fensaSurveySelling" onUpdate={onUpdate} />
-            {!sellingOnly && <EditRow label="Fensa/Survey cost (per item)" value={pricing.fensaSurveyCost} path="fensaSurveyCost" onUpdate={onUpdate} />}
-          </div>
+          <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockSelling} path="deliveryStockSelling" onUpdate={onUpdate} />
+          {!sellingOnly && <EditRow label="Delivery/Stock cost (per SM)" value={pricing.deliveryStockCost} path="deliveryStockCost" onUpdate={onUpdate} />}
+          <EditRow label="Fensa/Survey (per item)" value={pricing.fensaSurveySelling} path="fensaSurveySelling" onUpdate={onUpdate} />
+          {!sellingOnly && <EditRow label="Fensa/Survey cost (per item)" value={pricing.fensaSurveyCost} path="fensaSurveyCost" onUpdate={onUpdate} />}
         </div>
       </div>
 
