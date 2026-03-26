@@ -238,17 +238,22 @@ export default function QuoteBuilder() {
 
             return (
               <div className="mb-4">
-                <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-1 text-sm">
+                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 gap-y-1 text-sm">
                   <div className="text-xs font-medium text-muted-foreground">Category</div>
                   <div className="text-xs font-medium text-muted-foreground text-right">Selling</div>
                   <div className="text-xs font-medium text-muted-foreground text-right">Cost</div>
-                  {breakdownRows.map(row => (
-                    <>
-                      <div key={row.label} className="text-muted-foreground">{row.label}</div>
-                      <div className="text-right font-medium">{formatCurrency(row.selling)}</div>
-                      <div className="text-right text-muted-foreground">{formatCurrency(row.cost)}</div>
-                    </>
-                  ))}
+                  <div className="text-xs font-medium text-muted-foreground text-right">Margin</div>
+                  {breakdownRows.map(row => {
+                    const rowMargin = row.selling > 0 ? ((row.selling - row.cost) / row.selling) * 100 : 0;
+                    return (
+                      <React.Fragment key={row.label}>
+                        <div className="text-muted-foreground">{row.label}</div>
+                        <div className="text-right font-medium">{formatCurrency(row.selling)}</div>
+                        <div className="text-right text-muted-foreground">{formatCurrency(row.cost)}</div>
+                        <div className={`text-right font-medium ${rowMargin > 0 ? 'text-green-600' : rowMargin < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>{rowMargin.toFixed(1)}%</div>
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
             );
