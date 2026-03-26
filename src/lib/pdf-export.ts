@@ -59,14 +59,23 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
   doc.text(`Date: ${project.date || new Date().toLocaleDateString('en-GB')}`, margin, y);
   doc.setTextColor(0, 0, 0);
 
-  // Company name (top-right)
-  const companyY = 22;
-  doc.setFontSize(28);
-  doc.setFont('helvetica', 'bold');
-  doc.text('TIMELESS', pageWidth - margin, companyY, { align: 'right' });
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'normal');
-  doc.text('WINDOWS & DOORS', pageWidth - margin, companyY + 9, { align: 'right' });
+  // Company logo (top-right)
+  const companyY = 14;
+  const logoData = await loadLogoBase64();
+  if (logoData) {
+    // Logo aspect ratio ~3.7:1, render at ~60mm wide
+    const logoW = 60;
+    const logoH = logoW / 3.7;
+    doc.addImage(logoData, 'PNG', pageWidth - margin - logoW, companyY, logoW, logoH);
+  } else {
+    // Fallback to text if logo fails to load
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TIMELESS', pageWidth - margin, companyY + 8, { align: 'right' });
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('DOORS & WINDOWS', pageWidth - margin, companyY + 17, { align: 'right' });
+  }
 
   y = Math.max(y, companyY + 20) + 10;
 
