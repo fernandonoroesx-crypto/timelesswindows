@@ -360,12 +360,16 @@ function LineItemCard({
           </div>
           <div>
             <Label className="text-xs">MDF Reveal</Label>
-            <Select value={item.mdfRevealType} onValueChange={(v: 'narrow' | 'wide' | 'none') => onUpdate({ mdfRevealType: v, includeMdfReveal: v !== 'none' })}>
+            <Select value={item.mdfRevealType} onValueChange={(v: string) => onUpdate({ mdfRevealType: v as any, includeMdfReveal: v !== 'none' })}>
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                <SelectItem value="narrow">Narrow</SelectItem>
-                <SelectItem value="wide">Wide</SelectItem>
+                <SelectItem value="singleNarrow">Single · Narrow</SelectItem>
+                <SelectItem value="sideNarrow">Side · Narrow</SelectItem>
+                <SelectItem value="centralNarrow">Central · Narrow</SelectItem>
+                <SelectItem value="singleWide">Single · Wide</SelectItem>
+                <SelectItem value="sideWide">Side · Wide</SelectItem>
+                <SelectItem value="centralWide">Central · Wide</SelectItem>
               </SelectContent>
             </Select>
           </div>
