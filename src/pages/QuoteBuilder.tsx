@@ -221,21 +221,18 @@ export default function QuoteBuilder() {
             }
             const overhead = project.settings.overheadDays * (quotePricing.overheadPerDay || 0);
 
+            const labourSelling = totals.installation + totals.internalMakingGood + totals.externalMakingGood
+              + totals.architrave + totals.trims + totals.mdfReveal + totals.deliveryStock + totals.fensaSurvey;
+            const labourCost = costTotals.installation + costTotals.internalMakingGood + costTotals.externalMakingGood
+              + costTotals.architrave + costTotals.trims + costTotals.mdfReveal + costTotals.deliveryStock + costTotals.fensaSurvey
+              + costTotals.consumables + overhead;
+
             const breakdownRows = [
               { label: 'Materials', selling: totals.material, cost: costTotals.material },
               ...(!project.settings.supplyOnly ? [
-                { label: 'Installation', selling: totals.installation, cost: costTotals.installation },
-                ...(totals.internalMakingGood > 0 ? [{ label: 'Int. Making Good', selling: totals.internalMakingGood, cost: costTotals.internalMakingGood }] : []),
-                ...(totals.externalMakingGood > 0 ? [{ label: 'Ext. Making Good', selling: totals.externalMakingGood, cost: costTotals.externalMakingGood }] : []),
-                ...(totals.architrave > 0 ? [{ label: 'Architrave', selling: totals.architrave, cost: costTotals.architrave }] : []),
-                ...(totals.trims > 0 ? [{ label: 'Trims', selling: totals.trims, cost: costTotals.trims }] : []),
-                ...(totals.mdfReveal > 0 ? [{ label: 'MDF Reveal', selling: totals.mdfReveal, cost: costTotals.mdfReveal }] : []),
+                { label: 'Labour', selling: labourSelling, cost: labourCost },
                 ...(totals.wasteDisposal > 0 ? [{ label: 'Waste Disposal', selling: totals.wasteDisposal, cost: costTotals.wasteDisposal }] : []),
-                ...(totals.deliveryStock > 0 ? [{ label: 'Delivery & Stock', selling: totals.deliveryStock, cost: costTotals.deliveryStock }] : []),
-                ...(totals.fensaSurvey > 0 ? [{ label: 'FENSA & Survey', selling: totals.fensaSurvey, cost: costTotals.fensaSurvey }] : []),
                 ...(totals.extras > 0 ? [{ label: 'Extras', selling: totals.extras, cost: costTotals.extras }] : []),
-                ...(costTotals.consumables > 0 ? [{ label: 'Consumables', selling: 0, cost: costTotals.consumables }] : []),
-                ...(overhead > 0 ? [{ label: 'Overhead', selling: 0, cost: overhead }] : []),
               ] : []),
             ];
 
