@@ -84,7 +84,8 @@ function parseSupplierFormat(text: string, currency: 'GBP' | 'EUR'): ExtractedLi
 
   // Find all dimension+price combos: "630x1670mm 1.05m² 587,-" or "630x1670mm  0.84m²  457,-"
   // Also handle table rows where dimensions and price are on the same line
-  const dimPricePattern = /(\d{3,4})\s*x\s*(\d{3,4})\s*mm\s+[\d.]+\s*m²\s+(\d+)[,.][-–]/g;
+  // Handle various text rendering: m², m2, m 2, m ², and different dash chars (-, –, —)
+  const dimPricePattern = /(\d{3,4})\s*x\s*(\d{3,4})\s*mm\s+[\d.]+\s*m[²2\s]\s*(\d+)[,.\s]*[-–—]/g;
   let match;
 
   while ((match = dimPricePattern.exec(text)) !== null) {
@@ -118,7 +119,7 @@ function parseSupplierFormat(text: string, currency: 'GBP' | 'EUR'): ExtractedLi
   // For pages where dimensions and price are in separate table cells
   if (items.length === 0) {
     const dimOnlyPattern = /(\d{3,4})\s*x\s*(\d{3,4})\s*mm/g;
-    const pricePattern = /\b(\d{3,5})[,.][-–]\b/g;
+    const pricePattern = /\b(\d{3,5})[,.\s]*[-–—]/g;
 
     const dims: Array<{ w: number; h: number; index: number }> = [];
     const prices: Array<{ price: number; index: number }> = [];
