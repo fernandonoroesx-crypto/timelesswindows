@@ -252,7 +252,58 @@ export default function QuoteBuilder() {
           {project.lineItems.length > 0 && (
             <div className="elevated-card rounded-xl p-6 border-l-4 border-l-secondary">
               <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Breakdown */}
+              {(() => {
+                const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0 };
+                const costTotals = { ...totals };
+                for (const item of project.lineItems) {
+                  const sb = getItemSellingBreakdown(item, project.settings, quotePricing);
+                  const cb = getItemCostBreakdown(item, project.settings, quotePricing);
+                  for (const k of Object.keys(totals) as (keyof typeof totals)[]) {
+                    totals[k] += sb[k] * item.qty;
+                    costTotals[k] += cb[k] * item.qty;
+                  }
+                }
+                const overhead = project.settings.overheadDays * (quotePricing.overheadPerDay || 0);
+
+                const breakdownRows = [
+                  { label: 'Materials', selling: totals.material, cost: costTotals.material },
+                  ...(!project.settings.supplyOnly ? [
+                    { label: 'Installation', selling: totals.installation, cost: costTotals.installation },
+                    ...(totals.internalMakingGood > 0 ? [{ label: 'Int. Making Good', selling: totals.internalMakingGood, cost: costTotals.internalMakingGood }] : []),
+                    ...(totals.externalMakingGood > 0 ? [{ label: 'Ext. Making Good', selling: totals.externalMakingGood, cost: costTotals.externalMakingGood }] : []),
+                    ...(totals.architrave > 0 ? [{ label: 'Architrave', selling: totals.architrave, cost: costTotals.architrave }] : []),
+                    ...(totals.trims > 0 ? [{ label: 'Trims', selling: totals.trims, cost: costTotals.trims }] : []),
+                    ...(totals.mdfReveal > 0 ? [{ label: 'MDF Reveal', selling: totals.mdfReveal, cost: costTotals.mdfReveal }] : []),
+                    ...(totals.wasteDisposal > 0 ? [{ label: 'Waste Disposal', selling: totals.wasteDisposal, cost: costTotals.wasteDisposal }] : []),
+                    ...(totals.deliveryStock > 0 ? [{ label: 'Delivery & Stock', selling: totals.deliveryStock, cost: costTotals.deliveryStock }] : []),
+                    ...(totals.fensaSurvey > 0 ? [{ label: 'FENSA & Survey', selling: totals.fensaSurvey, cost: costTotals.fensaSurvey }] : []),
+                    ...(totals.extras > 0 ? [{ label: 'Extras', selling: totals.extras, cost: costTotals.extras }] : []),
+                    ...(costTotals.consumables > 0 ? [{ label: 'Consumables', selling: 0, cost: costTotals.consumables }] : []),
+                    ...(overhead > 0 ? [{ label: 'Overhead', selling: 0, cost: overhead }] : []),
+                  ] : []),
+                ];
+
+                return (
+                  <div className="mb-4">
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-1 text-sm">
+                      <div className="text-xs font-medium text-muted-foreground">Category</div>
+                      <div className="text-xs font-medium text-muted-foreground text-right">Selling</div>
+                      <div className="text-xs font-medium text-muted-foreground text-right">Cost</div>
+                      {breakdownRows.map(row => (
+                        <>
+                          <div key={row.label} className="text-muted-foreground">{row.label}</div>
+                          <div className="text-right font-medium">{formatCurrency(row.selling)}</div>
+                          <div className="text-right text-muted-foreground">{formatCurrency(row.cost)}</div>
+                        </>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="border-t pt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
                 <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
                 <SummaryCard label="Selling Price" value={formatCurrency(summary.sellingPrice.total)} highlight />
