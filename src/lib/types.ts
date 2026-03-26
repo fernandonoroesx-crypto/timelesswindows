@@ -146,6 +146,7 @@ export interface MakingGoodPricing {
 }
 
 export interface PricingData {
+  uplift: Record<string, number>;
   installationSelling: Record<string, number>;
   installationCost: Record<string, number>;
   makingGoodSelling: MakingGoodPricing;

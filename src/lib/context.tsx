@@ -2,6 +2,10 @@ import { useState, createContext, useContext } from 'react';
 import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier } from '@/lib/types';
 
 export const DEFAULT_PRICING: PricingData = {
+  uplift: {
+    'Casement': 0, 'Casement Flag': 0, 'Box Sash': 0, 'Fix Sash': 0,
+    'Spring Sash': 0, 'Door': 0, 'Door + Top Light': 0, 'French Door': 0, 'Patio Door': 0,
+  },
   installationSelling: {
     'Casement': 90, 'Casement Flag': 50, 'Box Sash': 150, 'Fix Sash': 125,
     'Spring Sash': 125, 'Door': 125, 'Door + Top Light': 175, 'French Door': 175, 'Patio Door': 175,

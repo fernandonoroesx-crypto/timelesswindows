@@ -52,7 +52,10 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
   const materialGbp = item.manufactureCurrency === 'EUR'
     ? item.manufacturePrice * settings.eurToGbpRate
     : item.manufacturePrice;
-  b.material = Math.round(materialGbp * (1 + item.uplift / 100));
+  const upliftPct = item.uplift != null && item.uplift !== 0
+    ? item.uplift
+    : (pricing.uplift[item.type] || 0);
+  b.material = Math.round(materialGbp * (1 + upliftPct / 100));
 
   if (!settings.supplyOnly) {
     // Installation: flat rate per type, or override
