@@ -20,7 +20,7 @@ const EMPTY_SUPPLIER: Omit<Supplier, 'id' | 'createdAt'> = {
 };
 
 export default function SuppliersPage() {
-  const { suppliers, setSuppliers } = useApp();
+  const { suppliers, saveSupplierToDb, deleteSupplierFromDb } = useApp();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState(EMPTY_SUPPLIER);
