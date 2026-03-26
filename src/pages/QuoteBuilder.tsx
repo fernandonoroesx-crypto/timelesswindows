@@ -33,6 +33,7 @@ export default function QuoteBuilder() {
     p.pricing = { ...globalPricing };
     return p;
   });
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentProject) setProject(currentProject);
