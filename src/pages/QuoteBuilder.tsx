@@ -447,7 +447,10 @@ function LineItemCard({
                     {costBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={costBreakdown.architrave} />}
                     {costBreakdown.trims > 0 && <FormulaRow label="Trims" value={costBreakdown.trims} />}
                     {costBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={costBreakdown.mdfReveal} />}
-                    {costBreakdown.extras > 0 && <FormulaRow label="Extras + Consumables" value={costBreakdown.extras} />}
+                    {costBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={costBreakdown.deliveryStock} />}
+                    {costBreakdown.fensaSurvey > 0 && <FormulaRow label="Fensa/Survey" value={costBreakdown.fensaSurvey} />}
+                    {costBreakdown.consumables > 0 && <FormulaRow label="Consumables" value={costBreakdown.consumables} />}
+                    {costBreakdown.extras > 0 && <FormulaRow label="Extras" value={costBreakdown.extras} />}
                     {costBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={costBreakdown.wasteDisposal} />}
                   </>
                 )}
