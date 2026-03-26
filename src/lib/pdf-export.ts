@@ -6,7 +6,7 @@ import { getProjectPricing } from './context';
 
 async function loadLogoBase64(): Promise<string | null> {
   try {
-    const response = await fetch('/images/timeless-logo.png');
+    const response = await fetch('/images/timeless-logo.jpg');
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
