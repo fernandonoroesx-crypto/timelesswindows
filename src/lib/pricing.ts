@@ -48,14 +48,14 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
     fensaSurvey: 0, extras: 0, consumables: 0, unitTotal: 0, total: 0,
   };
 
-  // Material: ROUND(Manufacture_price_£ × (1 + Uplift%), 0)
+  // Material: ROUND(Manufacture_price_£ × Uplift, 0)
   const materialGbp = item.manufactureCurrency === 'EUR'
     ? item.manufacturePrice * settings.eurToGbpRate
     : item.manufacturePrice;
-  const upliftPct = item.uplift != null && item.uplift !== 0
+  const upliftMultiplier = item.uplift != null && item.uplift !== 0
     ? item.uplift
-    : (pricing.uplift[item.type] || 0);
-  b.material = Math.round(materialGbp * (1 + upliftPct / 100));
+    : (pricing.uplift[item.type] || 1);
+  b.material = Math.round(materialGbp * upliftMultiplier);
 
   if (!settings.supplyOnly) {
     // Installation: flat rate per type, or override
