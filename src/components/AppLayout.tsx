@@ -20,7 +20,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="p-6">
-          <h1 className="font-heading text-xl font-bold text-sidebar-primary">QuoteCraft</h1>
+          <h1 className="font-heading text-xl font-bold text-sidebar-primary">TIMELESS WINDOWS</h1>
           <p className="text-xs text-sidebar-foreground/60 mt-1">Windows & Doors Quoting</p>
         </div>
         <nav className="flex-1 px-3 space-y-1">
@@ -49,7 +49,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar text-sidebar-foreground border-b border-sidebar-border px-4 py-3 flex items-center justify-between">
-        <h1 className="font-heading text-lg font-bold text-sidebar-primary">QuoteCraft</h1>
+        <h1 className="font-heading text-lg font-bold text-sidebar-primary">TIMELESS WINDOWS</h1>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1">
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
