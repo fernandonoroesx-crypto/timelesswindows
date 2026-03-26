@@ -95,6 +95,7 @@ export default function QuoteBuilder() {
     const newItem = createNewLineItem();
     newItem.itemRef = `${project.projectRef || 'ITEM'}-${project.lineItems.length + 1}`;
     updateProject({ lineItems: [...project.lineItems, newItem] });
+    setEditingItemId(newItem.id);
   };
 
   const updateLineItem = (id: string, updates: Partial<QuoteLineItem>) => {
