@@ -84,17 +84,29 @@ export default function SettingsPage() {
         {/* Making Good */}
         <div className="elevated-card rounded-xl p-6">
           <h2 className="font-heading text-lg font-semibold mb-4">Making Good — Selling</h2>
+          <p className="text-xs text-muted-foreground mb-2">Internal Installation</p>
           <div className="space-y-2">
-            <EditRow label="Internal Making Good (per item)" value={pricing.makingGoodSelling.internal} onChange={v => update('makingGoodSelling.internal', v)} />
-            <EditRow label="External Making Good (per item)" value={pricing.makingGoodSelling.external} onChange={v => update('makingGoodSelling.external', v)} />
+            <EditRow label="Internal MG" value={pricing.makingGoodSelling.intMkgInternal} onChange={v => update('makingGoodSelling.intMkgInternal', v)} />
+            <EditRow label="External MG" value={pricing.makingGoodSelling.extMkgInternal} onChange={v => update('makingGoodSelling.extMkgInternal', v)} />
+          </div>
+          <p className="text-xs text-muted-foreground mb-2 mt-3">External Installation</p>
+          <div className="space-y-2">
+            <EditRow label="Internal MG" value={pricing.makingGoodSelling.intMkgExternal} onChange={v => update('makingGoodSelling.intMkgExternal', v)} />
+            <EditRow label="External MG" value={pricing.makingGoodSelling.extMkgExternal} onChange={v => update('makingGoodSelling.extMkgExternal', v)} />
           </div>
         </div>
 
         <div className="elevated-card rounded-xl p-6">
           <h2 className="font-heading text-lg font-semibold mb-4">Making Good — Cost</h2>
+          <p className="text-xs text-muted-foreground mb-2">Internal Installation</p>
           <div className="space-y-2">
-            <EditRow label="Internal Making Good (per item)" value={pricing.makingGoodCost.internal} onChange={v => update('makingGoodCost.internal', v)} />
-            <EditRow label="External Making Good (per item)" value={pricing.makingGoodCost.external} onChange={v => update('makingGoodCost.external', v)} />
+            <EditRow label="Internal MG" value={pricing.makingGoodCost.intMkgInternal} onChange={v => update('makingGoodCost.intMkgInternal', v)} />
+            <EditRow label="External MG" value={pricing.makingGoodCost.extMkgInternal} onChange={v => update('makingGoodCost.extMkgInternal', v)} />
+          </div>
+          <p className="text-xs text-muted-foreground mb-2 mt-3">External Installation</p>
+          <div className="space-y-2">
+            <EditRow label="Internal MG" value={pricing.makingGoodCost.intMkgExternal} onChange={v => update('makingGoodCost.intMkgExternal', v)} />
+            <EditRow label="External MG" value={pricing.makingGoodCost.extMkgExternal} onChange={v => update('makingGoodCost.extMkgExternal', v)} />
           </div>
         </div>
 
