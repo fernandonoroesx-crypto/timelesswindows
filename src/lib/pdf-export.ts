@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Project, QuoteLineItem } from './types';
-import { getItemSellingBreakdown, getItemCostBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
+import { getItemSellingBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
 import { getProjectPricing } from './context';
 
 export function exportQuotePdf(project: Project, clientAddress?: string) {
