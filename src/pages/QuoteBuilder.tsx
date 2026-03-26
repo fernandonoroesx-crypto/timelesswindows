@@ -337,18 +337,8 @@ function LineItemCard({
             <Input className="h-9 text-xs" value={item.supplier} onChange={e => onUpdate({ supplier: e.target.value })} placeholder="Supplier" />
           </div>
           <div>
-            <Label className="text-xs">Price ({item.manufactureCurrency})</Label>
+            <Label className="text-xs">Price</Label>
             <Input type="number" step="0.01" className="h-9 text-xs" value={item.manufacturePrice} onChange={e => onUpdate({ manufacturePrice: parseFloat(e.target.value) || 0 })} />
-          </div>
-          <div>
-            <Label className="text-xs">Currency</Label>
-            <Select value={item.manufactureCurrency} onValueChange={(v: 'GBP' | 'EUR') => onUpdate({ manufactureCurrency: v })}>
-              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="GBP">GBP</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div>
             <Label className="text-xs">Uplift %</Label>
