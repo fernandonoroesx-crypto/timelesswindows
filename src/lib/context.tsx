@@ -48,6 +48,7 @@ interface AppContextType {
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
   suppliers: Supplier[];
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
+  globalPricing: PricingData;
   loading: boolean;
   saveProjectToDb: (project: Project) => Promise<void>;
   deleteProjectFromDb: (id: string) => Promise<void>;
