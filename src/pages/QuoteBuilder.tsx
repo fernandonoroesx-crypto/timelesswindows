@@ -43,10 +43,13 @@ export default function QuoteBuilder() {
 
   const updatePricing = (path: string, value: number) => {
     const currentPricing = project.pricing || getProjectPricing(project);
-    const next = JSON.parse(JSON.stringify(currentPricing));
+    const next = JSON.parse(JSON.stringify({ ...DEFAULT_PRICING, ...currentPricing, uplift: currentPricing.uplift || DEFAULT_PRICING.uplift }));
     const keys = path.split('.');
     let obj = next;
-    for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (obj[keys[i]] === undefined) obj[keys[i]] = {};
+      obj = obj[keys[i]];
+    }
     obj[keys[keys.length - 1]] = value;
     updateProject({ pricing: next });
   };
