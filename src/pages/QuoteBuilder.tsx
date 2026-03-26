@@ -272,12 +272,13 @@ function QuotePricingEditor({ pricing, onUpdate }: { pricing: PricingData; onUpd
 }
 
 function LineItemCard({
-  item, index, settings, quotePricing, onUpdate, onRemove, onDuplicate,
+  item, index, settings, quotePricing, suppliers, onUpdate, onRemove, onDuplicate,
 }: {
   item: QuoteLineItem;
   index: number;
   settings: ProjectSettings;
   quotePricing: PricingData;
+  suppliers: import('@/lib/types').Supplier[];
   onUpdate: (updates: Partial<QuoteLineItem>) => void;
   onRemove: () => void;
   onDuplicate: () => void;
