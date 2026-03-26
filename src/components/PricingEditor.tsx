@@ -42,7 +42,7 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
       <div className={cardClass}>
         <h3 className="font-heading text-sm font-semibold mb-3">Uplift % (per type)</h3>
         <div className="space-y-2">
-          {Object.entries(pricing.uplift).map(([type, pct]) => (
+          {Object.entries(safeUplift).map(([type, pct]) => (
             <EditRow key={type} label={type} value={pct} path={`uplift.${type}`} onUpdate={onUpdate} unit="%" />
           ))}
         </div>
