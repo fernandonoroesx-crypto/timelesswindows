@@ -210,9 +210,16 @@ export default function QuoteBuilder() {
           <div className="elevated-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-lg font-semibold">Line Items</h2>
-              <Button onClick={addLineItem} size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-                <Plus className="w-4 h-4 mr-2" /> Add Item
-              </Button>
+              <div className="flex gap-2">
+                <PdfImportDialog
+                  projectRef={project.projectRef}
+                  existingCount={project.lineItems.length}
+                  onImport={(items) => updateProject({ lineItems: [...project.lineItems, ...items] })}
+                />
+                <Button onClick={addLineItem} size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                  <Plus className="w-4 h-4 mr-2" /> Add Item
+                </Button>
+              </div>
             </div>
 
             {project.lineItems.length === 0 ? (
