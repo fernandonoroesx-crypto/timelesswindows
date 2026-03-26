@@ -107,7 +107,7 @@ export function createNewLineItem(): QuoteLineItem {
     id: crypto.randomUUID(),
     itemRef: '',
     type: 'Casement',
-    qty: 0,
+    qty: 1,
     widthMm: 0,
     heightMm: 0,
     manufactureCurrency: 'GBP',
