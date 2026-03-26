@@ -137,14 +137,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [dbClients, dbSuppliers, dbProjects] = await Promise.all([
+        const [dbClients, dbSuppliers, dbProjects, dbPricing] = await Promise.all([
           fetchClients(),
           fetchSuppliers(),
           fetchProjects(),
+          fetchGlobalPricing(),
         ]);
         setClients(dbClients);
         setSuppliers(dbSuppliers);
         setProjects(dbProjects);
+        setGlobalPricing(dbPricing);
       } catch (err) {
         console.error('Failed to load data from cloud:', err);
         toast.error('Failed to load data from cloud');
