@@ -134,7 +134,7 @@ export async function fetchGlobalPricing(): Promise<PricingData> {
     .eq('key', 'pricing')
     .maybeSingle();
   if (error) throw error;
-  if (data?.value) return { ...DEFAULT_PRICING, ...(data.value as any) };
+  if (data?.value) return { ...DEFAULT_PRICING, ...(data.value as unknown as PricingData) };
   return DEFAULT_PRICING;
 }
 
