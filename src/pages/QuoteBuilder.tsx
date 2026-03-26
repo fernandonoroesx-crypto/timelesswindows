@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, ArchitraveType, TrimsType, MdfRevealType } from '@/lib/types';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, ArchitraveType, TrimsType, MdfRevealType, Supplier } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,7 @@ const WINDOW_TYPES: WindowType[] = [
 const EXTRA_TYPES: ExtraType[] = ['Recess of reveal', 'Shutters', 'Cut Out of work top'];
 
 export default function QuoteBuilder() {
-  const { currentProject, setCurrentProject, projects, setProjects, clients } = useApp();
+  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers } = useApp();
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project>(() => currentProject || createNewProject());
@@ -231,6 +231,7 @@ export default function QuoteBuilder() {
                     index={index}
                     settings={project.settings}
                     quotePricing={quotePricing}
+                    suppliers={suppliers}
                     onUpdate={(updates) => updateLineItem(item.id, updates)}
                     onRemove={() => removeLineItem(item.id)}
                     onDuplicate={() => duplicateLineItem(item.id)}
@@ -271,12 +272,13 @@ function QuotePricingEditor({ pricing, onUpdate }: { pricing: PricingData; onUpd
 }
 
 function LineItemCard({
-  item, index, settings, quotePricing, onUpdate, onRemove, onDuplicate,
+  item, index, settings, quotePricing, suppliers, onUpdate, onRemove, onDuplicate,
 }: {
   item: QuoteLineItem;
   index: number;
   settings: ProjectSettings;
   quotePricing: PricingData;
+  suppliers: Supplier[];
   onUpdate: (updates: Partial<QuoteLineItem>) => void;
   onRemove: () => void;
   onDuplicate: () => void;
@@ -330,7 +332,25 @@ function LineItemCard({
           </div>
           <div>
             <Label className="text-xs">Supplier</Label>
-            <Input className="h-9 text-xs" value={item.supplier} onChange={e => onUpdate({ supplier: e.target.value })} placeholder="Supplier" />
+            <Select
+              value={item.supplier || '__none__'}
+              onValueChange={v => {
+                if (v === '__none__') {
+                  onUpdate({ supplier: '', manufactureCurrency: 'GBP' });
+                } else {
+                  const found = suppliers.find(s => s.name === v);
+                  onUpdate({ supplier: v, manufactureCurrency: found?.currency || 'GBP' });
+                }
+              }}
+            >
+              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select supplier" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— No supplier —</SelectItem>
+                {suppliers.map(s => (
+                  <SelectItem key={s.id} value={s.name}>{s.name} ({s.currency})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-xs">Price</Label>

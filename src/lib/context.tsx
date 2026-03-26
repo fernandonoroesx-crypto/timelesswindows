@@ -1,5 +1,5 @@
 import { useState, createContext, useContext } from 'react';
-import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData } from '@/lib/types';
+import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier } from '@/lib/types';
 
 export const DEFAULT_PRICING: PricingData = {
   installationSelling: {
@@ -40,6 +40,8 @@ interface AppContextType {
   setCurrentProject: (project: Project | null) => void;
   clients: Client[];
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
+  suppliers: Supplier[];
+  setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -122,6 +124,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('quote-clients');
     return saved ? JSON.parse(saved) : [];
   });
+  const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
+    const saved = localStorage.getItem('quote-suppliers');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const saveProjects = (newProjects: Project[] | ((prev: Project[]) => Project[])) => {
     setProjects(prev => {
@@ -139,8 +145,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const saveSuppliers = (newSuppliers: Supplier[] | ((prev: Supplier[]) => Supplier[])) => {
+    setSuppliers(prev => {
+      const result = typeof newSuppliers === 'function' ? newSuppliers(prev) : newSuppliers;
+      localStorage.setItem('quote-suppliers', JSON.stringify(result));
+      return result;
+    });
+  };
+
   return (
-    <AppContext.Provider value={{ projects, setProjects: saveProjects, currentProject, setCurrentProject, clients, setClients: saveClients }}>
+    <AppContext.Provider value={{ projects, setProjects: saveProjects, currentProject, setCurrentProject, clients, setClients: saveClients, suppliers, setSuppliers: saveSuppliers }}>
       {children}
     </AppContext.Provider>
   );
