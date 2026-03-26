@@ -296,83 +296,104 @@ export default function QuoteBuilder() {
               </div>
             </div>
 
+            {/* New item being added - show full card at top */}
+            {editingItemId && project.lineItems.length > 0 && project.lineItems[0]?.id === editingItemId && (
+              <div className="mb-4">
+                <LineItemCard
+                  item={project.lineItems[0]}
+                  index={0}
+                  settings={project.settings}
+                  quotePricing={quotePricing}
+                  suppliers={suppliers}
+                  onUpdate={(updates) => updateLineItem(editingItemId, updates)}
+                  onRemove={() => { removeLineItem(editingItemId); setEditingItemId(null); }}
+                  onDuplicate={() => duplicateLineItem(editingItemId)}
+                />
+                <div className="flex justify-end mt-2">
+                  <Button size="sm" onClick={() => setEditingItemId(null)} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                    Done
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {project.lineItems.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p>No items yet. Click "Add Item" to start building your quote.</p>
               </div>
             ) : (
-              <>
-                {/* Compact summary table */}
-                <div className="overflow-auto border rounded-lg">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
-                        <th className="text-left px-3 py-2 font-medium text-muted-foreground">Ref</th>
-                        <th className="text-left px-3 py-2 font-medium text-muted-foreground">Type</th>
-                        <th className="text-right px-3 py-2 font-medium text-muted-foreground">Qty</th>
-                        <th className="text-right px-3 py-2 font-medium text-muted-foreground">W×H (mm)</th>
-                        <th className="text-right px-3 py-2 font-medium text-muted-foreground">Selling</th>
-                        <th className="text-right px-3 py-2 font-medium text-muted-foreground">Cost</th>
-                        <th className="text-right px-3 py-2 font-medium text-muted-foreground">Margin</th>
-                        <th className="text-center px-3 py-2 font-medium text-muted-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {project.lineItems.map((item, index) => {
-                        const sb = getItemSellingBreakdown(item, project.settings, quotePricing);
-                        const cb = getItemCostBreakdown(item, project.settings, quotePricing);
-                        const lineSelling = sb.total * item.qty;
-                        const lineCost = cb.total * item.qty;
-                        const lineMargin = lineSelling > 0 ? ((lineSelling - lineCost) / lineSelling) * 100 : 0;
-                        return (
-                          <React.Fragment key={item.id}>
-                            <tr
-                              className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
-                              onClick={() => setEditingItemId(editingItemId === item.id ? null : item.id)}
-                            >
-                              <td className="px-3 py-2 text-muted-foreground font-mono text-xs">{index + 1}</td>
-                              <td className="px-3 py-2 font-medium">{item.itemRef || '—'}</td>
-                              <td className="px-3 py-2">{item.type}</td>
-                              <td className="px-3 py-2 text-right">{item.qty}</td>
-                              <td className="px-3 py-2 text-right">{item.widthMm}×{item.heightMm}</td>
-                              <td className="px-3 py-2 text-right font-medium">{formatCurrency(lineSelling)}</td>
-                              <td className="px-3 py-2 text-right text-muted-foreground">{formatCurrency(lineCost)}</td>
-                              <td className={`px-3 py-2 text-right font-medium ${lineMargin > 0 ? 'text-green-600' : lineMargin < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                                {lineMargin.toFixed(1)}%
-                              </td>
-                              <td className="px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
-                                <div className="flex justify-center gap-1">
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => duplicateLineItem(item.id)}><Copy className="w-3.5 h-3.5" /></Button>
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => removeLineItem(item.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+              <div className="overflow-auto border rounded-lg">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
+                      <th className="text-left px-3 py-2 font-medium text-muted-foreground">Ref</th>
+                      <th className="text-left px-3 py-2 font-medium text-muted-foreground">Type</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Qty</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">W×H (mm)</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Selling</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Cost</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Margin</th>
+                      <th className="text-center px-3 py-2 font-medium text-muted-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {project.lineItems.map((item, index) => {
+                      // Skip the item being edited as new (shown above)
+                      if (item.id === editingItemId && index === 0) return null;
+                      const sb = getItemSellingBreakdown(item, project.settings, quotePricing);
+                      const cb = getItemCostBreakdown(item, project.settings, quotePricing);
+                      const lineSelling = sb.total * item.qty;
+                      const lineCost = cb.total * item.qty;
+                      const lineMargin = lineSelling > 0 ? ((lineSelling - lineCost) / lineSelling) * 100 : 0;
+                      const isEditing = editingItemId === item.id;
+                      return (
+                        <React.Fragment key={item.id}>
+                          <tr
+                            className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                            onClick={() => setEditingItemId(isEditing ? null : item.id)}
+                          >
+                            <td className="px-3 py-2 text-muted-foreground font-mono text-xs">{index + 1}</td>
+                            <td className="px-3 py-2 font-medium">{item.itemRef || '—'}</td>
+                            <td className="px-3 py-2">{item.type}</td>
+                            <td className="px-3 py-2 text-right">{item.qty}</td>
+                            <td className="px-3 py-2 text-right">{item.widthMm}×{item.heightMm}</td>
+                            <td className="px-3 py-2 text-right font-medium">{formatCurrency(lineSelling)}</td>
+                            <td className="px-3 py-2 text-right text-muted-foreground">{formatCurrency(lineCost)}</td>
+                            <td className={`px-3 py-2 text-right font-medium ${lineMargin > 0 ? 'text-green-600' : lineMargin < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                              {lineMargin.toFixed(1)}%
+                            </td>
+                            <td className="px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
+                              <div className="flex justify-center gap-1">
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => duplicateLineItem(item.id)}><Copy className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => removeLineItem(item.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                              </div>
+                            </td>
+                          </tr>
+                          {isEditing && (
+                            <tr>
+                              <td colSpan={9} className="p-0">
+                                <div className="p-4 bg-muted/20 border-b">
+                                  <LineItemCard
+                                    item={item}
+                                    index={index}
+                                    settings={project.settings}
+                                    quotePricing={quotePricing}
+                                    suppliers={suppliers}
+                                    onUpdate={(updates) => updateLineItem(item.id, updates)}
+                                    onRemove={() => { removeLineItem(item.id); setEditingItemId(null); }}
+                                    onDuplicate={() => duplicateLineItem(item.id)}
+                                  />
                                 </div>
                               </td>
                             </tr>
-                            {editingItemId === item.id && (
-                              <tr>
-                                <td colSpan={9} className="p-0">
-                                  <div className="p-4 bg-muted/20 border-b">
-                                    <LineItemCard
-                                      item={item}
-                                      index={index}
-                                      settings={project.settings}
-                                      quotePricing={quotePricing}
-                                      suppliers={suppliers}
-                                      onUpdate={(updates) => updateLineItem(item.id, updates)}
-                                      onRemove={() => { removeLineItem(item.id); setEditingItemId(null); }}
-                                      onDuplicate={() => duplicateLineItem(item.id)}
-                                    />
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </TabsContent>
