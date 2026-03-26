@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager } from '@/lib/types';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, MdfRevealType } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -360,12 +360,16 @@ function LineItemCard({
           </div>
           <div>
             <Label className="text-xs">MDF Reveal</Label>
-            <Select value={item.mdfRevealType} onValueChange={(v: 'narrow' | 'wide' | 'none') => onUpdate({ mdfRevealType: v, includeMdfReveal: v !== 'none' })}>
+            <Select value={item.mdfRevealType} onValueChange={(v: string) => onUpdate({ mdfRevealType: v as any, includeMdfReveal: v !== 'none' })}>
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                <SelectItem value="narrow">Narrow</SelectItem>
-                <SelectItem value="wide">Wide</SelectItem>
+                <SelectItem value="singleNarrow">Single · Narrow</SelectItem>
+                <SelectItem value="sideNarrow">Side · Narrow</SelectItem>
+                <SelectItem value="centralNarrow">Central · Narrow</SelectItem>
+                <SelectItem value="singleWide">Single · Wide</SelectItem>
+                <SelectItem value="sideWide">Side · Wide</SelectItem>
+                <SelectItem value="centralWide">Central · Wide</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -396,19 +400,21 @@ function LineItemCard({
               <div className="space-y-1 text-xs">
                 <FormulaRow label="Material" value={sellingBreakdown.material}
                   formula={item.manufactureCurrency === 'EUR'
-                    ? `${formatCurrency(item.manufacturePrice)} × ${settings.eurToGbpRate} × (1 + ${item.uplift}%)`
-                    : `${formatCurrency(item.manufacturePrice)} × (1 + ${item.uplift}%)`}
+                    ? `ROUND(${formatCurrency(item.manufacturePrice)} × ${settings.eurToGbpRate} × (1 + ${item.uplift}%))`
+                    : `ROUND(${formatCurrency(item.manufacturePrice)} × (1 + ${item.uplift}%))`}
                 />
                 {!settings.supplyOnly && (
                   <>
                     <FormulaRow label="Installation" value={sellingBreakdown.installation} />
-                    {sellingBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={sellingBreakdown.internalMakingGood} />}
-                    {sellingBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={sellingBreakdown.externalMakingGood} />}
-                    {sellingBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={sellingBreakdown.architrave} />}
-                    {sellingBreakdown.trims > 0 && <FormulaRow label="Trims" value={sellingBreakdown.trims} />}
-                    {sellingBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={sellingBreakdown.mdfReveal} />}
+                    {sellingBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={sellingBreakdown.internalMakingGood} formula={`Qty × rate`} />}
+                    {sellingBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={sellingBreakdown.externalMakingGood} formula={`Qty × rate`} />}
+                    {sellingBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={sellingBreakdown.architrave} formula={`(${item.widthMm} + 2×${item.heightMm}) / 1000 × rate`} />}
+                    {sellingBreakdown.trims > 0 && <FormulaRow label="Trims" value={sellingBreakdown.trims} formula="Qty × rate" />}
+                    {sellingBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={sellingBreakdown.mdfReveal} formula="Qty × rate" />}
+                    {sellingBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={sellingBreakdown.deliveryStock} formula="Area SM × rate" />}
+                    {sellingBreakdown.fensaSurvey > 0 && <FormulaRow label="Fensa/Survey" value={sellingBreakdown.fensaSurvey} formula="Qty × rate" />}
                     {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
-                    {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} />}
+                    {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} formula="Qty × rate" />}
                   </>
                 )}
                 <div className="border-t pt-1 mt-1 flex justify-between font-semibold">
@@ -441,7 +447,10 @@ function LineItemCard({
                     {costBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={costBreakdown.architrave} />}
                     {costBreakdown.trims > 0 && <FormulaRow label="Trims" value={costBreakdown.trims} />}
                     {costBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={costBreakdown.mdfReveal} />}
-                    {costBreakdown.extras > 0 && <FormulaRow label="Extras + Consumables" value={costBreakdown.extras} />}
+                    {costBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={costBreakdown.deliveryStock} />}
+                    {costBreakdown.fensaSurvey > 0 && <FormulaRow label="Fensa/Survey" value={costBreakdown.fensaSurvey} />}
+                    {costBreakdown.consumables > 0 && <FormulaRow label="Consumables" value={costBreakdown.consumables} />}
+                    {costBreakdown.extras > 0 && <FormulaRow label="Extras" value={costBreakdown.extras} />}
                     {costBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={costBreakdown.wasteDisposal} />}
                   </>
                 )}

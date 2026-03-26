@@ -13,6 +13,8 @@ export type InstallationType = 'Internal' | 'External';
 
 export type Currency = 'GBP' | 'EUR';
 
+export type MdfRevealType = 'singleNarrow' | 'sideNarrow' | 'centralNarrow' | 'singleWide' | 'sideWide' | 'centralWide' | 'none';
+
 export interface QuoteLineItem {
   id: string;
   itemRef: string;
@@ -28,7 +30,7 @@ export interface QuoteLineItem {
   includeArchitrave: boolean;
   includeTrims: boolean;
   includeMdfReveal: boolean;
-  mdfRevealType: 'narrow' | 'wide' | 'none';
+  mdfRevealType: MdfRevealType;
   extras: ExtraType[];
 }
 
@@ -68,6 +70,8 @@ export interface CostBreakdown {
   trims: number;
   mdfReveal: number;
   wasteDisposal: number;
+  deliveryStock: number;
+  fensaSurvey: number;
   extras: number;
   consumables: number;
   overhead: number;
@@ -102,19 +106,32 @@ export interface Client {
   createdAt: string;
 }
 
+export interface MdfPricing {
+  singleNarrow: number;
+  sideNarrow: number;
+  centralNarrow: number;
+  singleWide: number;
+  sideWide: number;
+  centralWide: number;
+}
+
 export interface PricingData {
   installationSelling: Record<string, number>;
   installationCost: Record<string, number>;
-  makingGoodSelling: { intMkgInternal: number; extMkgInternal: number; intMkgExternal: number; extMkgExternal: number };
-  makingGoodCost: { intMkgInternal: number; extMkgInternal: number; intMkgExternal: number; extMkgExternal: number };
+  makingGoodSelling: { internal: number; external: number };
+  makingGoodCost: { internal: number; external: number };
   architraveSelling: number;
   architraveCost: number;
   trimsSelling: number;
   trimsCost: number;
-  mdfSelling: { narrow: number; wide: number };
-  mdfCost: { narrow: number; wide: number };
+  mdfSelling: MdfPricing;
+  mdfCost: MdfPricing;
   extras: Record<string, number>;
   consumables: Record<string, number>;
   wasteDisposal: number;
+  deliveryStockSelling: number;
+  deliveryStockCost: number;
+  fensaSurveySelling: number;
+  fensaSurveyCost: number;
   overheadPerDay: number;
 }
