@@ -231,6 +231,7 @@ export default function QuoteBuilder() {
                     index={index}
                     settings={project.settings}
                     quotePricing={quotePricing}
+                    suppliers={suppliers}
                     onUpdate={(updates) => updateLineItem(item.id, updates)}
                     onRemove={() => removeLineItem(item.id)}
                     onDuplicate={() => duplicateLineItem(item.id)}
