@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import PricingEditor from '@/components/PricingEditor';
 
 export default function ClientsPage() {
-  const { clients, setClients } = useApp();
+  const { clients, setClients, saveClientToDb, deleteClientFromDb } = useApp();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', notes: '', projectManagers: [] as ProjectManager[] });
