@@ -400,19 +400,21 @@ function LineItemCard({
               <div className="space-y-1 text-xs">
                 <FormulaRow label="Material" value={sellingBreakdown.material}
                   formula={item.manufactureCurrency === 'EUR'
-                    ? `${formatCurrency(item.manufacturePrice)} × ${settings.eurToGbpRate} × (1 + ${item.uplift}%)`
-                    : `${formatCurrency(item.manufacturePrice)} × (1 + ${item.uplift}%)`}
+                    ? `ROUND(${formatCurrency(item.manufacturePrice)} × ${settings.eurToGbpRate} × (1 + ${item.uplift}%))`
+                    : `ROUND(${formatCurrency(item.manufacturePrice)} × (1 + ${item.uplift}%))`}
                 />
                 {!settings.supplyOnly && (
                   <>
                     <FormulaRow label="Installation" value={sellingBreakdown.installation} />
-                    {sellingBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={sellingBreakdown.internalMakingGood} />}
-                    {sellingBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={sellingBreakdown.externalMakingGood} />}
-                    {sellingBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={sellingBreakdown.architrave} />}
-                    {sellingBreakdown.trims > 0 && <FormulaRow label="Trims" value={sellingBreakdown.trims} />}
-                    {sellingBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={sellingBreakdown.mdfReveal} />}
+                    {sellingBreakdown.internalMakingGood > 0 && <FormulaRow label="Int. Making Good" value={sellingBreakdown.internalMakingGood} formula={`Qty × rate`} />}
+                    {sellingBreakdown.externalMakingGood > 0 && <FormulaRow label="Ext. Making Good" value={sellingBreakdown.externalMakingGood} formula={`Qty × rate`} />}
+                    {sellingBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={sellingBreakdown.architrave} formula={`(${item.widthMm} + 2×${item.heightMm}) / 1000 × rate`} />}
+                    {sellingBreakdown.trims > 0 && <FormulaRow label="Trims" value={sellingBreakdown.trims} formula="Qty × rate" />}
+                    {sellingBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={sellingBreakdown.mdfReveal} formula="Qty × rate" />}
+                    {sellingBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={sellingBreakdown.deliveryStock} formula="Area SM × rate" />}
+                    {sellingBreakdown.fensaSurvey > 0 && <FormulaRow label="Fensa/Survey" value={sellingBreakdown.fensaSurvey} formula="Qty × rate" />}
                     {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
-                    {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} />}
+                    {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} formula="Qty × rate" />}
                   </>
                 )}
                 <div className="border-t pt-1 mt-1 flex justify-between font-semibold">
