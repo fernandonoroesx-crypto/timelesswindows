@@ -58,17 +58,29 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
       {/* Making Good */}
       <div className={cardClass}>
         <h3 className="font-heading text-sm font-semibold mb-3">Making Good{sellingOnly ? '' : ' — Selling'}</h3>
+        <p className="text-xs text-muted-foreground mb-2">Internal Installation</p>
         <div className="space-y-2">
-          <EditRow label="Internal Making Good" value={pricing.makingGoodSelling.internal} path="makingGoodSelling.internal" onUpdate={onUpdate} />
-          <EditRow label="External Making Good" value={pricing.makingGoodSelling.external} path="makingGoodSelling.external" onUpdate={onUpdate} />
+          <EditRow label="Internal MG" value={pricing.makingGoodSelling.intMkgInternal} path="makingGoodSelling.intMkgInternal" onUpdate={onUpdate} />
+          <EditRow label="External MG" value={pricing.makingGoodSelling.extMkgInternal} path="makingGoodSelling.extMkgInternal" onUpdate={onUpdate} />
+        </div>
+        <p className="text-xs text-muted-foreground mb-2 mt-3">External Installation</p>
+        <div className="space-y-2">
+          <EditRow label="Internal MG" value={pricing.makingGoodSelling.intMkgExternal} path="makingGoodSelling.intMkgExternal" onUpdate={onUpdate} />
+          <EditRow label="External MG" value={pricing.makingGoodSelling.extMkgExternal} path="makingGoodSelling.extMkgExternal" onUpdate={onUpdate} />
         </div>
       </div>
       {!sellingOnly && (
         <div className={cardClass}>
           <h3 className="font-heading text-sm font-semibold mb-3">Making Good — Cost</h3>
+          <p className="text-xs text-muted-foreground mb-2">Internal Installation</p>
           <div className="space-y-2">
-            <EditRow label="Internal Making Good" value={pricing.makingGoodCost.internal} path="makingGoodCost.internal" onUpdate={onUpdate} />
-            <EditRow label="External Making Good" value={pricing.makingGoodCost.external} path="makingGoodCost.external" onUpdate={onUpdate} />
+            <EditRow label="Internal MG" value={pricing.makingGoodCost.intMkgInternal} path="makingGoodCost.intMkgInternal" onUpdate={onUpdate} />
+            <EditRow label="External MG" value={pricing.makingGoodCost.extMkgInternal} path="makingGoodCost.extMkgInternal" onUpdate={onUpdate} />
+          </div>
+          <p className="text-xs text-muted-foreground mb-2 mt-3">External Installation</p>
+          <div className="space-y-2">
+            <EditRow label="Internal MG" value={pricing.makingGoodCost.intMkgExternal} path="makingGoodCost.intMkgExternal" onUpdate={onUpdate} />
+            <EditRow label="External MG" value={pricing.makingGoodCost.extMkgExternal} path="makingGoodCost.extMkgExternal" onUpdate={onUpdate} />
           </div>
         </div>
       )}
