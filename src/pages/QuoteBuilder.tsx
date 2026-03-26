@@ -14,6 +14,7 @@ import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator,
 import { toast } from 'sonner';
 import { exportQuotePdf } from '@/lib/pdf-export';
 import PricingEditor from '@/components/PricingEditor';
+import PdfImportDialog from '@/components/PdfImportDialog';
 
 const WINDOW_TYPES: WindowType[] = [
   'Casement', 'Casement Flag', 'Box Sash', 'Fix Sash', 'Spring Sash',
