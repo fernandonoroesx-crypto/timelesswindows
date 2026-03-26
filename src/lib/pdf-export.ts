@@ -179,25 +179,17 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
       + summary.sellingPrice.architrave
       + summary.sellingPrice.trims
       + summary.sellingPrice.mdfReveal
-      + summary.sellingPrice.consumables
-      + summary.sellingPrice.overhead;
+      + summary.sellingPrice.deliveryStock
+      + summary.sellingPrice.fensaSurvey;
     summaryLines.push({ label: 'Labour:', value: formatCurrency(labourTotal) });
   }
 
   if (project.settings.includeWasteDisposal && summary.sellingPrice.wasteDisposal > 0) {
-    summaryLines.push({ label: 'Rubbish Disposal:', value: formatCurrency(summary.sellingPrice.wasteDisposal) });
+    summaryLines.push({ label: 'Waste Disposal:', value: formatCurrency(summary.sellingPrice.wasteDisposal) });
   }
 
   if (summary.sellingPrice.extras > 0) {
     summaryLines.push({ label: 'Extras:', value: formatCurrency(summary.sellingPrice.extras) });
-  }
-
-  if (summary.sellingPrice.deliveryStock > 0) {
-    summaryLines.push({ label: 'Delivery & Stock:', value: formatCurrency(summary.sellingPrice.deliveryStock) });
-  }
-
-  if (summary.sellingPrice.fensaSurvey > 0) {
-    summaryLines.push({ label: 'FENSA & Survey:', value: formatCurrency(summary.sellingPrice.fensaSurvey) });
   }
 
   // Draw summary rows
