@@ -106,27 +106,30 @@ export default function ClientsPage() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) {
       toast.error('Client name is required');
       return;
     }
 
-    if (editingId) {
-      setClients(prev =>
-        prev.map(c => c.id === editingId ? { ...c, ...form } : c)
-      );
-      toast.success('Client updated');
-    } else {
-      const newClient: Client = {
-        id: crypto.randomUUID(),
-        ...form,
-        createdAt: new Date().toISOString(),
-      };
-      setClients(prev => [...prev, newClient]);
-      toast.success('Client added');
+    try {
+      if (editingId) {
+        const updated: Client = { id: editingId, ...form, createdAt: clients.find(c => c.id === editingId)?.createdAt || new Date().toISOString() };
+        await saveClientToDb(updated);
+        toast.success('Client updated');
+      } else {
+        const newClient: Client = {
+          id: crypto.randomUUID(),
+          ...form,
+          createdAt: new Date().toISOString(),
+        };
+        await saveClientToDb(newClient);
+        toast.success('Client added');
+      }
+      resetForm();
+    } catch {
+      toast.error('Failed to save client');
     }
-    resetForm();
   };
 
   const handleEdit = (client: Client) => {
@@ -142,9 +145,13 @@ export default function ClientsPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
-    setClients(prev => prev.filter(c => c.id !== id));
-    toast.success('Client removed');
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteClientFromDb(id);
+      toast.success('Client removed');
+    } catch {
+      toast.error('Failed to delete client');
+    }
   };
 
   return (
