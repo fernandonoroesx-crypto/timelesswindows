@@ -130,6 +130,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [globalPricing, setGlobalPricing] = useState<PricingData>(DEFAULT_PRICING);
   const [loading, setLoading] = useState(true);
 
   // Load all data from Supabase on mount
