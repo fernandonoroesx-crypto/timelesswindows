@@ -76,8 +76,7 @@ export default function QuoteBuilder() {
 
   const selectPM = (pmId: string) => {
     if (pmId === '_none') {
-      const saved = localStorage.getItem('quote-pricing');
-      const defaultPricing = saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : { ...DEFAULT_PRICING };
+      const defaultPricing = { ...globalPricing };
       updateProject({ projectManagerId: undefined, projectManagerName: '', pricing: defaultPricing });
       return;
     }
