@@ -9,6 +9,7 @@ import QuoteBuilder from "./pages/QuoteBuilder";
 import QuotesList from "./pages/QuotesList";
 import SettingsPage from "./pages/SettingsPage";
 import ClientsPage from "./pages/ClientsPage";
+import SuppliersPage from "./pages/SuppliersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

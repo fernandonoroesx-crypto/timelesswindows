@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users } from 'lucide-react';
+import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/clients', icon: Users, label: 'Clients' },
+  { to: '/suppliers', icon: Truck, label: 'Suppliers' },
   { to: '/quotes', icon: FileText, label: 'Quotes' },
   { to: '/quotes/new', icon: Plus, label: 'New Quote' },
   { to: '/settings', icon: Settings, label: 'Settings' },
