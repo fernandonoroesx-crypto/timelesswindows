@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: ProjectSettings = {
 };
 
 export function getProjectPricing(project: Project): PricingData {
-  if (project.pricing) return project.pricing;
+  if (project.pricing) return { ...DEFAULT_PRICING, ...project.pricing, uplift: project.pricing.uplift || DEFAULT_PRICING.uplift };
   const saved = localStorage.getItem('quote-pricing');
   return saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : DEFAULT_PRICING;
 }

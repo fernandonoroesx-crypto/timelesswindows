@@ -7,7 +7,9 @@ function loadGlobalPricing(): PricingData {
 }
 
 function p(quotePricing?: PricingData): PricingData {
-  return quotePricing || loadGlobalPricing();
+  return quotePricing
+    ? { ...DEFAULT_PRICING, ...quotePricing, uplift: quotePricing.uplift || DEFAULT_PRICING.uplift }
+    : loadGlobalPricing();
 }
 
 export function calculateSm(widthMm: number, heightMm: number): number {

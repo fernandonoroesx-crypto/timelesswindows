@@ -43,10 +43,13 @@ export default function QuoteBuilder() {
 
   const updatePricing = (path: string, value: number) => {
     const currentPricing = project.pricing || getProjectPricing(project);
-    const next = JSON.parse(JSON.stringify(currentPricing));
+    const next = JSON.parse(JSON.stringify({ ...DEFAULT_PRICING, ...currentPricing, uplift: currentPricing.uplift || DEFAULT_PRICING.uplift }));
     const keys = path.split('.');
     let obj = next;
-    for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (obj[keys[i]] === undefined) obj[keys[i]] = {};
+      obj = obj[keys[i]];
+    }
     obj[keys[keys.length - 1]] = value;
     updateProject({ pricing: next });
   };
@@ -285,6 +288,7 @@ function LineItemCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const safeUplift = quotePricing.uplift || DEFAULT_PRICING.uplift;
 
   const sellingBreakdown = getItemSellingBreakdown(item, settings, quotePricing);
   const costBreakdown = getItemCostBreakdown(item, settings, quotePricing);
@@ -359,10 +363,10 @@ function LineItemCard({
           <div>
             <Label className="text-xs">Uplift</Label>
             <Input type="number" step="0.1" className="h-9 text-xs"
-              value={item.uplift != null && item.uplift !== 0 ? item.uplift : (quotePricing.uplift[item.type] || 1)}
+              value={item.uplift != null && item.uplift !== 0 ? item.uplift : (safeUplift[item.type] || 1)}
               onChange={e => {
                 const val = parseFloat(e.target.value) || 1;
-                const defaultVal = quotePricing.uplift[item.type] || 1;
+                const defaultVal = safeUplift[item.type] || 1;
                 onUpdate({ uplift: val === defaultVal ? 0 : val });
               }}
               placeholder="Auto"
