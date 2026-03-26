@@ -278,7 +278,7 @@ function LineItemCard({
   index: number;
   settings: ProjectSettings;
   quotePricing: PricingData;
-  suppliers: import('@/lib/types').Supplier[];
+  suppliers: Supplier[];
   onUpdate: (updates: Partial<QuoteLineItem>) => void;
   onRemove: () => void;
   onDuplicate: () => void;
