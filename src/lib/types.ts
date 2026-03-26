@@ -115,11 +115,18 @@ export interface MdfPricing {
   centralWide: number;
 }
 
+export interface MakingGoodPricing {
+  intMkgInternal: number;  // Internal MG when Internal install
+  extMkgInternal: number;  // External MG when Internal install
+  intMkgExternal: number;  // Internal MG when External install
+  extMkgExternal: number;  // External MG when External install
+}
+
 export interface PricingData {
   installationSelling: Record<string, number>;
   installationCost: Record<string, number>;
-  makingGoodSelling: { internal: number; external: number };
-  makingGoodCost: { internal: number; external: number };
+  makingGoodSelling: MakingGoodPricing;
+  makingGoodCost: MakingGoodPricing;
   architraveSelling: number;
   architraveCost: number;
   trimsSelling: number;

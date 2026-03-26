@@ -141,10 +141,14 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     }
 
     if (settings.includeInternalMakingGood) {
-      b.internalMakingGood = pricing.makingGoodCost.internal;
+      b.internalMakingGood = item.installationType === 'Internal'
+        ? pricing.makingGoodCost.intMkgInternal
+        : pricing.makingGoodCost.intMkgExternal;
     }
     if (settings.includeExternalMakingGood) {
-      b.externalMakingGood = pricing.makingGoodCost.external;
+      b.externalMakingGood = item.installationType === 'Internal'
+        ? pricing.makingGoodCost.extMkgInternal
+        : pricing.makingGoodCost.extMkgExternal;
     }
 
     if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
