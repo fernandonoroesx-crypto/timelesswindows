@@ -223,12 +223,12 @@ export default function SettingsPage() {
   );
 }
 
-function EditRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function EditRow({ label, value, onChange, unit }: { label: string; value: number; onChange: (v: number) => void; unit?: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm flex-1">{label}</span>
       <div className="flex items-center gap-1">
-        <span className="text-xs text-muted-foreground">£</span>
+        <span className="text-xs text-muted-foreground">{unit || '£'}</span>
         <Input type="number" step="0.01" className="h-8 w-24 text-xs text-right" value={value}
           onChange={e => onChange(parseFloat(e.target.value) || 0)} />
       </div>
