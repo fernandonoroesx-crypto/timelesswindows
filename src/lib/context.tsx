@@ -200,7 +200,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       projects, setProjects, currentProject, setCurrentProject,
-      clients, setClients, suppliers, setSuppliers, loading,
+      clients, setClients, suppliers, setSuppliers, globalPricing, loading,
       saveProjectToDb, deleteProjectFromDb,
       saveClientToDb, deleteClientFromDb,
       saveSupplierToDb, deleteSupplierFromDb,
