@@ -76,12 +76,16 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
       b.mdfReveal = pricing.mdfSelling[item.mdfRevealType] || 0;
     }
 
-    // Making Good: flat rate per item (conditional)
+    // Making Good: depends on installation type
     if (settings.includeInternalMakingGood) {
-      b.internalMakingGood = pricing.makingGoodSelling.internal;
+      b.internalMakingGood = item.installationType === 'Internal'
+        ? pricing.makingGoodSelling.intMkgInternal
+        : pricing.makingGoodSelling.intMkgExternal;
     }
     if (settings.includeExternalMakingGood) {
-      b.externalMakingGood = pricing.makingGoodSelling.external;
+      b.externalMakingGood = item.installationType === 'Internal'
+        ? pricing.makingGoodSelling.extMkgInternal
+        : pricing.makingGoodSelling.extMkgExternal;
     }
 
     // Waste Disposal: flat rate per item
