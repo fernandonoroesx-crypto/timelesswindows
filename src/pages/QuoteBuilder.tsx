@@ -24,10 +24,15 @@ const WINDOW_TYPES: WindowType[] = [
 const EXTRA_TYPES: ExtraType[] = ['Recess of reveal', 'Shutters', 'Cut Out of work top'];
 
 export default function QuoteBuilder() {
-  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers, saveProjectToDb } = useApp();
+  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers, saveProjectToDb, globalPricing } = useApp();
   const navigate = useNavigate();
 
-  const [project, setProject] = useState<Project>(() => currentProject || createNewProject());
+  const [project, setProject] = useState<Project>(() => {
+    if (currentProject) return currentProject;
+    const p = createNewProject();
+    p.pricing = { ...globalPricing };
+    return p;
+  });
 
   useEffect(() => {
     if (currentProject) setProject(currentProject);
@@ -71,8 +76,7 @@ export default function QuoteBuilder() {
 
   const selectPM = (pmId: string) => {
     if (pmId === '_none') {
-      const saved = localStorage.getItem('quote-pricing');
-      const defaultPricing = saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : { ...DEFAULT_PRICING };
+      const defaultPricing = { ...globalPricing };
       updateProject({ projectManagerId: undefined, projectManagerName: '', pricing: defaultPricing });
       return;
     }

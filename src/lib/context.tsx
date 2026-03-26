@@ -48,6 +48,7 @@ interface AppContextType {
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
   suppliers: Supplier[];
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
+  globalPricing: PricingData;
   loading: boolean;
   saveProjectToDb: (project: Project) => Promise<void>;
   deleteProjectFromDb: (id: string) => Promise<void>;
@@ -129,20 +130,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [globalPricing, setGlobalPricing] = useState<PricingData>(DEFAULT_PRICING);
   const [loading, setLoading] = useState(true);
 
   // Load all data from Supabase on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [dbClients, dbSuppliers, dbProjects] = await Promise.all([
+        const [dbClients, dbSuppliers, dbProjects, dbPricing] = await Promise.all([
           fetchClients(),
           fetchSuppliers(),
           fetchProjects(),
+          fetchGlobalPricing(),
         ]);
         setClients(dbClients);
         setSuppliers(dbSuppliers);
         setProjects(dbProjects);
+        setGlobalPricing(dbPricing);
       } catch (err) {
         console.error('Failed to load data from cloud:', err);
         toast.error('Failed to load data from cloud');
@@ -196,7 +200,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       projects, setProjects, currentProject, setCurrentProject,
-      clients, setClients, suppliers, setSuppliers, loading,
+      clients, setClients, suppliers, setSuppliers, globalPricing, loading,
       saveProjectToDb, deleteProjectFromDb,
       saveClientToDb, deleteClientFromDb,
       saveSupplierToDb, deleteSupplierFromDb,
