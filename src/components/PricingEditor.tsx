@@ -37,6 +37,16 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
 
   return (
     <div className={`grid gap-4 ${compact ? 'lg:grid-cols-2' : 'lg:grid-cols-2 gap-6'}`}>
+      {/* Uplift */}
+      <div className={cardClass}>
+        <h3 className="font-heading text-sm font-semibold mb-3">Uplift % (per type)</h3>
+        <div className="space-y-2">
+          {Object.entries(pricing.uplift).map(([type, pct]) => (
+            <EditRow key={type} label={type} value={pct} path={`uplift.${type}`} onUpdate={onUpdate} unit="%" />
+          ))}
+        </div>
+      </div>
+
       {/* Installation */}
       <div className={cardClass}>
         <h3 className="font-heading text-sm font-semibold mb-3">Installation{sellingOnly ? '' : ' — Selling'}</h3>

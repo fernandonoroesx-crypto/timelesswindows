@@ -61,6 +61,16 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Uplift */}
+        <div className="elevated-card rounded-xl p-6">
+          <h2 className="font-heading text-lg font-semibold mb-4">Uplift % (per type)</h2>
+          <div className="space-y-2">
+            {Object.entries(pricing.uplift).map(([type, pct]) => (
+              <EditRow key={type} label={type} value={pct} onChange={v => update(`uplift.${type}`, v)} unit="%" />
+            ))}
+          </div>
+        </div>
+
         {/* Installation selling */}
         <div className="elevated-card rounded-xl p-6">
           <h2 className="font-heading text-lg font-semibold mb-4">Installation — Selling</h2>

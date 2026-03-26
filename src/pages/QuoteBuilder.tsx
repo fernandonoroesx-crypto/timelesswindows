@@ -358,7 +358,15 @@ function LineItemCard({
           </div>
           <div>
             <Label className="text-xs">Uplift %</Label>
-            <Input type="number" step="1" className="h-9 text-xs" value={item.uplift} onChange={e => onUpdate({ uplift: parseFloat(e.target.value) || 0 })} />
+            <Input type="number" step="1" className="h-9 text-xs"
+              value={item.uplift != null && item.uplift !== 0 ? item.uplift : (quotePricing.uplift[item.type] || 0)}
+              onChange={e => {
+                const val = parseFloat(e.target.value) || 0;
+                const defaultVal = quotePricing.uplift[item.type] || 0;
+                onUpdate({ uplift: val === defaultVal ? 0 : val });
+              }}
+              placeholder="Auto"
+            />
           </div>
           <div>
             <Label className="text-xs">Install Price</Label>
