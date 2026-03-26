@@ -10,16 +10,12 @@ function p(quotePricing?: PricingData): PricingData {
   return quotePricing || loadGlobalPricing();
 }
 
-export const WINDOW_INSTALLATION_SELLING = loadGlobalPricing().installationSelling;
-export const CONSUMABLES = loadGlobalPricing().consumables;
-export const OVERHEAD_PER_DAY = loadGlobalPricing().overheadPerDay;
-
 export function calculateSm(widthMm: number, heightMm: number): number {
-  return (widthMm / 1000) * (heightMm / 1000);
+  return (widthMm * heightMm) / 1_000_000;
 }
 
 export function calculateLm(widthMm: number, heightMm: number): number {
-  return ((widthMm + heightMm) * 2) / 1000;
+  return ((2 * widthMm) + (2 * heightMm)) / 1000;
 }
 
 /** Architrave LM = (Width + 2×Height) / 1000 */
@@ -59,24 +55,28 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
   b.material = Math.round(materialGbp * (1 + item.uplift / 100));
 
   if (!settings.supplyOnly) {
-    // Installation: flat rate per type
-    b.installation = pricing.installationSelling[item.type] || 0;
+    // Installation: flat rate per type, or override
+    b.installation = item.installationOverride != null
+      ? item.installationOverride
+      : (pricing.installationSelling[item.type] || 0);
 
-    // Architrave: LM × rate/LM
-    if (item.includeArchitrave) {
+    // Architrave: LM × rate per type
+    if (item.architraveType !== 'none') {
       const archLm = calculateArchitraveLm(item.widthMm, item.heightMm);
-      b.architrave = archLm * pricing.architraveSelling;
+      b.architrave = archLm * (pricing.architraveSelling[item.architraveType] || 0);
     }
 
-    // Trims: flat rate per item
-    if (item.includeTrims) b.trims = pricing.trimsSelling;
+    // Trims: flat rate per type
+    if (item.trimsType !== 'none') {
+      b.trims = pricing.trimsSelling[item.trimsType] || 0;
+    }
 
-    // MDF Reveal: flat rate per type
-    if (item.includeMdfReveal && item.mdfRevealType !== 'none') {
+    // MDF Reveal: flat rate per width
+    if (item.mdfRevealType !== 'none') {
       b.mdfReveal = pricing.mdfSelling[item.mdfRevealType] || 0;
     }
 
-    // Making Good: depends on installation type
+    // Making Good
     if (settings.includeInternalMakingGood) {
       b.internalMakingGood = item.installationType === 'Internal'
         ? pricing.makingGoodSelling.intMkgInternal
@@ -88,20 +88,20 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
         : pricing.makingGoodSelling.extMkgExternal;
     }
 
-    // Waste Disposal: flat rate per item
+    // Waste Disposal
     if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
 
     // Delivery/Stock: Area_SM × rate/SM
     const areaSm = calculateSm(item.widthMm, item.heightMm);
     b.deliveryStock = areaSm * pricing.deliveryStockSelling;
 
-    // Fensa/Survey: flat rate per item
+    // Fensa/Survey
     b.fensaSurvey = pricing.fensaSurveySelling;
 
-    // Extras
-    for (const extra of item.extras) {
-      b.extras += pricing.extras[extra] || 0;
-    }
+    // Extras from slots
+    if (item.extra1 !== 'none') b.extras += pricing.extras[item.extra1] || 0;
+    if (item.extra2 !== 'none') b.extras += pricing.extras[item.extra2] || 0;
+    b.extras += item.customExtra || 0;
   }
 
   b.unitTotal = b.material + b.installation + b.architrave + b.trims + b.mdfReveal
@@ -120,7 +120,6 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     fensaSurvey: 0, extras: 0, consumables: 0, unitTotal: 0, total: 0,
   };
 
-  // Material: raw cost (no uplift)
   const materialGbp = item.manufactureCurrency === 'EUR'
     ? item.manufacturePrice * settings.eurToGbpRate
     : item.manufacturePrice;
@@ -129,14 +128,16 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
   if (!settings.supplyOnly) {
     b.installation = pricing.installationCost[item.type] || 0;
 
-    if (item.includeArchitrave) {
+    if (item.architraveType !== 'none') {
       const archLm = calculateArchitraveLm(item.widthMm, item.heightMm);
-      b.architrave = archLm * pricing.architraveCost;
+      b.architrave = archLm * (pricing.architraveCost[item.architraveType] || 0);
     }
 
-    if (item.includeTrims) b.trims = pricing.trimsCost;
+    if (item.trimsType !== 'none') {
+      b.trims = pricing.trimsCost[item.trimsType] || 0;
+    }
 
-    if (item.includeMdfReveal && item.mdfRevealType !== 'none') {
+    if (item.mdfRevealType !== 'none') {
       b.mdfReveal = pricing.mdfCost[item.mdfRevealType] || 0;
     }
 
@@ -158,11 +159,10 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
 
     b.fensaSurvey = pricing.fensaSurveyCost;
 
-    for (const extra of item.extras) {
-      b.extras += pricing.extras[extra] || 0;
-    }
+    if (item.extra1 !== 'none') b.extras += pricing.extras[item.extra1] || 0;
+    if (item.extra2 !== 'none') b.extras += pricing.extras[item.extra2] || 0;
+    b.extras += item.customExtra || 0;
 
-    // Consumables per item
     b.consumables = Object.values(pricing.consumables).reduce((a, v) => a + v, 0);
   }
 
