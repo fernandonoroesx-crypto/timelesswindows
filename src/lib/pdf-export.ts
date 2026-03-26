@@ -66,7 +66,7 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
     // Logo aspect ratio ~3.7:1, render at ~60mm wide
     const logoW = 60;
     const logoH = logoW / 3.7;
-    doc.addImage(logoData, 'PNG', pageWidth - margin - logoW, companyY, logoW, logoH);
+    doc.addImage(logoData, 'JPEG', pageWidth - margin - logoW, companyY, logoW, logoH);
   } else {
     // Fallback to text if logo fails to load
     doc.setFontSize(28);
