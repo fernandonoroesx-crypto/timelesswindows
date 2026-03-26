@@ -20,7 +20,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="p-6">
-          <h1 className="font-heading text-xl font-bold text-sidebar-primary">QuoteCraft</h1>
+          <h1 className="font-heading text-xl font-bold text-sidebar-primary">TIMELESS WINDOWS</h1>
           <p className="text-xs text-sidebar-foreground/60 mt-1">Windows & Doors Quoting</p>
         </div>
         <nav className="flex-1 px-3 space-y-1">
