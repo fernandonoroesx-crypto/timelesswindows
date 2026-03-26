@@ -35,7 +35,7 @@ const MDF_LABELS: Record<string, string> = {
 
 export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly }: PricingEditorProps) {
   const cardClass = compact ? "border rounded-lg p-4" : "elevated-card rounded-xl p-6";
-  const safeUplift = pricing.uplift || {};
+  const safeUplift = pricing.uplift || DEFAULT_PRICING.uplift;
 
   return (
     <div className={`grid gap-4 ${compact ? 'lg:grid-cols-2' : 'lg:grid-cols-2 gap-6'}`}>
