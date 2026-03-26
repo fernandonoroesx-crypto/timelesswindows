@@ -186,10 +186,6 @@ export default function QuoteBuilder() {
             <Label>Project Ref</Label>
             <Input value={project.projectRef} onChange={e => updateProject({ projectRef: e.target.value })} placeholder="AD123 - Address" />
           </div>
-          <div>
-            <Label>EUR → GBP Rate</Label>
-            <Input type="number" step="0.01" value={project.settings.eurToGbpRate} onChange={e => updateSettings('eurToGbpRate', parseFloat(e.target.value) || 0)} />
-          </div>
         </div>
 
         <div className="flex flex-wrap gap-6 mt-4 pt-4 border-t">
