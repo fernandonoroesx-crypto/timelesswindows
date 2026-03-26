@@ -112,15 +112,15 @@ export default function QuoteBuilder() {
     }
   };
 
-  const saveProject = () => {
-    const exists = projects.find(p => p.id === project.id);
-    if (exists) {
-      setProjects(prev => prev.map(p => p.id === project.id ? project : p));
-    } else {
-      setProjects(prev => [...prev, project]);
+  const saveProject = async () => {
+    try {
+      await saveProjectToDb(project);
+      setCurrentProject(project);
+      toast.success('Quote saved successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save quote');
     }
-    setCurrentProject(project);
-    toast.success('Quote saved successfully');
   };
 
   const quotePricing = project.pricing || getProjectPricing(project);

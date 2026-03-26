@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/pricing';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,19 +6,7 @@ import { Save } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PricingData } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
-
-function loadPricing(): PricingData {
-  const saved = localStorage.getItem('quote-pricing');
-  return saved ? { ...DEFAULT_PRICING, ...JSON.parse(saved) } : DEFAULT_PRICING;
-}
-
-export function savePricing(data: PricingData) {
-  localStorage.setItem('quote-pricing', JSON.stringify(data));
-}
-
-export function getPricing(): PricingData {
-  return loadPricing();
-}
+import { fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
 
 const MDF_LABELS: Record<string, string> = {
   singleNarrow: 'Single · Narrow',
@@ -30,23 +18,40 @@ const MDF_LABELS: Record<string, string> = {
 };
 
 export default function SettingsPage() {
-  const [pricing, setPricing] = useState<PricingData>(loadPricing);
+  const [pricing, setPricing] = useState<PricingData>(DEFAULT_PRICING);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchGlobalPricing().then(p => {
+      setPricing(p);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
 
   const update = (path: string, value: number) => {
     setPricing(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       const keys = path.split('.');
       let obj = next;
-      for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (obj[keys[i]] === undefined) obj[keys[i]] = {};
+        obj = obj[keys[i]];
+      }
       obj[keys[keys.length - 1]] = value;
       return next;
     });
   };
 
-  const handleSave = () => {
-    savePricing(pricing);
-    toast.success('Pricing saved successfully');
+  const handleSave = async () => {
+    try {
+      await saveGlobalPricing(pricing);
+      toast.success('Pricing saved successfully');
+    } catch {
+      toast.error('Failed to save pricing');
+    }
   };
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Loading settings...</div>;
 
   return (
     <div className="space-y-8 animate-slide-in">
@@ -65,7 +70,7 @@ export default function SettingsPage() {
         <div className="elevated-card rounded-xl p-6">
           <h2 className="font-heading text-lg font-semibold mb-4">Uplift (multiplier)</h2>
           <div className="space-y-2">
-            {Object.entries(pricing.uplift).map(([type, val]) => (
+            {Object.entries(pricing.uplift || DEFAULT_PRICING.uplift).map(([type, val]) => (
               <EditRow key={type} label={type} value={val} onChange={v => update(`uplift.${type}`, v)} unit="×" />
             ))}
           </div>
