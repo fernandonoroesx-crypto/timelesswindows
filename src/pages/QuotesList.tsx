@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApp, getProjectPricing } from '@/lib/context';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import { useNavigate } from 'react-router-dom';
@@ -6,9 +7,23 @@ import { Plus, FileText } from 'lucide-react';
 import { createNewProject } from '@/lib/context';
 import { toast } from 'sonner';
 
+const STATUS_FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'sent', label: 'Sent' },
+  { value: 'won', label: 'Won' },
+  { value: 'lost', label: 'Lost' },
+  { value: 'on-hold', label: 'On Hold' },
+] as const;
+
 export default function QuotesList() {
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
   const navigate = useNavigate();
+
+  const filteredProjects = statusFilter === 'all'
+    ? projects
+    : projects.filter(p => p.status === statusFilter);
 
   const handleNew = () => {
     const project = createNewProject();
@@ -34,15 +49,37 @@ export default function QuotesList() {
         </Button>
       </div>
 
-      {projects.length === 0 ? (
+      {/* Status filter tabs */}
+      <div className="flex gap-1 overflow-x-auto pb-1">
+        {STATUS_FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setStatusFilter(f.value)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              statusFilter === f.value
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            {f.label}
+            {f.value !== 'all' && (
+              <span className="ml-1.5 opacity-70">
+                {projects.filter(p => p.status === f.value).length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {filteredProjects.length === 0 ? (
         <div className="elevated-card rounded-xl p-12 text-center">
           <FileText className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No quotes created yet</p>
-          <Button onClick={handleNew} variant="outline">Create your first quote</Button>
+          <p className="text-muted-foreground mb-4">{statusFilter === 'all' ? 'No quotes created yet' : 'No quotes with this status'}</p>
+          {statusFilter === 'all' && <Button onClick={handleNew} variant="outline">Create your first quote</Button>}
         </div>
       ) : (
         <div className="grid gap-4">
-          {projects.slice().reverse().map(project => {
+          {filteredProjects.slice().reverse().map(project => {
             const summary = calculateQuoteSummary(project.lineItems, project.settings, getProjectPricing(project));
             return (
               <div key={project.id} className="elevated-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
