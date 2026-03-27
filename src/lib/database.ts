@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Client, Supplier, Project, PricingData } from '@/lib/types';
+import type { Client, Supplier, Project, PricingData, ManagedProject } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
 
 // ── Clients ──────────────────────────────────────────────
