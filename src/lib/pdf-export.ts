@@ -237,6 +237,65 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
   doc.text('All prices excl. VAT', summaryX, y);
   doc.setTextColor(0, 0, 0);
 
+  // === DETAILED BREAKDOWN TABLE (per window) ===
+  doc.addPage();
+  y = 20;
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Installation & Extras Breakdown', margin, y);
+  y += 8;
+
+  if (project.lineItems.length > 0) {
+    const detailBody = project.lineItems.map((item, i) => {
+      const breakdown = getItemSellingBreakdown(item, project.settings, pricing);
+      const installTotal = breakdown.installation
+        + breakdown.internalMakingGood + breakdown.externalMakingGood
+        + breakdown.architrave + breakdown.trims + breakdown.mdfReveal
+        + breakdown.deliveryStock + breakdown.fensaSurvey;
+      return [
+        item.itemRef || `${i + 1}`,
+        item.type,
+        formatCurrency(installTotal * item.qty),
+        formatCurrency(breakdown.extras * item.qty),
+        formatCurrency((installTotal + breakdown.extras) * item.qty),
+      ];
+    });
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Ref', 'Type', 'Installation', 'Extras', 'Total']],
+      body: detailBody,
+      theme: 'plain',
+      headStyles: {
+        fillColor: false as any,
+        textColor: [60, 60, 60],
+        fontStyle: 'bold',
+        fontSize: 8,
+        cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: [30, 30, 30],
+        cellPadding: { top: 2.5, bottom: 2.5, left: 4, right: 4 },
+      },
+      columnStyles: {
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+      },
+      margin: { left: margin, right: margin },
+      willDrawCell: (data) => {
+        if (data.section === 'head') {
+          doc.setDrawColor(160, 160, 160);
+          doc.setLineWidth(0.3);
+          doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
+        }
+      },
+    });
+  }
+
   // === FOOTER ===
   const totalPages = (doc as any).internal.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
