@@ -216,7 +216,13 @@ export default function QuoteBuilder() {
           </div>
           <div>
             <Label>Status</Label>
-            <Select value={project.status} onValueChange={(v) => updateProject({ status: v as Project['status'] })}>
+            <Select value={project.status} onValueChange={(v) => {
+              if (v === 'won') {
+                setShowWonConfirm(true);
+              } else {
+                updateProject({ status: v as Project['status'] });
+              }
+            }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">Draft</SelectItem>
