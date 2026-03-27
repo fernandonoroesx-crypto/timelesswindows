@@ -201,6 +201,19 @@ export default function QuoteBuilder() {
             <Label>Project Ref</Label>
             <Input value={project.projectRef} onChange={e => updateProject({ projectRef: e.target.value })} placeholder="AD123 - Address" />
           </div>
+          <div>
+            <Label>Status</Label>
+            <Select value={project.status} onValueChange={(v) => updateProject({ status: v as Project['status'] })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="won">Won</SelectItem>
+                <SelectItem value="lost">Lost</SelectItem>
+                <SelectItem value="on_hold">On Hold</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-6 mt-4 pt-4 border-t">

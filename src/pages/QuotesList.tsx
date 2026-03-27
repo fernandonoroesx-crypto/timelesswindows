@@ -47,7 +47,10 @@ export default function QuotesList() {
             return (
               <div key={project.id} className="elevated-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="font-heading font-semibold truncate">{project.projectRef || 'Untitled'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-heading font-semibold truncate">{project.projectRef || 'Untitled'}</p>
+                    <StatusBadge status={project.status} />
+                  </div>
                   <p className="text-sm text-muted-foreground">{project.client || 'No client'} · {project.date}</p>
                 </div>
                 <div className="flex items-center gap-6 text-sm">
