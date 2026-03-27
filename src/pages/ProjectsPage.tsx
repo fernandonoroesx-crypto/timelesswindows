@@ -37,7 +37,7 @@ const stageBadgeClass: Record<ProjectStage, string> = {
 
 export default function ProjectsPage() {
   const { managedProjects } = useApp();
-  const { role, fieldUserName } = useRole();
+  const { role, displayName } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
