@@ -80,10 +80,12 @@ export default function Dashboard() {
           <h1 className="font-heading text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-1">Project board overview</p>
         </div>
-        <Button onClick={handleNewProject} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-          <Plus className="w-4 h-4 mr-2" />
-          New Quote
-        </Button>
+        {role !== 'field' && (
+          <Button onClick={handleNewProject} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            New Quote
+          </Button>
+        )}
       </div>
 
       {/* Summary bar */}
