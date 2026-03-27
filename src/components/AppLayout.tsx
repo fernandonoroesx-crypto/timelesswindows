@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck } from 'lucide-react';
+import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
