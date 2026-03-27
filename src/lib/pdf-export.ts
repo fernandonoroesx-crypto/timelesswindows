@@ -302,11 +302,15 @@ export async function exportInstallationPdf(project: Project) {
     let grandTotal = 0;
     const detailBody = project.lineItems.map((item, i) => {
       const breakdown = getItemSellingBreakdown(item, project.settings, pricing);
-      const installTotal = (breakdown.installation
-        + breakdown.internalMakingGood + breakdown.externalMakingGood
-        + breakdown.architrave + breakdown.trims + breakdown.mdfReveal
-        + breakdown.deliveryStock + breakdown.fensaSurvey) * item.qty;
+      const installTotal = breakdown.installation * item.qty;
       grandTotal += installTotal;
+      return [
+        item.itemRef || `${i + 1}`,
+        item.type,
+        `${item.widthMm} × ${item.heightMm}`,
+        item.qty.toString(),
+        formatCurrency(installTotal),
+      ];
       return [
         item.itemRef || `${i + 1}`,
         item.type,
