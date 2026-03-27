@@ -7,6 +7,7 @@ const navItems = [
   { to: '/clients', icon: Users, label: 'Clients' },
   { to: '/suppliers', icon: Truck, label: 'Suppliers' },
   { to: '/quotes', icon: FileText, label: 'Quotes' },
+  { to: '/projects', icon: FolderOpen, label: 'Projects' },
   { to: '/quotes/new', icon: Plus, label: 'New Quote' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
