@@ -237,33 +237,91 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
   doc.text('All prices excl. VAT', summaryX, y);
   doc.setTextColor(0, 0, 0);
 
-  // === DETAILED BREAKDOWN TABLE (per window) ===
-  doc.addPage();
-  y = 20;
+  // === FOOTER ===
+  const totalPages = (doc as any).internal.getNumberOfPages();
+  for (let pg = 1; pg <= totalPages; pg++) {
+    doc.setPage(pg);
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    const pageStr = `Page ${String(pg).padStart(2, '0')} of ${String(totalPages).padStart(2, '0')}`;
+    doc.text(pageStr, pageWidth - margin, pageHeight - 10, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+  }
 
-  doc.setFontSize(12);
+  // Save
+  const filename = `Quote-${project.projectRef || project.id}.pdf`;
+  doc.save(filename);
+}
+
+export async function exportInstallationPdf(project: Project) {
+  const doc = new jsPDF();
+  const pricing = getProjectPricing(project);
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  let y = 20;
+
+  // === HEADER ===
+  const logoData = await loadLogoBase64();
+  if (logoData) {
+    const logoW = 60;
+    const logoH = logoW / 3.7;
+    doc.addImage(logoData, 'JPEG', pageWidth - margin - logoW, 14, logoW, logoH);
+  }
+
+  doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.text('Installation Breakdown', margin, y);
+  doc.text('Installation Costs Report', margin, y);
+  y += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  if (project.client) {
+    doc.text(project.client, margin, y);
+    y += 5;
+  }
+  if (project.projectRef) {
+    doc.text(`Ref: ${project.projectRef}`, margin, y);
+    y += 5;
+  }
+  doc.text(`Date: ${project.date || new Date().toLocaleDateString('en-GB')}`, margin, y);
+  doc.setTextColor(0, 0, 0);
   y += 8;
 
+  // Divider
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 8;
+
+  // === TABLE ===
   if (project.lineItems.length > 0) {
+    let grandTotal = 0;
     const detailBody = project.lineItems.map((item, i) => {
       const breakdown = getItemSellingBreakdown(item, project.settings, pricing);
-      const installTotal = breakdown.installation
+      const installTotal = (breakdown.installation
         + breakdown.internalMakingGood + breakdown.externalMakingGood
         + breakdown.architrave + breakdown.trims + breakdown.mdfReveal
-        + breakdown.deliveryStock + breakdown.fensaSurvey;
+        + breakdown.deliveryStock + breakdown.fensaSurvey) * item.qty;
+      grandTotal += installTotal;
       return [
         item.itemRef || `${i + 1}`,
         item.type,
-        formatCurrency(installTotal * item.qty),
+        `${item.widthMm} × ${item.heightMm}`,
+        item.qty.toString(),
+        formatCurrency(installTotal),
       ];
     });
 
+    // Add total row
+    detailBody.push(['', '', '', 'Total:', formatCurrency(grandTotal)]);
+
     autoTable(doc, {
       startY: y,
-      head: [['Ref', 'Type', 'Installation']],
+      head: [['Ref', 'Type', 'Size (mm)', 'Qty', 'Installation']],
       body: detailBody,
       theme: 'plain',
       headStyles: {
@@ -279,7 +337,8 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
         cellPadding: { top: 2.5, bottom: 2.5, left: 4, right: 4 },
       },
       columnStyles: {
-        2: { halign: 'right' },
+        3: { halign: 'center', cellWidth: 14 },
+        4: { halign: 'right' },
       },
       margin: { left: margin, right: margin },
       willDrawCell: (data) => {
@@ -288,22 +347,25 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
           doc.setLineWidth(0.3);
           doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
         }
+        // Bold the total row
+        if (data.section === 'body' && data.row.index === detailBody.length - 1) {
+          data.cell.styles.fontStyle = 'bold';
+        }
       },
     });
   }
 
   // === FOOTER ===
   const totalPages = (doc as any).internal.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
+  for (let pg = 1; pg <= totalPages; pg++) {
+    doc.setPage(pg);
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
-    const pageStr = `Page ${String(p).padStart(2, '0')} of ${String(totalPages).padStart(2, '0')}`;
+    const pageStr = `Page ${String(pg).padStart(2, '0')} of ${String(totalPages).padStart(2, '0')}`;
     doc.text(pageStr, pageWidth - margin, pageHeight - 10, { align: 'right' });
     doc.setTextColor(0, 0, 0);
   }
 
-  // Save
-  const filename = `Quote-${project.projectRef || project.id}.pdf`;
+  const filename = `Installation-${project.projectRef || project.id}.pdf`;
   doc.save(filename);
 }

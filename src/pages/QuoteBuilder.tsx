@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
-import { exportQuotePdf } from '@/lib/pdf-export';
+import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
 import PricingEditor from '@/components/PricingEditor';
 import PdfImportDialog from '@/components/PdfImportDialog';
 
@@ -148,9 +148,15 @@ export default function QuoteBuilder() {
           <Button variant="outline" onClick={async () => {
             const client = clients.find(c => c.id === project.clientId);
             await exportQuotePdf(project, client?.address);
-            toast.success('PDF exported');
+            toast.success('Quote PDF exported');
           }}>
-            <FileDown className="w-4 h-4 mr-2" /> Export PDF
+            <FileDown className="w-4 h-4 mr-2" /> Quote PDF
+          </Button>
+          <Button variant="outline" onClick={async () => {
+            await exportInstallationPdf(project);
+            toast.success('Installation report exported');
+          }}>
+            <FileDown className="w-4 h-4 mr-2" /> Installation PDF
           </Button>
         </div>
       </div>
