@@ -61,7 +61,7 @@ export default function ProjectsPage() {
     <div>
       <h1 className="text-2xl font-heading font-bold text-foreground mb-6">Projects</h1>
       <div className="space-y-3">
-        {managedProjects.map(mp => {
+        {visibleProjects.map(mp => {
           const stageLabel = STAGES.find(s => s.value === mp.currentStage)?.label || mp.currentStage;
           return (
             <Card key={mp.id} className="hover:shadow-md transition-shadow">
