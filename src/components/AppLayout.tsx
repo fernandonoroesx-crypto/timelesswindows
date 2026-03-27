@@ -16,6 +16,8 @@ const allNavItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { role } = useRole();
+  const navItems = allNavItems.filter(item => item.roles.includes(role));
 
   return (
     <div className="flex min-h-screen">

@@ -59,6 +59,34 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-slide-in">
+      {/* Role Switcher */}
+      <div className="elevated-card rounded-xl p-6">
+        <h2 className="font-heading text-lg font-semibold mb-4">User Role (Testing)</h2>
+        <p className="text-xs text-muted-foreground mb-3">Switch roles to simulate different user access levels.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+          <div>
+            <Label>Current Role</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin — Full access</SelectItem>
+                <SelectItem value="manager">Manager — No settings/pricing</SelectItem>
+                <SelectItem value="field">Field — Projects only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Field User Name</Label>
+            <Input
+              placeholder="e.g. John Smith"
+              value={fieldUserName}
+              onChange={e => setFieldUserName(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">Used to filter projects when role = Field</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold">Pricing Settings</h1>
