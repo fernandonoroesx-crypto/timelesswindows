@@ -42,7 +42,7 @@ export default function ProjectsPage() {
     ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
     : managedProjects;
 
-  if (managedProjects.length === 0) {
+  if (visibleProjects.length === 0) {
     return (
       <div>
         <h1 className="text-2xl font-heading font-bold text-foreground mb-6">Projects</h1>
