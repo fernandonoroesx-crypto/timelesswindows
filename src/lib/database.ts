@@ -150,3 +150,58 @@ export async function saveGlobalPricing(pricing: PricingData): Promise<void> {
   }, { onConflict: 'key' });
   if (error) throw error;
 }
+
+// ── Managed Projects ────────────────────────────────────
+
+export async function fetchManagedProjects(): Promise<ManagedProject[]> {
+  const { data, error } = await supabase
+    .from('managed_projects')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    quoteId: row.quote_id,
+    quoteRef: row.quote_ref || '',
+    clientName: row.client_name || '',
+    address: row.address || '',
+    projectType: row.project_type || 'standard',
+    currentStage: row.current_stage || 'won',
+    keyDates: {
+      surveyDate: row.survey_date || undefined,
+      orderDate: row.order_date || undefined,
+      expectedDelivery: row.expected_delivery || undefined,
+      installationDate: row.installation_date || undefined,
+      completionDate: row.completion_date || undefined,
+    },
+    assignedTeam: (row.assigned_team as any[]) || [],
+    notes: (row.notes as any[]) || [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export async function upsertManagedProject(mp: ManagedProject): Promise<void> {
+  const { error } = await supabase.from('managed_projects').upsert({
+    id: mp.id,
+    quote_id: mp.quoteId,
+    quote_ref: mp.quoteRef,
+    client_name: mp.clientName,
+    address: mp.address,
+    project_type: mp.projectType,
+    current_stage: mp.currentStage,
+    survey_date: mp.keyDates.surveyDate || null,
+    order_date: mp.keyDates.orderDate || null,
+    expected_delivery: mp.keyDates.expectedDelivery || null,
+    installation_date: mp.keyDates.installationDate || null,
+    completion_date: mp.keyDates.completionDate || null,
+    assigned_team: mp.assignedTeam as any,
+    notes: mp.notes as any,
+  } as any);
+  if (error) throw error;
+}
+
+export async function deleteManagedProject(id: string): Promise<void> {
+  const { error } = await supabase.from('managed_projects').delete().eq('id', id);
+  if (error) throw error;
+}

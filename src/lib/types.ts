@@ -122,6 +122,35 @@ export interface Supplier {
   createdAt: string;
 }
 
+export interface ProjectNote {
+  timestamp: string;
+  author: string;
+  text: string;
+}
+
+export type ProjectStage = 'won' | 'survey' | 'ordered' | 'delivery' | 'installation' | 'completed';
+
+export interface ManagedProject {
+  id: string;
+  quoteId: string | null;
+  quoteRef: string;
+  clientName: string;
+  address: string;
+  projectType: 'standard' | 'supply-only';
+  currentStage: ProjectStage;
+  keyDates: {
+    surveyDate?: string;
+    orderDate?: string;
+    expectedDelivery?: string;
+    installationDate?: string;
+    completionDate?: string;
+  };
+  assignedTeam: string[];
+  notes: ProjectNote[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ArchitravePricing {
   single: number;
   baySide: number;
