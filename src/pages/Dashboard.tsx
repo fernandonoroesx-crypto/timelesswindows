@@ -36,7 +36,13 @@ const stageHeaderColor: Record<ProjectStage, string> = {
 
 export default function Dashboard() {
   const { projects, managedProjects, setProjects, setCurrentProject } = useApp();
+  const { role, fieldUserName } = useRole();
   const navigate = useNavigate();
+
+  // Filter managed projects for field users
+  const visibleProjects = role === 'field'
+    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
+    : managedProjects;
 
   const handleNewProject = () => {
     const project = createNewProject();
