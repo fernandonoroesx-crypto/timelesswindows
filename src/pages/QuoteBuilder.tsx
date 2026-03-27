@@ -441,6 +441,27 @@ export default function QuoteBuilder() {
           <QuotePricingEditor pricing={quotePricing} onUpdate={updatePricing} />
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={showWonConfirm} onOpenChange={setShowWonConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark this quote as Won?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a linked Project.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              updateProject({ status: 'won' });
+              setShowWonConfirm(false);
+              toast.success('Quote marked as Won');
+            }}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
