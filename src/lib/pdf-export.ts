@@ -244,7 +244,7 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.text('Installation & Extras Breakdown', margin, y);
+  doc.text('Installation Breakdown', margin, y);
   y += 8;
 
   if (project.lineItems.length > 0) {
@@ -258,14 +258,12 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
         item.itemRef || `${i + 1}`,
         item.type,
         formatCurrency(installTotal * item.qty),
-        formatCurrency(breakdown.extras * item.qty),
-        formatCurrency((installTotal + breakdown.extras) * item.qty),
       ];
     });
 
     autoTable(doc, {
       startY: y,
-      head: [['Ref', 'Type', 'Installation', 'Extras', 'Total']],
+      head: [['Ref', 'Type', 'Installation']],
       body: detailBody,
       theme: 'plain',
       headStyles: {
