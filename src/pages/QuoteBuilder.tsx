@@ -452,10 +452,16 @@ export default function QuoteBuilder() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              updateProject({ status: 'won' });
+            <AlertDialogAction onClick={async () => {
+              const wonProject = { ...project, status: 'won' as const, updatedAt: new Date().toISOString() };
+              setProject(wonProject);
               setShowWonConfirm(false);
-              toast.success('Quote marked as Won');
+              try {
+                await saveProjectToDb(wonProject);
+                toast.success('Quote marked as Won — Project created');
+              } catch {
+                toast.error('Failed to save');
+              }
             }}>
               Confirm
             </AlertDialogAction>
