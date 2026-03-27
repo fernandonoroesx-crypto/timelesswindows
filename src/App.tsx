@@ -10,6 +10,7 @@ import QuotesList from "./pages/QuotesList";
 import SettingsPage from "./pages/SettingsPage";
 import ClientsPage from "./pages/ClientsPage";
 import SuppliersPage from "./pages/SuppliersPage";
+import ProjectsPage from "./pages/ProjectsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
