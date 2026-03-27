@@ -4,12 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save } from 'lucide-react';
+import { Save, UserPlus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PricingData } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
 import { fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
-import { useRole, type UserRole } from '@/lib/roles';
+import { useAuth, type UserRole } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const MDF_LABELS: Record<string, string> = {
   singleNarrow: 'Single · Narrow',
@@ -20,8 +22,16 @@ const MDF_LABELS: Record<string, string> = {
   centralWide: 'Central · Wide',
 };
 
+interface ManagedUser {
+  id: string;
+  email: string;
+  display_name: string;
+  role: UserRole | null;
+  created_at: string;
+}
+
 export default function SettingsPage() {
-  const { role, setRole, fieldUserName, setFieldUserName } = useRole();
+  const { role } = useAuth();
   const [pricing, setPricing] = useState<PricingData>(DEFAULT_PRICING);
   const [loading, setLoading] = useState(true);
 
@@ -59,33 +69,8 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-slide-in">
-      {/* Role Switcher */}
-      <div className="elevated-card rounded-xl p-6">
-        <h2 className="font-heading text-lg font-semibold mb-4">User Role (Testing)</h2>
-        <p className="text-xs text-muted-foreground mb-3">Switch roles to simulate different user access levels.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
-          <div>
-            <Label>Current Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin — Full access</SelectItem>
-                <SelectItem value="manager">Manager — No settings/pricing</SelectItem>
-                <SelectItem value="field">Field — Projects only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Field User Name</Label>
-            <Input
-              placeholder="e.g. John Smith"
-              value={fieldUserName}
-              onChange={e => setFieldUserName(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">Used to filter projects when role = Field</p>
-          </div>
-        </div>
-      </div>
+      {/* User Management (Admin only) */}
+      {role === 'admin' && <UserManagement />}
 
       <div className="flex items-center justify-between">
         <div>
@@ -260,6 +245,152 @@ export default function SettingsPage() {
   );
 }
 
+/* ─── User Management Section ─── */
+function UserManagement() {
+  const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState<UserRole>('field');
+  const [inviting, setInviting] = useState(false);
+
+  const loadUsers = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-users', { method: 'GET' });
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (e) {
+      console.error('Failed to load users:', e);
+    }
+    setLoadingUsers(false);
+  };
+
+  useEffect(() => { loadUsers(); }, []);
+
+  const handleInvite = async () => {
+    if (!inviteEmail) return;
+    setInviting(true);
+    try {
+      const { error } = await supabase.functions.invoke('admin-users', {
+        method: 'POST',
+        body: { email: inviteEmail, displayName: inviteName, role: inviteRole },
+      });
+      if (error) throw error;
+      toast.success(`Invite sent to ${inviteEmail}`);
+      setInviteOpen(false);
+      setInviteEmail('');
+      setInviteName('');
+      setInviteRole('field');
+      loadUsers();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to invite user');
+    }
+    setInviting(false);
+  };
+
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    try {
+      const { error } = await supabase.functions.invoke('admin-users', {
+        method: 'PATCH',
+        body: { userId, role: newRole },
+      });
+      if (error) throw error;
+      toast.success('Role updated');
+      loadUsers();
+    } catch {
+      toast.error('Failed to update role');
+    }
+  };
+
+  return (
+    <div className="elevated-card rounded-xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" />
+          <h2 className="font-heading text-lg font-semibold">User Management</h2>
+        </div>
+        <Button size="sm" onClick={() => setInviteOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" /> Invite User
+        </Button>
+      </div>
+
+      {loadingUsers ? (
+        <p className="text-sm text-muted-foreground">Loading users…</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="pb-2 font-medium">Name</th>
+                <th className="pb-2 font-medium">Email</th>
+                <th className="pb-2 font-medium">Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} className="border-b last:border-0">
+                  <td className="py-2">{u.display_name}</td>
+                  <td className="py-2 text-muted-foreground">{u.email}</td>
+                  <td className="py-2">
+                    <Select value={u.role || ''} onValueChange={(v) => handleRoleChange(u.id, v as UserRole)}>
+                      <SelectTrigger className="h-8 w-32">
+                        <SelectValue placeholder="No role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="field">Field</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Invite dialog */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite a New User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input placeholder="user@company.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Display Name</Label>
+              <Input placeholder="John Smith" value={inviteName} onChange={e => setInviteName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={inviteRole} onValueChange={v => setInviteRole(v as UserRole)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="field">Field</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
+            <Button onClick={handleInvite} disabled={inviting || !inviteEmail}>
+              {inviting ? 'Sending…' : 'Send Invite'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ─── Reusable edit rows ─── */
 function EditRow({ label, value, onChange, unit }: { label: string; value: number; onChange: (v: number) => void; unit?: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
