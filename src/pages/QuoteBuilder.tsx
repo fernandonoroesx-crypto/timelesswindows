@@ -3,7 +3,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
-import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, ArchitraveType, TrimsType, MdfRevealType, Supplier } from '@/lib/types';
+import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, ArchitraveType, TrimsType, MdfRevealType, Supplier, ManagedProject } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ const WINDOW_TYPES: WindowType[] = [
 const EXTRA_TYPES: ExtraType[] = ['Recess of reveal', 'Shutters', 'Cut Out of work top'];
 
 export default function QuoteBuilder() {
-  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers, saveProjectToDb, globalPricing } = useApp();
+  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers, saveProjectToDb, saveManagedProjectToDb, globalPricing } = useApp();
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project>(() => {
@@ -458,6 +458,23 @@ export default function QuoteBuilder() {
               setShowWonConfirm(false);
               try {
                 await saveProjectToDb(wonProject);
+                // Find client to get address
+                const client = clients.find(c => c.id === wonProject.clientId);
+                const mp: ManagedProject = {
+                  id: crypto.randomUUID(),
+                  quoteId: wonProject.id,
+                  quoteRef: wonProject.projectRef,
+                  clientName: wonProject.client,
+                  address: client?.address || '',
+                  projectType: wonProject.settings.supplyOnly ? 'supply-only' : 'standard',
+                  currentStage: 'won',
+                  keyDates: {},
+                  assignedTeam: [],
+                  notes: [],
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+                await saveManagedProjectToDb(mp);
                 toast.success('Quote marked as Won — Project created');
               } catch {
                 toast.error('Failed to save');

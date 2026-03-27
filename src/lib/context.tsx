@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier } from '@/lib/types';
-import { fetchClients, upsertClient, deleteClient as dbDeleteClient, fetchSuppliers, upsertSupplier, deleteSupplier as dbDeleteSupplier, fetchProjects, upsertProject, deleteProject as dbDeleteProject, fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
+import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier, ManagedProject } from '@/lib/types';
+import { fetchClients, upsertClient, deleteClient as dbDeleteClient, fetchSuppliers, upsertSupplier, deleteSupplier as dbDeleteSupplier, fetchProjects, upsertProject, deleteProject as dbDeleteProject, fetchGlobalPricing, saveGlobalPricing, fetchManagedProjects, upsertManagedProject, deleteManagedProject as dbDeleteManagedProject } from '@/lib/database';
 import { toast } from 'sonner';
 
 export const DEFAULT_PRICING: PricingData = {
@@ -48,6 +48,7 @@ interface AppContextType {
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
   suppliers: Supplier[];
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
+  managedProjects: ManagedProject[];
   globalPricing: PricingData;
   loading: boolean;
   saveProjectToDb: (project: Project) => Promise<void>;
@@ -56,6 +57,8 @@ interface AppContextType {
   deleteClientFromDb: (id: string) => Promise<void>;
   saveSupplierToDb: (supplier: Supplier) => Promise<void>;
   deleteSupplierFromDb: (id: string) => Promise<void>;
+  saveManagedProjectToDb: (mp: ManagedProject) => Promise<void>;
+  deleteManagedProjectFromDb: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -130,6 +133,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [managedProjects, setManagedProjects] = useState<ManagedProject[]>([]);
   const [globalPricing, setGlobalPricing] = useState<PricingData>(DEFAULT_PRICING);
   const [loading, setLoading] = useState(true);
 
@@ -137,16 +141,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [dbClients, dbSuppliers, dbProjects, dbPricing] = await Promise.all([
+        const [dbClients, dbSuppliers, dbProjects, dbPricing, dbManagedProjects] = await Promise.all([
           fetchClients(),
           fetchSuppliers(),
           fetchProjects(),
           fetchGlobalPricing(),
+          fetchManagedProjects(),
         ]);
         setClients(dbClients);
         setSuppliers(dbSuppliers);
         setProjects(dbProjects);
         setGlobalPricing(dbPricing);
+        setManagedProjects(dbManagedProjects);
       } catch (err) {
         console.error('Failed to load data from cloud:', err);
         toast.error('Failed to load data from cloud');
@@ -197,13 +203,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSuppliers(prev => prev.filter(s => s.id !== id));
   }, []);
 
+  const saveManagedProjectToDb = useCallback(async (mp: ManagedProject) => {
+    await upsertManagedProject(mp);
+    setManagedProjects(prev => {
+      const exists = prev.find(p => p.id === mp.id);
+      return exists ? prev.map(p => p.id === mp.id ? mp : p) : [...prev, mp];
+    });
+  }, []);
+
+  const deleteManagedProjectFromDb = useCallback(async (id: string) => {
+    await dbDeleteManagedProject(id);
+    setManagedProjects(prev => prev.filter(p => p.id !== id));
+  }, []);
+
   return (
     <AppContext.Provider value={{
       projects, setProjects, currentProject, setCurrentProject,
-      clients, setClients, suppliers, setSuppliers, globalPricing, loading,
+      clients, setClients, suppliers, setSuppliers,
+      managedProjects, globalPricing, loading,
       saveProjectToDb, deleteProjectFromDb,
       saveClientToDb, deleteClientFromDb,
       saveSupplierToDb, deleteSupplierFromDb,
+      saveManagedProjectToDb, deleteManagedProjectFromDb,
     }}>
       {children}
     </AppContext.Provider>
