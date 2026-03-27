@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/lib/context';
-import type { ManagedProject, ProjectStage } from '@/lib/types';
+import type { ProjectStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { FolderOpen, Eye } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
