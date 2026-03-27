@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApp, getProjectPricing } from '@/lib/context';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import { useNavigate } from 'react-router-dom';
@@ -5,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Plus, FileText } from 'lucide-react';
 import { createNewProject } from '@/lib/context';
 import { toast } from 'sonner';
+
+const STATUS_FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'sent', label: 'Sent' },
+  { value: 'won', label: 'Won' },
+  { value: 'lost', label: 'Lost' },
+  { value: 'on-hold', label: 'On Hold' },
+] as const;
 
 export default function QuotesList() {
   const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
