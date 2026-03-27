@@ -203,6 +203,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSuppliers(prev => prev.filter(s => s.id !== id));
   }, []);
 
+  const saveManagedProjectToDb = useCallback(async (mp: ManagedProject) => {
+    await upsertManagedProject(mp);
+    setManagedProjects(prev => {
+      const exists = prev.find(p => p.id === mp.id);
+      return exists ? prev.map(p => p.id === mp.id ? mp : p) : [...prev, mp];
+    });
+  }, []);
+
+  const deleteManagedProjectFromDb = useCallback(async (id: string) => {
+    await dbDeleteManagedProject(id);
+    setManagedProjects(prev => prev.filter(p => p.id !== id));
+  }, []);
+
   return (
     <AppContext.Provider value={{
       projects, setProjects, currentProject, setCurrentProject,
