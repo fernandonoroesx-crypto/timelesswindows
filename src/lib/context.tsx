@@ -48,6 +48,7 @@ interface AppContextType {
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
   suppliers: Supplier[];
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
+  managedProjects: ManagedProject[];
   globalPricing: PricingData;
   loading: boolean;
   saveProjectToDb: (project: Project) => Promise<void>;
@@ -56,6 +57,8 @@ interface AppContextType {
   deleteClientFromDb: (id: string) => Promise<void>;
   saveSupplierToDb: (supplier: Supplier) => Promise<void>;
   deleteSupplierFromDb: (id: string) => Promise<void>;
+  saveManagedProjectToDb: (mp: ManagedProject) => Promise<void>;
+  deleteManagedProjectFromDb: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
