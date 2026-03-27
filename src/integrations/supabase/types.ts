@@ -83,6 +83,7 @@ export type Database = {
           project_manager_id: string | null
           project_manager_name: string | null
           project_ref: string
+          sent_at: string | null
           settings: Json
           status: string
           updated_at: string
@@ -98,6 +99,7 @@ export type Database = {
           project_manager_id?: string | null
           project_manager_name?: string | null
           project_ref?: string
+          sent_at?: string | null
           settings?: Json
           status?: string
           updated_at?: string
@@ -113,6 +115,7 @@ export type Database = {
           project_manager_id?: string | null
           project_manager_name?: string | null
           project_ref?: string
+          sent_at?: string | null
           settings?: Json
           status?: string
           updated_at?: string

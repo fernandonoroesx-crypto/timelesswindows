@@ -98,6 +98,7 @@ export async function fetchProjects(): Promise<Project[]> {
     lineItems: (row.line_items as any[]) || [],
     pricing: row.pricing ? (row.pricing as unknown as PricingData) : undefined,
     status: (row.status as Project['status']) || 'draft',
+    sentAt: (row as any).sent_at || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
@@ -116,6 +117,7 @@ export async function upsertProject(project: Project): Promise<void> {
     line_items: project.lineItems as any,
     pricing: project.pricing as any,
     status: project.status,
+    sent_at: project.sentAt || null,
   });
   if (error) throw error;
 }

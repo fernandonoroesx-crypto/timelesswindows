@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
 import PricingEditor from '@/components/PricingEditor';
@@ -141,9 +141,21 @@ export default function QuoteBuilder() {
             {project.projectRef || 'New quote'} — {project.client || 'No client'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={saveProject} className="bg-primary text-primary-foreground">
             <Save className="w-4 h-4 mr-2" /> Save
+          </Button>
+          <Button
+            variant="outline"
+            className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+            onClick={async () => {
+              const now = new Date().toISOString();
+              updateProject({ status: 'sent', sentAt: now });
+              setTimeout(() => saveProject(), 100);
+              toast.success('Quote marked as sent');
+            }}
+          >
+            <Send className="w-4 h-4 mr-2" /> Send
           </Button>
           <Button variant="outline" onClick={async () => {
             const client = clients.find(c => c.id === project.clientId);
