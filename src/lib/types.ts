@@ -61,6 +61,7 @@ export interface Project {
   lineItems: QuoteLineItem[];
   pricing?: PricingData;
   status: 'draft' | 'sent' | 'won' | 'lost' | 'on-hold';
+  sentAt?: string;
   createdAt: string;
   updatedAt: string;
 }
