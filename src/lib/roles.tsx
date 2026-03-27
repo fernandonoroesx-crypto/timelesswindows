@@ -1,3 +1,4 @@
+// Role-based access context
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export type UserRole = 'admin' | 'manager' | 'field';
