@@ -60,7 +60,7 @@ export interface Project {
   settings: ProjectSettings;
   lineItems: QuoteLineItem[];
   pricing?: PricingData;
-  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  status: 'draft' | 'sent' | 'won' | 'lost' | 'on_hold';
   createdAt: string;
   updatedAt: string;
 }
