@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, getProjectPricing } from '@/lib/context';
+import { useRole } from '@/lib/roles';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import type { ProjectStage, ManagedProject } from '@/lib/types';
 import { Plus, Layers, TrendingUp, AlertTriangle, Eye } from 'lucide-react';
