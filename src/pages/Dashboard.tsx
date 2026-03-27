@@ -52,13 +52,15 @@ export default function Dashboard() {
   };
 
   // Summary stats
-  const activeProjects = managedProjects.filter(p => p.currentStage !== 'complete');
-  const wonPipelineValue = projects
-    .filter(p => p.status === 'won')
-    .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings, getProjectPricing(p)).sellingPrice.total, 0);
+  const activeProjects = visibleProjects.filter(p => p.currentStage !== 'complete');
+  const wonPipelineValue = role !== 'field'
+    ? projects
+        .filter(p => p.status === 'won')
+        .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings, getProjectPricing(p)).sellingPrice.total, 0)
+    : 0;
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const overdueProjects = managedProjects.filter(mp => {
+  const overdueProjects = visibleProjects.filter(mp => {
     if (mp.currentStage === 'complete') return false;
     const hasAnyDate = Object.values(mp.keyDates).some(d => !!d);
     return !hasAnyDate && mp.createdAt < sevenDaysAgo;
@@ -67,7 +69,7 @@ export default function Dashboard() {
   // Group by stage
   const grouped = STAGES.map(stage => ({
     ...stage,
-    projects: managedProjects.filter(mp => mp.currentStage === stage.value),
+    projects: visibleProjects.filter(mp => mp.currentStage === stage.value),
   }));
 
   return (
