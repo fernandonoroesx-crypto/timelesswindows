@@ -16,9 +16,9 @@ export default function Dashboard() {
   };
 
   const totalQuotes = projects.length;
-  const activeQuotes = projects.filter(p => p.status === 'draft' || p.status === 'sent').length;
+  const activeQuotes = projects.filter(p => p.status === 'draft' || p.status === 'sent' || p.status === 'on_hold').length;
   const totalRevenue = projects
-    .filter(p => p.status === 'accepted')
+    .filter(p => p.status === 'won')
     .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings, getProjectPricing(p)).sellingPrice.total, 0);
   const totalItems = projects.reduce((sum, p) => sum + p.lineItems.reduce((s, i) => s + i.qty, 0), 0);
 
@@ -118,16 +118,25 @@ function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label
   );
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  draft: 'Draft',
+  sent: 'Sent',
+  won: 'Won',
+  lost: 'Lost',
+  on_hold: 'On Hold',
+};
+
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
-    sent: 'bg-info/10 text-info',
-    accepted: 'bg-success/10 text-success',
-    rejected: 'bg-destructive/10 text-destructive',
+    sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    won: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    lost: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    on_hold: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   };
   return (
     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || styles.draft}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {STATUS_LABELS[status] || status}
     </span>
   );
 }
