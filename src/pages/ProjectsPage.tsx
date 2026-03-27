@@ -17,7 +17,7 @@ const STAGES: { value: ProjectStage; label: string }[] = [
   { value: 'ordered', label: 'Ordered' },
   { value: 'in-production', label: 'In Production' },
   { value: 'out-for-delivery', label: 'Out for Delivery' },
-  { value: 'on-site', label: 'On Site' },
+  { value: 'delivered', label: 'Delivered' },
   { value: 'installed', label: 'Installed' },
   { value: 'invoiced', label: 'Invoiced' },
   { value: 'complete', label: 'Complete' },
