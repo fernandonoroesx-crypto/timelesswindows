@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
@@ -34,6 +35,7 @@ export default function QuoteBuilder() {
     return p;
   });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [showWonConfirm, setShowWonConfirm] = useState(false);
 
   useEffect(() => {
     if (currentProject) setProject(currentProject);
@@ -215,7 +217,13 @@ export default function QuoteBuilder() {
           </div>
           <div>
             <Label>Status</Label>
-            <Select value={project.status} onValueChange={(v) => updateProject({ status: v as Project['status'] })}>
+            <Select value={project.status} onValueChange={(v) => {
+              if (v === 'won') {
+                setShowWonConfirm(true);
+              } else {
+                updateProject({ status: v as Project['status'] });
+              }
+            }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">Draft</SelectItem>
@@ -433,6 +441,27 @@ export default function QuoteBuilder() {
           <QuotePricingEditor pricing={quotePricing} onUpdate={updatePricing} />
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={showWonConfirm} onOpenChange={setShowWonConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark this quote as Won?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a linked Project.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              updateProject({ status: 'won' });
+              setShowWonConfirm(false);
+              toast.success('Quote marked as Won');
+            }}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
