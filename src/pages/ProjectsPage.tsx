@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/lib/context';
-import { useRole } from '@/lib/roles';
+import { useAuth } from '@/lib/auth';
 import type { ProjectStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,12 +37,12 @@ const stageBadgeClass: Record<ProjectStage, string> = {
 
 export default function ProjectsPage() {
   const { managedProjects } = useApp();
-  const { role, fieldUserName } = useRole();
+  const { role, displayName } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
   const visibleProjects = (role === 'field'
-    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
+    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === displayName.toLowerCase()))
     : managedProjects
   ).filter(mp => {
     if (!searchQuery.trim()) return true;

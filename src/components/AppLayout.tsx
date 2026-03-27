@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen, LogOut } from 'lucide-react';
 import { useState } from 'react';
-import { useRole } from '@/lib/roles';
+import { useAuth } from '@/lib/auth';
 
 const allNavItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'field'] },
@@ -15,9 +15,8 @@ const allNavItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
-  const { role } = useRole();
-  const navItems = allNavItems.filter(item => item.roles.includes(role));
+  const { role, displayName, signOut } = useAuth();
+  const navItems = allNavItems.filter(item => role && item.roles.includes(role));
 
   return (
     <div className="flex min-h-screen">
@@ -46,7 +45,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-sidebar-border space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-xs text-sidebar-foreground/80 truncate">{displayName}</p>
+              <p className="text-[10px] text-sidebar-foreground/40 capitalize">{role}</p>
+            </div>
+            <button
+              onClick={signOut}
+              className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-xs text-sidebar-foreground/40">v1.0 — Pricing 2026</p>
         </div>
       </aside>
@@ -54,9 +66,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar text-sidebar-foreground border-b border-sidebar-border px-4 py-3 flex items-center justify-between">
         <h1 className="font-heading text-lg font-bold text-sidebar-primary">TIMELESS WINDOWS</h1>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1">
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={signOut}
+            className="p-1 text-sidebar-foreground/50 hover:text-sidebar-foreground"
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1">
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile nav overlay */}

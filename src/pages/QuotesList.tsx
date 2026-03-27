@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp, getProjectPricing } from '@/lib/context';
-import { useRole } from '@/lib/roles';
+import { useAuth } from '@/lib/auth';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ export default function QuotesList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
-  const { role } = useRole();
+  const { role } = useAuth();
   const navigate = useNavigate();
 
   const filteredProjects = projects.filter(p => {
