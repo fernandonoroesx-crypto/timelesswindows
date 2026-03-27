@@ -70,7 +70,7 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {projects.slice(-10).reverse().map(project => {
-                  const summary = calculateQuoteSummary(project.lineItems, project.settings);
+                  const summary = calculateQuoteSummary(project.lineItems, project.settings, getProjectPricing(project));
                   return (
                     <tr key={project.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                       <td className="py-3 px-2 font-medium">{project.projectRef || '—'}</td>
