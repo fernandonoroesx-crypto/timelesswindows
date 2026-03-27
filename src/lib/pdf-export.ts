@@ -300,7 +300,7 @@ export async function exportInstallationPdf(project: Project) {
   // === TABLE ===
   if (project.lineItems.length > 0) {
     let grandCostTotal = 0;
-    let grandSellingTotal = 0;
+    let grandCostTotal = 0;
     const detailBody = project.lineItems.map((item, i) => {
       const costBreakdown = getItemCostBreakdown(item, project.settings, pricing);
       const sellingBreakdown = getItemSellingBreakdown(item, project.settings, pricing);
