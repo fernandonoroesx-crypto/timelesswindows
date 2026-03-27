@@ -458,6 +458,23 @@ export default function QuoteBuilder() {
               setShowWonConfirm(false);
               try {
                 await saveProjectToDb(wonProject);
+                // Find client to get address
+                const client = clients.find(c => c.id === wonProject.clientId);
+                const mp: ManagedProject = {
+                  id: crypto.randomUUID(),
+                  quoteId: wonProject.id,
+                  quoteRef: wonProject.projectRef,
+                  clientName: wonProject.client,
+                  address: client?.address || '',
+                  projectType: wonProject.settings.supplyOnly ? 'supply-only' : 'standard',
+                  currentStage: 'won',
+                  keyDates: {},
+                  assignedTeam: [],
+                  notes: [],
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+                await saveManagedProjectToDb(mp);
                 toast.success('Quote marked as Won — Project created');
               } catch {
                 toast.error('Failed to save');
