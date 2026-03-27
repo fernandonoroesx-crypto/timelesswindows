@@ -21,6 +21,7 @@ const MDF_LABELS: Record<string, string> = {
 };
 
 export default function SettingsPage() {
+  const { role, setRole, fieldUserName, setFieldUserName } = useRole();
   const [pricing, setPricing] = useState<PricingData>(DEFAULT_PRICING);
   const [loading, setLoading] = useState(true);
 
