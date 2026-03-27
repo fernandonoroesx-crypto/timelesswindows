@@ -12,9 +12,7 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | null>(null);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<UserRole>(() => {
-    return (localStorage.getItem('tw_role') as UserRole) || 'admin';
-  });
+  const [role, setRole] = useState<UserRole>('admin');
   const [fieldUserName, setFieldUserName] = useState(() => {
     return localStorage.getItem('tw_field_name') || '';
   });
