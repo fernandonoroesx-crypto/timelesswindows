@@ -98,6 +98,7 @@ export async function fetchProjects(): Promise<Project[]> {
     lineItems: (row.line_items as any[]) || [],
     pricing: row.pricing ? (row.pricing as unknown as PricingData) : undefined,
     status: (row.status as Project['status']) || 'draft',
+    sentAt: (row as any).sent_at || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
