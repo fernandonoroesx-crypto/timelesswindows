@@ -300,14 +300,10 @@ export async function exportInstallationPdf(project: Project) {
   // === TABLE ===
   if (project.lineItems.length > 0) {
     let grandCostTotal = 0;
-    let grandCostTotal = 0;
     const detailBody = project.lineItems.map((item, i) => {
       const costBreakdown = getItemCostBreakdown(item, project.settings, pricing);
-      const sellingBreakdown = getItemSellingBreakdown(item, project.settings, pricing);
       const installCost = costBreakdown.installation * item.qty;
-      const installSelling = sellingBreakdown.installation * item.qty;
       grandCostTotal += installCost;
-      grandSellingTotal += installSelling;
 
       // Build extras description
       const extraParts: string[] = [];
@@ -322,17 +318,16 @@ export async function exportInstallationPdf(project: Project) {
         `${item.widthMm} × ${item.heightMm}`,
         item.qty.toString(),
         formatCurrency(installCost),
-        formatCurrency(installSelling),
         extrasDesc,
       ];
     });
 
     // Add total row
-    detailBody.push(['', '', '', 'Total:', formatCurrency(grandCostTotal), formatCurrency(grandSellingTotal), '']);
+    detailBody.push(['', '', '', 'Total:', formatCurrency(grandCostTotal), '']);
 
     autoTable(doc, {
       startY: y,
-      head: [['Ref', 'Type', 'Size (mm)', 'Qty', 'Install Cost', 'Install Selling', 'Extras']],
+      head: [['Ref', 'Type', 'Size (mm)', 'Qty', 'Install Cost', 'Extras']],
       body: detailBody,
       theme: 'plain',
       headStyles: {
@@ -351,8 +346,7 @@ export async function exportInstallationPdf(project: Project) {
         0: { cellWidth: 16 },
         3: { halign: 'center', cellWidth: 14 },
         4: { halign: 'right' },
-        5: { halign: 'right' },
-        6: { cellWidth: 40 },
+        5: { cellWidth: 40 },
       },
       margin: { left: margin, right: margin },
       willDrawCell: (data) => {
