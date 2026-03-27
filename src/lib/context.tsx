@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier } from '@/lib/types';
-import { fetchClients, upsertClient, deleteClient as dbDeleteClient, fetchSuppliers, upsertSupplier, deleteSupplier as dbDeleteSupplier, fetchProjects, upsertProject, deleteProject as dbDeleteProject, fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
+import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier, ManagedProject } from '@/lib/types';
+import { fetchClients, upsertClient, deleteClient as dbDeleteClient, fetchSuppliers, upsertSupplier, deleteSupplier as dbDeleteSupplier, fetchProjects, upsertProject, deleteProject as dbDeleteProject, fetchGlobalPricing, saveGlobalPricing, fetchManagedProjects, upsertManagedProject, deleteManagedProject as dbDeleteManagedProject } from '@/lib/database';
 import { toast } from 'sonner';
 
 export const DEFAULT_PRICING: PricingData = {
