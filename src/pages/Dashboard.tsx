@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, getProjectPricing } from '@/lib/context';
-import { useRole } from '@/lib/roles';
+import { useAuth } from '@/lib/auth';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import type { ProjectStage, ManagedProject } from '@/lib/types';
 import { Plus, Layers, TrendingUp, AlertTriangle, Eye } from 'lucide-react';
@@ -36,12 +36,12 @@ const stageHeaderColor: Record<ProjectStage, string> = {
 
 export default function Dashboard() {
   const { projects, managedProjects, setProjects, setCurrentProject } = useApp();
-  const { role, fieldUserName } = useRole();
+  const { role, displayName } = useAuth();
   const navigate = useNavigate();
 
   // Filter managed projects for field users
   const visibleProjects = role === 'field'
-    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
+    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === displayName.toLowerCase()))
     : managedProjects;
 
   const handleNewProject = () => {
@@ -158,14 +158,11 @@ function KanbanColumn({
 }) {
   return (
     <div className="w-52 flex-shrink-0 flex flex-col">
-      {/* Column header */}
       <div className="flex items-center gap-2 mb-3">
         <div className={`w-2 h-2 rounded-full ${headerColor}`} />
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider">{label}</span>
         <span className="text-xs text-muted-foreground ml-auto">{projects.length}</span>
       </div>
-
-      {/* Cards */}
       <div className="space-y-2 flex-1 min-h-[120px]">
         {projects.length === 0 ? (
           <div className="border border-dashed border-border rounded-lg h-24 flex items-center justify-center">

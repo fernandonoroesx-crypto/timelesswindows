@@ -42,7 +42,7 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const visibleProjects = (role === 'field'
-    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
+    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === displayName.toLowerCase()))
     : managedProjects
   ).filter(mp => {
     if (!searchQuery.trim()) return true;

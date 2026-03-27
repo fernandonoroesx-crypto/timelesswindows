@@ -24,7 +24,7 @@ export default function QuotesList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
-  const { role } = useRole();
+  const { role } = useAuth();
   const navigate = useNavigate();
 
   const filteredProjects = projects.filter(p => {
