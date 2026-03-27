@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Project, QuoteLineItem } from './types';
-import { getItemSellingBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
+import { getItemSellingBreakdown, getItemCostBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
 import { getProjectPricing } from './context';
 
 async function loadLogoBase64(): Promise<string | null> {
@@ -299,33 +299,40 @@ export async function exportInstallationPdf(project: Project) {
 
   // === TABLE ===
   if (project.lineItems.length > 0) {
-    let grandTotal = 0;
+    let grandCostTotal = 0;
+    let grandSellingTotal = 0;
     const detailBody = project.lineItems.map((item, i) => {
-      const breakdown = getItemSellingBreakdown(item, project.settings, pricing);
-      const installTotal = breakdown.installation * item.qty;
-      grandTotal += installTotal;
+      const costBreakdown = getItemCostBreakdown(item, project.settings, pricing);
+      const sellingBreakdown = getItemSellingBreakdown(item, project.settings, pricing);
+      const installCost = costBreakdown.installation * item.qty;
+      const installSelling = sellingBreakdown.installation * item.qty;
+      grandCostTotal += installCost;
+      grandSellingTotal += installSelling;
+
+      // Build extras description
+      const extraParts: string[] = [];
+      if (item.extra1 !== 'none') extraParts.push(item.extra1);
+      if (item.extra2 !== 'none') extraParts.push(item.extra2);
+      if (item.customExtra > 0) extraParts.push(`Custom (${formatCurrency(item.customExtra)})`);
+      const extrasDesc = extraParts.length > 0 ? extraParts.join(', ') : '—';
+
       return [
         item.itemRef || `${i + 1}`,
         item.type,
         `${item.widthMm} × ${item.heightMm}`,
         item.qty.toString(),
-        formatCurrency(installTotal),
-      ];
-      return [
-        item.itemRef || `${i + 1}`,
-        item.type,
-        `${item.widthMm} × ${item.heightMm}`,
-        item.qty.toString(),
-        formatCurrency(installTotal),
+        formatCurrency(installCost),
+        formatCurrency(installSelling),
+        extrasDesc,
       ];
     });
 
     // Add total row
-    detailBody.push(['', '', '', 'Total:', formatCurrency(grandTotal)]);
+    detailBody.push(['', '', '', 'Total:', formatCurrency(grandCostTotal), formatCurrency(grandSellingTotal), '']);
 
     autoTable(doc, {
       startY: y,
-      head: [['Ref', 'Type', 'Size (mm)', 'Qty', 'Installation']],
+      head: [['Ref', 'Type', 'Size (mm)', 'Qty', 'Install Cost', 'Install Selling', 'Extras']],
       body: detailBody,
       theme: 'plain',
       headStyles: {
@@ -341,8 +348,11 @@ export async function exportInstallationPdf(project: Project) {
         cellPadding: { top: 2.5, bottom: 2.5, left: 4, right: 4 },
       },
       columnStyles: {
+        0: { cellWidth: 16 },
         3: { halign: 'center', cellWidth: 14 },
         4: { halign: 'right' },
+        5: { halign: 'right' },
+        6: { cellWidth: 40 },
       },
       margin: { left: margin, right: margin },
       willDrawCell: (data) => {
