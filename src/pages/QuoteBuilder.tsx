@@ -35,6 +35,7 @@ export default function QuoteBuilder() {
     return p;
   });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [showWonConfirm, setShowWonConfirm] = useState(false);
 
   useEffect(() => {
     if (currentProject) setProject(currentProject);
