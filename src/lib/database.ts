@@ -117,6 +117,7 @@ export async function upsertProject(project: Project): Promise<void> {
     line_items: project.lineItems as any,
     pricing: project.pricing as any,
     status: project.status,
+    sent_at: project.sentAt || null,
   });
   if (error) throw error;
 }
