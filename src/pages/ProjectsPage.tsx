@@ -15,9 +15,12 @@ const STAGES: { value: ProjectStage; label: string }[] = [
   { value: 'won', label: 'Won' },
   { value: 'survey', label: 'Survey' },
   { value: 'ordered', label: 'Ordered' },
-  { value: 'delivery', label: 'Delivery' },
-  { value: 'installation', label: 'Installation' },
-  { value: 'completed', label: 'Completed' },
+  { value: 'in-production', label: 'In Production' },
+  { value: 'out-for-delivery', label: 'Out for Delivery' },
+  { value: 'on-site', label: 'On Site' },
+  { value: 'installed', label: 'Installed' },
+  { value: 'invoiced', label: 'Invoiced' },
+  { value: 'complete', label: 'Complete' },
 ];
 
 const stageBadgeClass: Record<ProjectStage, string> = {
