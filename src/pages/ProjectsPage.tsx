@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FolderOpen, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+import { FolderOpen, Plus, X, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STAGES: { value: ProjectStage; label: string }[] = [
@@ -18,6 +18,7 @@ const STAGES: { value: ProjectStage; label: string }[] = [
   { value: 'in-production', label: 'In Production' },
   { value: 'out-for-delivery', label: 'Out for Delivery' },
   { value: 'delivered', label: 'Delivered' },
+  { value: 'on-site', label: 'On Site' },
   { value: 'installed', label: 'Installed' },
   { value: 'invoiced', label: 'Invoiced' },
   { value: 'complete', label: 'Complete' },
@@ -26,38 +27,40 @@ const STAGES: { value: ProjectStage; label: string }[] = [
 const stageBadgeClass: Record<ProjectStage, string> = {
   won: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
   survey: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
-  ordered: 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-800',
-  'in-production': 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800',
-  'out-for-delivery': 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
-  delivered: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800',
-  installed: 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-800',
-  invoiced: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800',
-  complete: 'bg-muted text-muted-foreground border-border',
+  ordered: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+  'in-production': 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+  'out-for-delivery': 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-800',
+  delivered: 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-800',
+  'on-site': 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800',
+  installed: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800',
+  invoiced: 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-800',
+  complete: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
 };
 
 export default function ProjectsPage() {
   const { managedProjects, saveManagedProjectToDb } = useApp();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState<ManagedProject | null>(null);
   const [newTeamMember, setNewTeamMember] = useState('');
   const [newNoteText, setNewNoteText] = useState('');
 
-  const toggleExpand = (id: string) => {
-    if (expandedId === id) {
-      setExpandedId(null);
-      setEditingProject(null);
-    } else {
-      setExpandedId(id);
-      setEditingProject(managedProjects.find(p => p.id === id) || null);
-    }
+  const openDetail = (mp: ManagedProject) => {
+    setViewingId(mp.id);
+    setEditingProject({ ...mp });
+  };
+
+  const closeDetail = () => {
+    setViewingId(null);
+    setEditingProject(null);
+    setNewTeamMember('');
+    setNewNoteText('');
   };
 
   const saveProject = async () => {
     if (!editingProject) return;
     try {
       await saveManagedProjectToDb({ ...editingProject, updatedAt: new Date().toISOString() });
-      setExpandedId(null);
-      setEditingProject(null);
+      closeDetail();
       toast.success('Project saved');
     } catch {
       toast.error('Failed to save project');
@@ -82,6 +85,139 @@ export default function ProjectsPage() {
     setNewNoteText('');
   };
 
+  // Detail view
+  if (viewingId && editingProject) {
+    const stageLabel = STAGES.find(s => s.value === editingProject.currentStage)?.label || editingProject.currentStage;
+    return (
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <Button variant="outline" size="sm" onClick={closeDetail}>← Back</Button>
+          <h1 className="text-2xl font-heading font-bold text-foreground">{editingProject.quoteRef || 'Project'}</h1>
+          <Badge className={stageBadgeClass[editingProject.currentStage]}>{stageLabel}</Badge>
+        </div>
+
+        <div className="space-y-6">
+          {/* Stage & Address */}
+          <Card>
+            <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Current Stage</Label>
+                <Select value={editingProject.currentStage} onValueChange={(v) => setEditingProject({ ...editingProject, currentStage: v as ProjectStage })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STAGES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Client</Label>
+                <Input value={editingProject.clientName} disabled className="bg-muted" />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Address</Label>
+                <Input value={editingProject.address} onChange={e => setEditingProject({ ...editingProject, address: e.target.value })} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Key Dates */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Key Dates</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {([
+                  ['surveyDate', 'Survey Date'],
+                  ['orderDate', 'Order Date'],
+                  ['expectedDelivery', 'Expected Delivery'],
+                  ['installationDate', 'Installation Date'],
+                  ['completionDate', 'Completion Date'],
+                ] as const).map(([key, label]) => (
+                  <div key={key}>
+                    <Label className="text-xs">{label}</Label>
+                    <Input
+                      type="date"
+                      value={editingProject.keyDates[key] || ''}
+                      onChange={e => setEditingProject({
+                        ...editingProject,
+                        keyDates: { ...editingProject.keyDates, [key]: e.target.value || undefined },
+                      })}
+                    />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Assigned Team */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Assigned Team</h3>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {editingProject.assignedTeam.map((member, i) => (
+                  <Badge key={i} variant="secondary" className="gap-1">
+                    {member}
+                    <button onClick={() => removeTeamMember(i)} className="ml-1 hover:text-destructive">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+                {editingProject.assignedTeam.length === 0 && <p className="text-sm text-muted-foreground">No team members assigned</p>}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add team member..."
+                  value={newTeamMember}
+                  onChange={e => setNewTeamMember(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addTeamMember()}
+                  className="max-w-xs"
+                />
+                <Button variant="outline" size="sm" onClick={addTeamMember}><Plus className="w-4 h-4" /></Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notes */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Notes</h3>
+              <div className="flex gap-2 mb-3">
+                <Textarea
+                  placeholder="Add a note..."
+                  value={newNoteText}
+                  onChange={e => setNewNoteText(e.target.value)}
+                  className="min-h-[60px]"
+                />
+                <Button variant="outline" size="sm" onClick={addNote} className="self-end"><Plus className="w-4 h-4" /></Button>
+              </div>
+              {editingProject.notes.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {editingProject.notes.map((note, i) => (
+                    <div key={i} className="bg-muted/50 rounded p-3 text-sm">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>{note.author}</span>
+                        <span>{new Date(note.timestamp).toLocaleString()}</span>
+                      </div>
+                      <p className="text-foreground">{note.text}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No notes yet</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={closeDetail}>Cancel</Button>
+            <Button onClick={saveProject}>Save Project</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // List view
   if (managedProjects.length === 0) {
     return (
       <div>
@@ -102,17 +238,11 @@ export default function ProjectsPage() {
       <h1 className="text-2xl font-heading font-bold text-foreground mb-6">Projects</h1>
       <div className="space-y-3">
         {managedProjects.map(mp => {
-          const isExpanded = expandedId === mp.id;
           const stageLabel = STAGES.find(s => s.value === mp.currentStage)?.label || mp.currentStage;
-
           return (
             <Card key={mp.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                {/* Summary row */}
-                <button
-                  onClick={() => toggleExpand(mp.id)}
-                  className="w-full flex items-center justify-between gap-4 text-left"
-                >
+                <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-mono text-sm font-semibold text-foreground">{mp.quoteRef || '—'}</span>
@@ -122,119 +252,10 @@ export default function ProjectsPage() {
                     <p className="text-sm text-muted-foreground">{mp.clientName || 'No client'}</p>
                     {mp.address && <p className="text-xs text-muted-foreground truncate">{mp.address}</p>}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {mp.assignedTeam.length > 0 && (
-                      <span className="text-xs text-muted-foreground">{mp.assignedTeam.length} team</span>
-                    )}
-                    {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                  </div>
-                </button>
-
-                {/* Expanded detail */}
-                {isExpanded && editingProject && (
-                  <div className="mt-4 pt-4 border-t border-border space-y-6">
-                    {/* Stage */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Current Stage</Label>
-                        <Select value={editingProject.currentStage} onValueChange={(v) => setEditingProject({ ...editingProject, currentStage: v as ProjectStage })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {STAGES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Address</Label>
-                        <Input value={editingProject.address} onChange={e => setEditingProject({ ...editingProject, address: e.target.value })} />
-                      </div>
-                    </div>
-
-                    {/* Key Dates */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-2">Key Dates</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {([
-                          ['surveyDate', 'Survey Date'],
-                          ['orderDate', 'Order Date'],
-                          ['expectedDelivery', 'Expected Delivery'],
-                          ['installationDate', 'Installation Date'],
-                          ['completionDate', 'Completion Date'],
-                        ] as const).map(([key, label]) => (
-                          <div key={key}>
-                            <Label className="text-xs">{label}</Label>
-                            <Input
-                              type="date"
-                              value={editingProject.keyDates[key] || ''}
-                              onChange={e => setEditingProject({
-                                ...editingProject,
-                                keyDates: { ...editingProject.keyDates, [key]: e.target.value || undefined },
-                              })}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Assigned Team */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-2">Assigned Team</h3>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {editingProject.assignedTeam.map((member, i) => (
-                          <Badge key={i} variant="secondary" className="gap-1">
-                            {member}
-                            <button onClick={() => removeTeamMember(i)} className="ml-1 hover:text-destructive">
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Add team member..."
-                          value={newTeamMember}
-                          onChange={e => setNewTeamMember(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && addTeamMember()}
-                          className="max-w-xs"
-                        />
-                        <Button variant="outline" size="sm" onClick={addTeamMember}><Plus className="w-4 h-4" /></Button>
-                      </div>
-                    </div>
-
-                    {/* Notes */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-2">Notes</h3>
-                      <div className="flex gap-2 mb-3">
-                        <Textarea
-                          placeholder="Add a note..."
-                          value={newNoteText}
-                          onChange={e => setNewNoteText(e.target.value)}
-                          className="min-h-[60px]"
-                        />
-                        <Button variant="outline" size="sm" onClick={addNote} className="self-end"><Plus className="w-4 h-4" /></Button>
-                      </div>
-                      {editingProject.notes.length > 0 && (
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
-                          {editingProject.notes.map((note, i) => (
-                            <div key={i} className="bg-muted/50 rounded p-2 text-sm">
-                              <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                                <span>{note.author}</span>
-                                <span>{new Date(note.timestamp).toLocaleString()}</span>
-                              </div>
-                              <p className="text-foreground">{note.text}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Save */}
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => { setExpandedId(null); setEditingProject(null); }}>Cancel</Button>
-                      <Button onClick={saveProject}>Save Project</Button>
-                    </div>
-                  </div>
-                )}
+                  <Button variant="outline" size="sm" onClick={() => openDetail(mp)}>
+                    <Eye className="w-4 h-4 mr-1" /> View
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
