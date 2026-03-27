@@ -71,6 +71,71 @@ export type Database = {
         }
         Relationships: []
       }
+      managed_projects: {
+        Row: {
+          address: string
+          assigned_team: Json
+          client_name: string
+          completion_date: string | null
+          created_at: string
+          current_stage: string
+          expected_delivery: string | null
+          id: string
+          installation_date: string | null
+          notes: Json
+          order_date: string | null
+          project_type: string
+          quote_id: string | null
+          quote_ref: string
+          survey_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          assigned_team?: Json
+          client_name?: string
+          completion_date?: string | null
+          created_at?: string
+          current_stage?: string
+          expected_delivery?: string | null
+          id?: string
+          installation_date?: string | null
+          notes?: Json
+          order_date?: string | null
+          project_type?: string
+          quote_id?: string | null
+          quote_ref?: string
+          survey_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          assigned_team?: Json
+          client_name?: string
+          completion_date?: string | null
+          created_at?: string
+          current_stage?: string
+          expected_delivery?: string | null
+          id?: string
+          installation_date?: string | null
+          notes?: Json
+          order_date?: string | null
+          project_type?: string
+          quote_id?: string | null
+          quote_ref?: string
+          survey_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "managed_projects_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client: string
