@@ -85,7 +85,7 @@ export default function QuotesList() {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'Draft', sent: 'Sent', won: 'Won', lost: 'Lost', on_hold: 'On Hold',
+  draft: 'Draft', sent: 'Sent', won: 'Won', lost: 'Lost', 'on-hold': 'On Hold',
 };
 
 function StatusBadge({ status }: { status: string }) {
