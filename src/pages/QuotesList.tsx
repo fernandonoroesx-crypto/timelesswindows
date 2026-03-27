@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp, getProjectPricing } from '@/lib/context';
-import { useRole } from '@/lib/roles';
+import { useAuth } from '@/lib/auth';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
