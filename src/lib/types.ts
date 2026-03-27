@@ -128,7 +128,7 @@ export interface ProjectNote {
   text: string;
 }
 
-export type ProjectStage = 'won' | 'survey' | 'ordered' | 'delivery' | 'installation' | 'completed';
+export type ProjectStage = 'won' | 'survey' | 'ordered' | 'in-production' | 'out-for-delivery' | 'on-site' | 'installed' | 'invoiced' | 'complete';
 
 export interface ManagedProject {
   id: string;
