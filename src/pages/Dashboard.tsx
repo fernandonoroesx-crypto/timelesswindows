@@ -16,7 +16,7 @@ export default function Dashboard() {
   };
 
   const totalQuotes = projects.length;
-  const activeQuotes = projects.filter(p => p.status === 'draft' || p.status === 'sent' || p.status === 'on_hold').length;
+  const activeQuotes = projects.filter(p => p.status === 'draft' || p.status === 'sent' || p.status === 'on-hold').length;
   const totalRevenue = projects
     .filter(p => p.status === 'won')
     .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings, getProjectPricing(p)).sellingPrice.total, 0);
