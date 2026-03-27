@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Project, QuoteLineItem } from './types';
-import { getItemSellingBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
+import { getItemSellingBreakdown, getItemCostBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
 import { getProjectPricing } from './context';
 
 async function loadLogoBase64(): Promise<string | null> {
