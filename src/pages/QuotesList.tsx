@@ -20,6 +20,7 @@ const STATUS_FILTERS = [
 export default function QuotesList() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
+  const { role } = useRole();
   const navigate = useNavigate();
 
   const filteredProjects = statusFilter === 'all'
