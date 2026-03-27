@@ -210,7 +210,7 @@ export default function QuoteBuilder() {
                 <SelectItem value="sent">Sent</SelectItem>
                 <SelectItem value="won">Won</SelectItem>
                 <SelectItem value="lost">Lost</SelectItem>
-                <SelectItem value="on_hold">On Hold</SelectItem>
+                <SelectItem value="on-hold">On Hold</SelectItem>
               </SelectContent>
             </Select>
           </div>
