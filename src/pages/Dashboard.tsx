@@ -123,7 +123,7 @@ const STATUS_LABELS: Record<string, string> = {
   sent: 'Sent',
   won: 'Won',
   lost: 'Lost',
-  on_hold: 'On Hold',
+  'on-hold': 'On Hold',
 };
 
 function StatusBadge({ status }: { status: string }) {
