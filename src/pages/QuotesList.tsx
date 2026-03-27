@@ -17,8 +17,13 @@ const STATUS_FILTERS = [
 ] as const;
 
 export default function QuotesList() {
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
   const navigate = useNavigate();
+
+  const filteredProjects = statusFilter === 'all'
+    ? projects
+    : projects.filter(p => p.status === statusFilter);
 
   const handleNew = () => {
     const project = createNewProject();
@@ -42,6 +47,28 @@ export default function QuotesList() {
         <Button onClick={handleNew} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
           <Plus className="w-4 h-4 mr-2" /> New Quote
         </Button>
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex gap-1 overflow-x-auto pb-1">
+        {STATUS_FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setStatusFilter(f.value)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              statusFilter === f.value
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            {f.label}
+            {f.value !== 'all' && (
+              <span className="ml-1.5 opacity-70">
+                {projects.filter(p => p.status === f.value).length}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {projects.length === 0 ? (
