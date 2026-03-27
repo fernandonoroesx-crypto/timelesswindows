@@ -35,7 +35,12 @@ const stageBadgeClass: Record<ProjectStage, string> = {
 
 export default function ProjectsPage() {
   const { managedProjects } = useApp();
+  const { role, fieldUserName } = useRole();
   const navigate = useNavigate();
+
+  const visibleProjects = role === 'field'
+    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
+    : managedProjects;
 
   if (managedProjects.length === 0) {
     return (

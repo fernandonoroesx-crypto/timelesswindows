@@ -99,15 +99,17 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">Active Projects</p>
           </div>
         </div>
-        <div className="elevated-card rounded-xl p-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <TrendingUp className="w-4 h-4 text-primary" />
+        {role !== 'field' && (
+          <div className="elevated-card rounded-xl p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-heading font-bold">{formatCurrency(wonPipelineValue)}</p>
+              <p className="text-xs text-muted-foreground">Pipeline Value</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xl font-heading font-bold">{formatCurrency(wonPipelineValue)}</p>
-            <p className="text-xs text-muted-foreground">Pipeline Value</p>
-          </div>
-        </div>
+        )}
         <div className="elevated-card rounded-xl p-4 flex items-center gap-3 col-span-2 lg:col-span-1">
           <div className={`p-2 rounded-lg ${overdueProjects.length > 0 ? 'bg-destructive/10' : 'bg-primary/10'}`}>
             <AlertTriangle className={`w-4 h-4 ${overdueProjects.length > 0 ? 'text-destructive' : 'text-primary'}`} />
