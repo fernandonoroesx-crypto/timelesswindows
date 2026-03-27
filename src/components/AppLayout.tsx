@@ -1,20 +1,23 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
+import { useRole } from '@/lib/roles';
 
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/clients', icon: Users, label: 'Clients' },
-  { to: '/suppliers', icon: Truck, label: 'Suppliers' },
-  { to: '/quotes', icon: FileText, label: 'Quotes' },
-  { to: '/projects', icon: FolderOpen, label: 'Projects' },
-  { to: '/quotes/new', icon: Plus, label: 'New Quote' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+const allNavItems = [
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'field'] },
+  { to: '/clients', icon: Users, label: 'Clients', roles: ['admin', 'manager'] },
+  { to: '/suppliers', icon: Truck, label: 'Suppliers', roles: ['admin', 'manager'] },
+  { to: '/quotes', icon: FileText, label: 'Quotes', roles: ['admin', 'manager'] },
+  { to: '/projects', icon: FolderOpen, label: 'Projects', roles: ['admin', 'manager', 'field'] },
+  { to: '/quotes/new', icon: Plus, label: 'New Quote', roles: ['admin', 'manager'] },
+  { to: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { role } = useRole();
+  const navItems = allNavItems.filter(item => item.roles.includes(role));
 
   return (
     <div className="flex min-h-screen">

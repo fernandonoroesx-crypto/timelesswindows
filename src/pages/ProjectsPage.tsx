@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/lib/context';
+import { useRole } from '@/lib/roles';
 import type { ProjectStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,9 +35,14 @@ const stageBadgeClass: Record<ProjectStage, string> = {
 
 export default function ProjectsPage() {
   const { managedProjects } = useApp();
+  const { role, fieldUserName } = useRole();
   const navigate = useNavigate();
 
-  if (managedProjects.length === 0) {
+  const visibleProjects = role === 'field'
+    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
+    : managedProjects;
+
+  if (visibleProjects.length === 0) {
     return (
       <div>
         <h1 className="text-2xl font-heading font-bold text-foreground mb-6">Projects</h1>
@@ -55,7 +61,7 @@ export default function ProjectsPage() {
     <div>
       <h1 className="text-2xl font-heading font-bold text-foreground mb-6">Projects</h1>
       <div className="space-y-3">
-        {managedProjects.map(mp => {
+        {visibleProjects.map(mp => {
           const stageLabel = STAGES.find(s => s.value === mp.currentStage)?.label || mp.currentStage;
           return (
             <Card key={mp.id} className="hover:shadow-md transition-shadow">

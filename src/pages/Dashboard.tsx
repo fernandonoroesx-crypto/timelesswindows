@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, getProjectPricing } from '@/lib/context';
+import { useRole } from '@/lib/roles';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import type { ProjectStage, ManagedProject } from '@/lib/types';
 import { Plus, Layers, TrendingUp, AlertTriangle, Eye } from 'lucide-react';
@@ -35,7 +36,13 @@ const stageHeaderColor: Record<ProjectStage, string> = {
 
 export default function Dashboard() {
   const { projects, managedProjects, setProjects, setCurrentProject } = useApp();
+  const { role, fieldUserName } = useRole();
   const navigate = useNavigate();
+
+  // Filter managed projects for field users
+  const visibleProjects = role === 'field'
+    ? managedProjects.filter(mp => mp.assignedTeam.some(name => name.toLowerCase() === fieldUserName.toLowerCase()))
+    : managedProjects;
 
   const handleNewProject = () => {
     const project = createNewProject();
@@ -45,13 +52,15 @@ export default function Dashboard() {
   };
 
   // Summary stats
-  const activeProjects = managedProjects.filter(p => p.currentStage !== 'complete');
-  const wonPipelineValue = projects
-    .filter(p => p.status === 'won')
-    .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings, getProjectPricing(p)).sellingPrice.total, 0);
+  const activeProjects = visibleProjects.filter(p => p.currentStage !== 'complete');
+  const wonPipelineValue = role !== 'field'
+    ? projects
+        .filter(p => p.status === 'won')
+        .reduce((sum, p) => sum + calculateQuoteSummary(p.lineItems, p.settings, getProjectPricing(p)).sellingPrice.total, 0)
+    : 0;
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const overdueProjects = managedProjects.filter(mp => {
+  const overdueProjects = visibleProjects.filter(mp => {
     if (mp.currentStage === 'complete') return false;
     const hasAnyDate = Object.values(mp.keyDates).some(d => !!d);
     return !hasAnyDate && mp.createdAt < sevenDaysAgo;
@@ -60,7 +69,7 @@ export default function Dashboard() {
   // Group by stage
   const grouped = STAGES.map(stage => ({
     ...stage,
-    projects: managedProjects.filter(mp => mp.currentStage === stage.value),
+    projects: visibleProjects.filter(mp => mp.currentStage === stage.value),
   }));
 
   return (
@@ -71,10 +80,12 @@ export default function Dashboard() {
           <h1 className="font-heading text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-1">Project board overview</p>
         </div>
-        <Button onClick={handleNewProject} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-          <Plus className="w-4 h-4 mr-2" />
-          New Quote
-        </Button>
+        {role !== 'field' && (
+          <Button onClick={handleNewProject} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            New Quote
+          </Button>
+        )}
       </div>
 
       {/* Summary bar */}
@@ -88,15 +99,17 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">Active Projects</p>
           </div>
         </div>
-        <div className="elevated-card rounded-xl p-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <TrendingUp className="w-4 h-4 text-primary" />
+        {role !== 'field' && (
+          <div className="elevated-card rounded-xl p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-heading font-bold">{formatCurrency(wonPipelineValue)}</p>
+              <p className="text-xs text-muted-foreground">Pipeline Value</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xl font-heading font-bold">{formatCurrency(wonPipelineValue)}</p>
-            <p className="text-xs text-muted-foreground">Pipeline Value</p>
-          </div>
-        </div>
+        )}
         <div className="elevated-card rounded-xl p-4 flex items-center gap-3 col-span-2 lg:col-span-1">
           <div className={`p-2 rounded-lg ${overdueProjects.length > 0 ? 'bg-destructive/10' : 'bg-primary/10'}`}>
             <AlertTriangle className={`w-4 h-4 ${overdueProjects.length > 0 ? 'text-destructive' : 'text-primary'}`} />

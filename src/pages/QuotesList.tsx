@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp, getProjectPricing } from '@/lib/context';
+import { useRole } from '@/lib/roles';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ const STATUS_FILTERS = [
 export default function QuotesList() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { projects, setCurrentProject, deleteProjectFromDb } = useApp();
+  const { role } = useRole();
   const navigate = useNavigate();
 
   const filteredProjects = statusFilter === 'all'
@@ -95,14 +97,16 @@ export default function QuotesList() {
                     <p className="text-muted-foreground text-xs">Items</p>
                     <p className="font-semibold">{summary.totalItems}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Total</p>
-                    <p className="font-semibold">{formatCurrency(summary.sellingPrice.total)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Margin</p>
-                    <p className="font-semibold">{summary.margin.toFixed(1)}%</p>
-                  </div>
+                   <div>
+                     <p className="text-muted-foreground text-xs">Total</p>
+                     <p className="font-semibold">{formatCurrency(summary.sellingPrice.total)}</p>
+                   </div>
+                   {role !== 'field' && (
+                     <div>
+                       <p className="text-muted-foreground text-xs">Margin</p>
+                       <p className="font-semibold">{summary.margin.toFixed(1)}%</p>
+                     </div>
+                   )}
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => { setCurrentProject(project); navigate('/quotes/new'); }}>
