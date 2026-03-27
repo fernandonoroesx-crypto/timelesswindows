@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/lib/context';
-import { useRole } from '@/lib/roles';
+import { useAuth } from '@/lib/auth';
 import type { ProjectStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
