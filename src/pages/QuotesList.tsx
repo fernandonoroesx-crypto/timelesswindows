@@ -71,15 +71,15 @@ export default function QuotesList() {
         ))}
       </div>
 
-      {projects.length === 0 ? (
+      {filteredProjects.length === 0 ? (
         <div className="elevated-card rounded-xl p-12 text-center">
           <FileText className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No quotes created yet</p>
-          <Button onClick={handleNew} variant="outline">Create your first quote</Button>
+          <p className="text-muted-foreground mb-4">{statusFilter === 'all' ? 'No quotes created yet' : 'No quotes with this status'}</p>
+          {statusFilter === 'all' && <Button onClick={handleNew} variant="outline">Create your first quote</Button>}
         </div>
       ) : (
         <div className="grid gap-4">
-          {projects.slice().reverse().map(project => {
+          {filteredProjects.slice().reverse().map(project => {
             const summary = calculateQuoteSummary(project.lineItems, project.settings, getProjectPricing(project));
             return (
               <div key={project.id} className="elevated-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
