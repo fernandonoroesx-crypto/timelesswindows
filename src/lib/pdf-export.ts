@@ -280,8 +280,6 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
       },
       columnStyles: {
         2: { halign: 'right' },
-        3: { halign: 'right' },
-        4: { halign: 'right' },
       },
       margin: { left: margin, right: margin },
       willDrawCell: (data) => {
