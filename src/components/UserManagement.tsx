@@ -4,7 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { UserPlus, Users, Pencil, Mail, Shield, User } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import {
+  UserPlus, Users, Pencil, Mail, Shield, User,
+  ShieldCheck, Briefcase, HardHat, Calendar, MoreVertical, RefreshCw,
+} from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { UserRole } from '@/lib/auth';
@@ -17,18 +24,44 @@ interface ManagedUser {
   created_at: string;
 }
 
+const ROLE_CONFIG: Record<string, { label: string; description: string; icon: typeof Shield; color: string; bg: string; border: string }> = {
+  admin: {
+    label: 'Admin',
+    description: 'Full access',
+    icon: ShieldCheck,
+    color: 'text-secondary',
+    bg: 'bg-secondary/10',
+    border: 'border-secondary/25',
+  },
+  manager: {
+    label: 'Manager',
+    description: 'No settings',
+    icon: Briefcase,
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
+  },
+  field: {
+    label: 'Field',
+    description: 'Projects only',
+    icon: HardHat,
+    color: 'text-accent',
+    bg: 'bg-accent/10',
+    border: 'border-accent/20',
+  },
+};
+
 export default function UserManagement() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Invite dialog
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('field');
   const [inviting, setInviting] = useState(false);
 
-  // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editName, setEditName] = useState('');
@@ -95,87 +128,155 @@ export default function UserManagement() {
     setSaving(false);
   };
 
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
-    try {
-      const { error } = await supabase.functions.invoke('admin-users', {
-        method: 'PATCH',
-        body: { userId, role: newRole },
-      });
-      if (error) throw error;
-      toast.success('Role updated');
-      loadUsers();
-    } catch {
-      toast.error('Failed to update role');
-    }
+  const filteredUsers = users.filter(u => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return u.display_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+  });
+
+  const roleCounts = users.reduce((acc, u) => {
+    const r = u.role || 'none';
+    acc[r] = (acc[r] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const getInitials = (name: string, email: string) => {
+    const source = name && name !== email ? name : email;
+    const parts = source.split(/[\s@]+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return source.substring(0, 2).toUpperCase();
   };
 
-  const roleBadge = (role: UserRole | null) => {
-    const styles: Record<string, string> = {
-      admin: 'bg-destructive/10 text-destructive border-destructive/20',
-      manager: 'bg-primary/10 text-primary border-primary/20',
-      field: 'bg-muted text-muted-foreground border-border',
-    };
-    return (
-      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${styles[role || 'field']}`}>
-        <Shield className="w-3 h-3" />
-        {role ? role.charAt(0).toUpperCase() + role.slice(1) : 'No role'}
-      </span>
-    );
+  const avatarGradient = (role: UserRole | null) => {
+    switch (role) {
+      case 'admin': return 'from-secondary/80 to-secondary/40';
+      case 'manager': return 'from-primary/80 to-primary/40';
+      case 'field': return 'from-accent/80 to-accent/40';
+      default: return 'from-muted-foreground/40 to-muted-foreground/20';
+    }
   };
 
   return (
     <div className="space-y-6 animate-slide-in">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary" />
-            User Management
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">Register new users and manage existing team members</p>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Team Members</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {users.length} user{users.length !== 1 ? 's' : ''} registered
+          </p>
         </div>
-        <Button onClick={() => setInviteOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-2" /> Register New User
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={() => { setLoadingUsers(true); loadUsers(); }} title="Refresh">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <Button onClick={() => setInviteOpen(true)} className="bg-primary text-primary-foreground">
+            <UserPlus className="w-4 h-4 mr-2" /> Add User
+          </Button>
+        </div>
       </div>
 
-      {loadingUsers ? (
-        <div className="elevated-card rounded-xl p-8 text-center text-muted-foreground">Loading users…</div>
-      ) : users.length === 0 ? (
-        <div className="elevated-card rounded-xl p-8 text-center text-muted-foreground">No users found.</div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {users.map(u => (
-            <div key={u.id} className="elevated-card rounded-xl p-5 flex flex-col gap-3 group relative">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                    {(u.display_name || u.email).charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{u.display_name}</p>
-                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                      <Mail className="w-3 h-3 shrink-0" /> {u.email}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => openEdit(u)}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3">
+        {(['admin', 'manager', 'field'] as const).map(r => {
+          const cfg = ROLE_CONFIG[r];
+          const Icon = cfg.icon;
+          return (
+            <div key={r} className={`rounded-xl border ${cfg.border} ${cfg.bg} px-4 py-3 flex items-center gap-3`}>
+              <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center`}>
+                <Icon className={`w-5 h-5 ${cfg.color}`} />
               </div>
-
-              <div className="flex items-center justify-between">
-                {roleBadge(u.role)}
-                <span className="text-xs text-muted-foreground">
-                  Joined {new Date(u.created_at).toLocaleDateString()}
-                </span>
+              <div>
+                <p className="text-xl font-heading font-bold leading-none">{roleCounts[r] || 0}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{cfg.label}s</p>
               </div>
             </div>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Input
+          placeholder="Search by name or email…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+        <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      </div>
+
+      {/* User list */}
+      {loadingUsers ? (
+        <div className="elevated-card rounded-xl p-12 text-center text-muted-foreground">
+          <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+          Loading team members…
+        </div>
+      ) : filteredUsers.length === 0 ? (
+        <div className="elevated-card rounded-xl p-12 text-center">
+          <Users className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-muted-foreground text-sm">
+            {searchQuery ? 'No users match your search.' : 'No team members yet.'}
+          </p>
+        </div>
+      ) : (
+        <div className="elevated-card rounded-xl overflow-hidden divide-y divide-border">
+          {filteredUsers.map((u, i) => {
+            const cfg = ROLE_CONFIG[u.role || 'field'];
+            const RoleIcon = cfg.icon;
+            return (
+              <div
+                key={u.id}
+                className="flex items-center gap-4 px-5 py-4 hover:bg-muted/40 transition-colors group"
+              >
+                {/* Avatar */}
+                <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${avatarGradient(u.role)} flex items-center justify-center text-white font-heading font-bold text-sm shrink-0 shadow-sm`}>
+                  {getInitials(u.display_name, u.email)}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-heading font-semibold text-sm truncate">
+                      {u.display_name || u.email}
+                    </p>
+                    <span className={`inline-flex items-center gap-1 rounded-full border ${cfg.border} ${cfg.bg} px-2 py-0.5 text-[11px] font-medium ${cfg.color}`}>
+                      <RoleIcon className="w-3 h-3" />
+                      {cfg.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                      <Mail className="w-3 h-3 shrink-0" />
+                      {u.email}
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="w-3 h-3 shrink-0" />
+                      {new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => openEdit(u)}>
+                      <Pencil className="w-4 h-4 mr-2" /> Edit User
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -183,14 +284,17 @@ export default function UserManagement() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-primary" />
+            <DialogTitle className="flex items-center gap-2 font-heading">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <UserPlus className="w-4 h-4 text-primary" />
+              </div>
               Register New User
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <Separator />
+          <div className="space-y-4 py-1">
             <div className="space-y-2">
-              <Label>Email Address</Label>
+              <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email Address</Label>
               <Input
                 type="email"
                 placeholder="user@company.com"
@@ -200,7 +304,7 @@ export default function UserManagement() {
               <p className="text-xs text-muted-foreground">An invite email will be sent to this address</p>
             </div>
             <div className="space-y-2">
-              <Label>Display Name</Label>
+              <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Display Name</Label>
               <Input
                 placeholder="John Smith"
                 value={inviteName}
@@ -208,20 +312,29 @@ export default function UserManagement() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Role</Label>
               <Select value={inviteRole} onValueChange={v => setInviteRole(v as UserRole)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin — Full access</SelectItem>
-                  <SelectItem value="manager">Manager — No settings access</SelectItem>
-                  <SelectItem value="field">Field — Assigned projects only</SelectItem>
+                  {Object.entries(ROLE_CONFIG).map(([key, cfg]) => {
+                    const Icon = cfg.icon;
+                    return (
+                      <SelectItem key={key} value={key}>
+                        <span className="flex items-center gap-2">
+                          <Icon className={`w-4 h-4 ${cfg.color}`} />
+                          {cfg.label} — {cfg.description}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
           </div>
+          <Separator />
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
-            <Button onClick={handleInvite} disabled={inviting || !inviteEmail}>
+            <Button onClick={handleInvite} disabled={inviting || !inviteEmail} className="bg-primary text-primary-foreground">
               {inviting ? 'Sending…' : 'Send Invite'}
             </Button>
           </DialogFooter>
@@ -232,20 +345,31 @@ export default function UserManagement() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" />
+            <DialogTitle className="flex items-center gap-2 font-heading">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <User className="w-4 h-4 text-primary" />
+              </div>
               Edit User
             </DialogTitle>
           </DialogHeader>
+          <Separator />
           {editUser && (
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={editUser.email} disabled className="bg-muted" />
-                <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            <div className="space-y-4 py-1">
+              {/* User preview header */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient(editUser.role)} flex items-center justify-center text-white font-heading font-bold text-sm`}>
+                  {getInitials(editUser.display_name, editUser.email)}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{editUser.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Joined {new Date(editUser.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label>Display Name</Label>
+                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Display Name</Label>
                 <Input
                   placeholder="John Smith"
                   value={editName}
@@ -253,24 +377,30 @@ export default function UserManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Role</Label>
                 <Select value={editRole} onValueChange={v => setEditRole(v as UserRole)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin — Full access</SelectItem>
-                    <SelectItem value="manager">Manager — No settings access</SelectItem>
-                    <SelectItem value="field">Field — Assigned projects only</SelectItem>
+                    {Object.entries(ROLE_CONFIG).map(([key, cfg]) => {
+                      const Icon = cfg.icon;
+                      return (
+                        <SelectItem key={key} value={key}>
+                          <span className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${cfg.color}`} />
+                            {cfg.label} — {cfg.description}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="text-xs text-muted-foreground pt-1">
-                Joined: {new Date(editUser.created_at).toLocaleDateString()}
-              </div>
             </div>
           )}
+          <Separator />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveEdit} disabled={saving}>
+            <Button onClick={handleSaveEdit} disabled={saving} className="bg-primary text-primary-foreground">
               {saving ? 'Saving…' : 'Save Changes'}
             </Button>
           </DialogFooter>
