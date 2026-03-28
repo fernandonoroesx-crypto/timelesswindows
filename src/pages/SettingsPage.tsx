@@ -20,13 +20,6 @@ const MDF_LABELS: Record<string, string> = {
   centralWide: 'Central · Wide',
 };
 
-interface ManagedUser {
-  id: string;
-  email: string;
-  display_name: string;
-  role: UserRole | null;
-  created_at: string;
-}
 
 export default function SettingsPage() {
   const { role } = useAuth();
