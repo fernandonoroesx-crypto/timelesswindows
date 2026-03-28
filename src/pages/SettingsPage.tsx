@@ -59,25 +59,26 @@ export default function SettingsPage() {
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading settings...</div>;
 
   return (
-    <div className="space-y-8 animate-slide-in">
-      {role === 'admin' && <UserManagement />}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-bold">Pricing Settings</h1>
-          <p className="text-muted-foreground text-sm mt-1">Edit your selling and cost prices</p>
-        </div>
-        <Button onClick={handleSave} className="bg-primary text-primary-foreground">
-          <Save className="w-4 h-4 mr-2" /> Save Pricing
-        </Button>
-      </div>
-
-      <Tabs defaultValue="selling" className="w-full">
+    <div className="space-y-6 animate-slide-in">
+      <Tabs defaultValue={role === 'admin' ? 'users' : 'selling'} className="w-full">
         <TabsList className="mb-6">
+          {role === 'admin' && <TabsTrigger value="users">Users</TabsTrigger>}
           <TabsTrigger value="selling">Selling Prices</TabsTrigger>
           <TabsTrigger value="cost">Cost Prices</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
+
+        {role === 'admin' && (
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
+        )}
+
+        <div className="flex items-center justify-end mb-4">
+          <Button onClick={handleSave} className="bg-primary text-primary-foreground">
+            <Save className="w-4 h-4 mr-2" /> Save Pricing
+          </Button>
+        </div>
 
         {/* ── SELLING TAB ── */}
         <TabsContent value="selling">
