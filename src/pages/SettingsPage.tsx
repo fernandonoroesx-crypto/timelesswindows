@@ -2,17 +2,14 @@ import { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/pricing';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, UserPlus, Users } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PricingData } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
 import { fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
-import { useAuth, type UserRole } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useAuth } from '@/lib/auth';
+import UserManagement from '@/components/UserManagement';
 
 const MDF_LABELS: Record<string, string> = {
   singleNarrow: 'Single · Narrow',
