@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import {
-  UserPlus, Users, Pencil, Mail, Shield, User,
-  ShieldCheck, Briefcase, HardHat, Calendar, MoreVertical, RefreshCw,
+  UserPlus, Users, Pencil, Mail, Shield, User, KeyRound,
+  ShieldCheck, Briefcase, HardHat, Calendar, MoreVertical, RefreshCw, Eye, EyeOff,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
