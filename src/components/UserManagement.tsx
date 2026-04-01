@@ -72,7 +72,7 @@ export default function UserManagement() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('admin-users', { method: 'GET' });
+      const { data, error } = await supabase.functions.invoke('admin-users', { body: { action: 'list' } });
       if (error) throw error;
       setUsers(data || []);
     } catch (e) {
