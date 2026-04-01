@@ -108,6 +108,8 @@ export default function UserManagement() {
     setEditUser(u);
     setEditName(u.display_name);
     setEditRole(u.role || 'field');
+    setEditPassword('');
+    setShowPassword(false);
     setEditOpen(true);
   };
 
