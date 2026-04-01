@@ -117,8 +117,8 @@ export default function UserManagement() {
     setSaving(true);
     try {
       const { error } = await supabase.functions.invoke('admin-users', {
-        method: 'PATCH',
         body: {
+          action: 'update',
           userId: editUser.id,
           role: editRole,
           displayName: editName,
