@@ -66,6 +66,8 @@ export default function UserManagement() {
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editName, setEditName] = useState('');
   const [editRole, setEditRole] = useState<UserRole>('field');
+  const [editPassword, setEditPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const loadUsers = async () => {
