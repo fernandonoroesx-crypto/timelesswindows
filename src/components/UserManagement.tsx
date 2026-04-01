@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import {
-  UserPlus, Users, Pencil, Mail, Shield, User,
-  ShieldCheck, Briefcase, HardHat, Calendar, MoreVertical, RefreshCw,
+  UserPlus, Users, Pencil, Mail, Shield, User, KeyRound,
+  ShieldCheck, Briefcase, HardHat, Calendar, MoreVertical, RefreshCw, Eye, EyeOff,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -66,6 +66,8 @@ export default function UserManagement() {
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editName, setEditName] = useState('');
   const [editRole, setEditRole] = useState<UserRole>('field');
+  const [editPassword, setEditPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const loadUsers = async () => {
@@ -106,6 +108,8 @@ export default function UserManagement() {
     setEditUser(u);
     setEditName(u.display_name);
     setEditRole(u.role || 'field');
+    setEditPassword('');
+    setShowPassword(false);
     setEditOpen(true);
   };
 
@@ -115,7 +119,12 @@ export default function UserManagement() {
     try {
       const { error } = await supabase.functions.invoke('admin-users', {
         method: 'PATCH',
-        body: { userId: editUser.id, role: editRole, displayName: editName },
+        body: {
+          userId: editUser.id,
+          role: editRole,
+          displayName: editName,
+          ...(editPassword ? { newPassword: editPassword } : {}),
+        },
       });
       if (error) throw error;
       toast.success('User updated successfully');
@@ -394,6 +403,27 @@ export default function UserManagement() {
                     })}
                   </SelectContent>
                 </Select>
+              </div>
+              <Separator className="my-1" />
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Change Password</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Leave blank to keep current"
+                    value={editPassword}
+                    onChange={e => setEditPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">Minimum 6 characters. Leave empty to keep unchanged.</p>
               </div>
             </div>
           )}

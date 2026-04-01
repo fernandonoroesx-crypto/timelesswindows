@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === 'PATCH') {
-      const { userId, role, displayName } = await req.json()
+      const { userId, role, displayName, newPassword } = await req.json()
 
       if (!userId) {
         return new Response(JSON.stringify({ error: 'userId is required' }), {
@@ -131,6 +131,18 @@ Deno.serve(async (req) => {
 
       if (displayName !== undefined) {
         await adminClient.from('profiles').update({ display_name: displayName }).eq('id', userId)
+      }
+
+      if (newPassword) {
+        const { error: pwError } = await adminClient.auth.admin.updateUserById(userId, {
+          password: newPassword,
+        })
+        if (pwError) {
+          return new Response(JSON.stringify({ error: pwError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
       }
 
       return new Response(JSON.stringify({ success: true }), {
