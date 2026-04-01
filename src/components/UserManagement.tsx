@@ -72,7 +72,7 @@ export default function UserManagement() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('admin-users', { method: 'GET' });
+      const { data, error } = await supabase.functions.invoke('admin-users', { body: { action: 'list' } });
       if (error) throw error;
       setUsers(data || []);
     } catch (e) {
@@ -88,8 +88,7 @@ export default function UserManagement() {
     setInviting(true);
     try {
       const { error } = await supabase.functions.invoke('admin-users', {
-        method: 'POST',
-        body: { email: inviteEmail, displayName: inviteName, role: inviteRole },
+        body: { action: 'invite', email: inviteEmail, displayName: inviteName, role: inviteRole },
       });
       if (error) throw error;
       toast.success(`Invite sent to ${inviteEmail}`);
@@ -118,8 +117,8 @@ export default function UserManagement() {
     setSaving(true);
     try {
       const { error } = await supabase.functions.invoke('admin-users', {
-        method: 'PATCH',
         body: {
+          action: 'update',
           userId: editUser.id,
           role: editRole,
           displayName: editName,
