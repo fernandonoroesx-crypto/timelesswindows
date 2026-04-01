@@ -119,7 +119,12 @@ export default function UserManagement() {
     try {
       const { error } = await supabase.functions.invoke('admin-users', {
         method: 'PATCH',
-        body: { userId: editUser.id, role: editRole, displayName: editName },
+        body: {
+          userId: editUser.id,
+          role: editRole,
+          displayName: editName,
+          ...(editPassword ? { newPassword: editPassword } : {}),
+        },
       });
       if (error) throw error;
       toast.success('User updated successfully');
