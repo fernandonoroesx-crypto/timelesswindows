@@ -44,8 +44,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (req.method === 'GET') {
-      // List all users with profiles and roles
+    const body = req.method === 'POST' ? await req.json() : {}
+    const action = body.action || 'list'
+
+    if (action === 'list') {
       const { data: profiles } = await adminClient.from('profiles').select('*')
       const { data: roles } = await adminClient.from('user_roles').select('*')
       const { data: { users } } = await adminClient.auth.admin.listUsers()
@@ -67,8 +69,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (req.method === 'POST') {
-      const { email, displayName, role } = await req.json()
+    if (action === 'invite') {
+      const { email, displayName, role } = body
 
       if (!email || !role) {
         return new Response(JSON.stringify({ error: 'Email and role are required' }), {
@@ -77,7 +79,6 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Invite user by email
       const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
         data: { display_name: displayName || email },
       })
@@ -89,7 +90,6 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Create profile and role
       await adminClient.from('profiles').insert({
         id: invited.user.id,
         display_name: displayName || email,
@@ -105,8 +105,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (req.method === 'PATCH') {
-      const { userId, role, displayName, newPassword } = await req.json()
+    if (action === 'update') {
+      const { userId, role, displayName, newPassword } = body
 
       if (!userId) {
         return new Response(JSON.stringify({ error: 'userId is required' }), {
@@ -150,8 +150,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
+    return new Response(JSON.stringify({ error: 'Unknown action' }), {
+      status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
