@@ -426,6 +426,7 @@ export default function UserManagement() {
                 <p className="text-xs text-muted-foreground">Minimum 6 characters. Leave empty to keep unchanged.</p>
               </div>
             </div>
+          )}
           <Separator />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
