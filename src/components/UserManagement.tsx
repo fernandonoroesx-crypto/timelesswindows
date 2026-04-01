@@ -88,8 +88,7 @@ export default function UserManagement() {
     setInviting(true);
     try {
       const { error } = await supabase.functions.invoke('admin-users', {
-        method: 'POST',
-        body: { email: inviteEmail, displayName: inviteName, role: inviteRole },
+        body: { action: 'invite', email: inviteEmail, displayName: inviteName, role: inviteRole },
       });
       if (error) throw error;
       toast.success(`Invite sent to ${inviteEmail}`);
