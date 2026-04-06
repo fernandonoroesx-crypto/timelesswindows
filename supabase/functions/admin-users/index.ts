@@ -14,24 +14,34 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
-  const authHeader = req.headers.get('Authorization')!
-  const anonClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  })
-
-  const { data: { user }, error: authError } = await anonClient.auth.getUser()
-  if (authError || !user) {
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  })
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token)
+  if (claimsError || !claimsData?.claims) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  const userId = claimsData.claims.sub as string
+
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
   const { data: callerRole } = await adminClient
     .from('user_roles')
     .select('role')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single()
 
   if (!callerRole || callerRole.role !== 'admin') {
