@@ -288,7 +288,7 @@ export default function QuoteBuilder() {
             const labourCost = costTotals.installation + costTotals.internalMakingGood + costTotals.externalMakingGood
               + costTotals.architrave + costTotals.trims + costTotals.mdfReveal
               + costTotals.deliveryStock + costTotals.fensaSurvey
-              + costTotals.consumables + costTotals.overhead + overheadDays;
+              + costTotals.consumables + costTotals.overhead;
 
             const summaryRows = [
               { label: 'Materials', selling: totals.material, cost: costTotals.material },
@@ -296,6 +296,7 @@ export default function QuoteBuilder() {
                 { label: 'Labour', selling: labourSelling, cost: labourCost },
                 ...(totals.wasteDisposal > 0 ? [{ label: 'Waste Disposal', selling: totals.wasteDisposal, cost: costTotals.wasteDisposal }] : []),
                 ...(totals.extras > 0 ? [{ label: 'Extras', selling: totals.extras, cost: costTotals.extras }] : []),
+                ...(overheadDays > 0 ? [{ label: `Overhead (${project.settings.overheadDays} days)`, selling: 0, cost: overheadDays }] : []),
               ] : []),
             ];
 
