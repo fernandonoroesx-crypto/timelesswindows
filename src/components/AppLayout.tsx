@@ -92,7 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => { setMobileOpen(false); if (item.to === '/quotes/new') setCurrentProject(null); }}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     isActive
