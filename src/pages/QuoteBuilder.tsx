@@ -56,6 +56,18 @@ export default function QuoteBuilder() {
   const updateSettings = (key: string, value: any) => {
     updateProject({ settings: { ...project.settings, [key]: value } });
   };
+  const updatePricing = (path: string, value: number) => {
+    const keys = path.split('.');
+    setProject(prev => {
+      const pricing = { ...(prev.pricing || quotePricing) } as any;
+      if (keys.length === 2) {
+        pricing[keys[0]] = { ...pricing[keys[0]], [keys[1]]: value };
+      } else {
+        pricing[keys[0]] = value;
+      }
+      return { ...prev, pricing };
+    });
+  };
 
 
   const selectClient = (clientId: string) => {
