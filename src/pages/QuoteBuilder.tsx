@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, Send } from 'lucide-react';
+import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, Send, SlidersHorizontal } from 'lucide-react';
+import PricingEditor from '@/components/PricingEditor';
 import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
 
@@ -54,6 +55,18 @@ export default function QuoteBuilder() {
 
   const updateSettings = (key: string, value: any) => {
     updateProject({ settings: { ...project.settings, [key]: value } });
+  };
+  const updatePricing = (path: string, value: number) => {
+    const keys = path.split('.');
+    setProject(prev => {
+      const pricing = { ...(prev.pricing || quotePricing) } as any;
+      if (keys.length === 2) {
+        pricing[keys[0]] = { ...pricing[keys[0]], [keys[1]]: value };
+      } else {
+        pricing[keys[0]] = value;
+      }
+      return { ...prev, pricing };
+    });
   };
 
 
@@ -308,8 +321,8 @@ export default function QuoteBuilder() {
       <Tabs defaultValue="items" className="space-y-4">
         <TabsList>
           <TabsTrigger value="items">Line Items ({project.lineItems.length})</TabsTrigger>
-          
-        </TabsList>
+          <TabsTrigger value="pricing"><SlidersHorizontal className="w-4 h-4 mr-1 inline" />Pricing</TabsTrigger>
+         </TabsList>
 
         <TabsContent value="items" className="space-y-6">
           <div className="elevated-card rounded-xl p-6">
@@ -426,6 +439,12 @@ export default function QuoteBuilder() {
                 </table>
               </div>
             )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="pricing">
+          <div className="elevated-card rounded-xl p-6">
+            <PricingEditor pricing={quotePricing} onUpdate={updatePricing} />
           </div>
         </TabsContent>
 
