@@ -172,13 +172,11 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     b.extras += item.customExtra || 0;
 
     b.consumables = Object.values(pricing.consumables).reduce((a, v) => a + v, 0);
-
-    b.overhead = (pricing.overheadPerItemRate || 0.1) * pricing.overheadPerDay;
   }
 
   b.unitTotal = b.material + b.installation + b.architrave + b.trims + b.mdfReveal
     + b.internalMakingGood + b.externalMakingGood + b.wasteDisposal
-    + b.deliveryStock + b.fensaSurvey + b.extras + b.consumables + b.overhead;
+    + b.deliveryStock + b.fensaSurvey + b.extras + b.consumables;
   b.total = b.unitTotal * item.qty;
 
   return b;

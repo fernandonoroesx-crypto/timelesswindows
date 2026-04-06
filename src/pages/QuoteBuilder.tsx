@@ -250,11 +250,18 @@ export default function QuoteBuilder() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-6 mt-4 pt-4 border-t">
+        <div className="flex flex-wrap items-end gap-6 mt-4 pt-4 border-t">
           <ToggleSetting label="Waste Disposal" checked={project.settings.includeWasteDisposal} onChange={v => updateSettings('includeWasteDisposal', v)} />
           <ToggleSetting label="Internal Making Good" checked={project.settings.includeInternalMakingGood} onChange={v => updateSettings('includeInternalMakingGood', v)} />
           <ToggleSetting label="External Making Good" checked={project.settings.includeExternalMakingGood} onChange={v => updateSettings('includeExternalMakingGood', v)} />
           <ToggleSetting label="Supply Only" checked={project.settings.supplyOnly} onChange={v => updateSettings('supplyOnly', v)} />
+          {!project.settings.supplyOnly && (
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Est. Days</Label>
+              <Input type="number" min="0" step="1" className="h-8 w-20 text-sm" value={project.settings.overheadDays}
+                onChange={e => updateSettings('overheadDays', parseInt(e.target.value) || 0)} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -306,8 +313,7 @@ export default function QuoteBuilder() {
                 { label: 'Delivery & Stock', selling: 0, cost: costTotals.deliveryStock },
                 { label: 'FENSA / Survey', selling: 0, cost: costTotals.fensaSurvey },
                 { label: 'Consumables', selling: 0, cost: costTotals.consumables },
-                { label: 'Overhead (per item)', selling: 0, cost: costTotals.overhead },
-                { label: 'Overhead (days)', selling: 0, cost: overheadDays },
+                { label: `Overhead (${project.settings.overheadDays} days)`, selling: 0, cost: overheadDays },
               ] : []),
             ];
 
