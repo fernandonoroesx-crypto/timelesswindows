@@ -86,21 +86,23 @@ export default function UserManagement() {
   useEffect(() => { loadUsers(); }, []);
 
   const handleInvite = async () => {
-    if (!inviteEmail) return;
+    if (!inviteEmail || !invitePassword) return;
     setInviting(true);
     try {
-      const { error } = await supabase.functions.invoke('admin-users', {
-        body: { action: 'invite', email: inviteEmail, displayName: inviteName, role: inviteRole },
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'invite', email: inviteEmail, password: invitePassword, displayName: inviteName, role: inviteRole },
       });
       if (error) throw error;
-      toast.success(`Invite sent to ${inviteEmail}`);
+      if (data?.error) throw new Error(data.error);
+      toast.success(`User ${inviteEmail} created successfully`);
       setInviteOpen(false);
       setInviteEmail('');
       setInviteName('');
+      setInvitePassword('');
       setInviteRole('field');
       loadUsers();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to invite user');
+      toast.error(e?.message || 'Failed to create user');
     }
     setInviting(false);
   };
