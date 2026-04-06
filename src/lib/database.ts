@@ -78,15 +78,15 @@ export async function deleteSupplier(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// ── Projects ─────────────────────────────────────────────
+// ── Quotes (was Projects) ────────────────────────────────
 
 export async function fetchProjects(): Promise<Project[]> {
   const { data, error } = await supabase
-    .from('projects')
+    .from('quotes')
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data || []).map(row => ({
+  return (data || []).map((row: any) => ({
     id: row.id,
     date: row.date || '',
     client: row.client || '',
@@ -98,14 +98,14 @@ export async function fetchProjects(): Promise<Project[]> {
     lineItems: (row.line_items as any[]) || [],
     pricing: row.pricing ? (row.pricing as unknown as PricingData) : undefined,
     status: (row.status as Project['status']) || 'draft',
-    sentAt: (row as any).sent_at || undefined,
+    sentAt: row.sent_at || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
 }
 
 export async function upsertProject(project: Project): Promise<void> {
-  const { error } = await supabase.from('projects').upsert({
+  const { error } = await supabase.from('quotes').upsert({
     id: project.id,
     date: project.date,
     client: project.client,
@@ -123,7 +123,7 @@ export async function upsertProject(project: Project): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  const { error } = await supabase.from('projects').delete().eq('id', id);
+  const { error } = await supabase.from('quotes').delete().eq('id', id);
   if (error) throw error;
 }
 
