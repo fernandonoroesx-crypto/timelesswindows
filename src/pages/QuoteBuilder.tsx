@@ -429,9 +429,6 @@ export default function QuoteBuilder() {
           </div>
         </TabsContent>
 
-        <TabsContent value="pricing" className="space-y-6">
-          <QuotePricingEditor pricing={quotePricing} onUpdate={updatePricing} />
-        </TabsContent>
       </Tabs>
 
       <AlertDialog open={showWonConfirm} onOpenChange={setShowWonConfirm}>
