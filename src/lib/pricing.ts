@@ -41,6 +41,7 @@ export interface PriceBreakdown {
   fensaSurvey: number;
   extras: number;
   consumables: number;
+  overhead: number;
   unitTotal: number;
   total: number;
 }
