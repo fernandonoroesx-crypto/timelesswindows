@@ -23,14 +23,14 @@ export async function exportQuoteExcel(project: Project) {
   const ws = wb.addWorksheet('Quote Report');
 
   // --- Project header ---
-  ws.mergeCells('A1:S1');
+  ws.mergeCells('A1:Q1');
   const titleCell = ws.getCell('A1');
   titleCell.value = `${project.projectRef || 'Quote'} — ${project.client || 'Client'}`;
   titleCell.font = { bold: true, size: 14, color: { argb: DARK_BLUE } };
   titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
   ws.getRow(1).height = 28;
 
-  ws.mergeCells('A2:S2');
+  ws.mergeCells('A2:Q2');
   ws.getCell('A2').value = `Date: ${project.date || '—'}`;
   ws.getCell('A2').font = { size: 10, color: { argb: 'FF666666' } };
   ws.getRow(2).height = 18;
@@ -58,7 +58,6 @@ export async function exportQuoteExcel(project: Project) {
   const widths = [14, 12, 6, 16, 10, 10, 12, 12, 14, 14, 12, 10, 12, 12, 10, 10, 12, 12, 12];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
-  // Currency columns (7 onwards except 3,4,5,6)
   const currCols = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 
   const sellingTotals: Record<string, number> = {
