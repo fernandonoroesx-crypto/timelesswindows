@@ -50,6 +50,8 @@ interface AppContextType {
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
   managedProjects: ManagedProject[];
   globalPricing: PricingData;
+  setGlobalPricing: React.Dispatch<React.SetStateAction<PricingData>>;
+  saveGlobalPricingToDb: (pricing: PricingData) => Promise<void>;
   loading: boolean;
   saveProjectToDb: (project: Project) => Promise<void>;
   deleteProjectFromDb: (id: string) => Promise<void>;
@@ -217,11 +219,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setManagedProjects(prev => prev.filter(p => p.id !== id));
   }, []);
 
+  const saveGlobalPricingToDb = useCallback(async (p: PricingData) => {
+    await saveGlobalPricing(p);
+    setGlobalPricing(p);
+  }, []);
+
   return (
     <AppContext.Provider value={{
       projects, setProjects, currentProject, setCurrentProject,
       clients, setClients, suppliers, setSuppliers,
-      managedProjects, globalPricing, loading,
+      managedProjects, globalPricing, setGlobalPricing, saveGlobalPricingToDb, loading,
       saveProjectToDb, deleteProjectFromDb,
       saveClientToDb, deleteClientFromDb,
       saveSupplierToDb, deleteSupplierFromDb,
