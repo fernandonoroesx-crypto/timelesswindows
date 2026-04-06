@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
-  // Verify caller is authenticated
   const authHeader = req.headers.get('Authorization')!
   const anonClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
@@ -28,7 +27,6 @@ Deno.serve(async (req) => {
     })
   }
 
-  // Check caller is admin
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
   const { data: callerRole } = await adminClient
     .from('user_roles')
@@ -70,37 +68,40 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'invite') {
-      const { email, displayName, role } = body
+      const { email, password, displayName, role } = body
 
-      if (!email || !role) {
-        return new Response(JSON.stringify({ error: 'Email and role are required' }), {
+      if (!email || !role || !password) {
+        return new Response(JSON.stringify({ error: 'Email, password, and role are required' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
-      const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-        data: { display_name: displayName || email },
+      const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { display_name: displayName || email },
       })
 
-      if (inviteError) {
-        return new Response(JSON.stringify({ error: inviteError.message }), {
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
       await adminClient.from('profiles').insert({
-        id: invited.user.id,
+        id: created.user.id,
         display_name: displayName || email,
       })
 
       await adminClient.from('user_roles').insert({
-        user_id: invited.user.id,
+        user_id: created.user.id,
         role,
       })
 
-      return new Response(JSON.stringify({ success: true, userId: invited.user.id }), {
+      return new Response(JSON.stringify({ success: true, userId: created.user.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
