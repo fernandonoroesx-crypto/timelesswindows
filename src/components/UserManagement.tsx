@@ -120,7 +120,7 @@ export default function UserManagement() {
     if (!editUser) return;
     setSaving(true);
     try {
-      const { error } = await supabase.functions.invoke('admin-users', {
+      const { data, error } = await supabase.functions.invoke('admin-users', {
         body: {
           action: 'update',
           userId: editUser.id,
@@ -130,6 +130,7 @@ export default function UserManagement() {
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success('User updated successfully');
       setEditOpen(false);
       setEditUser(null);
