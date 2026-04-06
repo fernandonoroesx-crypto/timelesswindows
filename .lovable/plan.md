@@ -1,31 +1,19 @@
 
 
-## Plan: Add MDF Width Dimension (Narrow/Wide) as Second Dropdown
+## Plan: Convert Trims from Flat Rate to Per Linear Meter
 
-MDF Reveal currently has one dropdown (Single/Bay Side/Bay Central) that controls the linear meter formula. You want a second dropdown for width (Narrow/Wide) that determines which rate is applied. The final MDF cost = `LM(type) × rate(width)`.
+Trims currently use a flat rate per type. This change makes Trims use the same LM formulas as Architrave and MDF:
+- **Single**: `(Width + 2×Height) / 1000`
+- **Bay Side**: `(Width + Height) / 1000`
+- **Bay Central**: `Width / 1000`
 
-### Changes
+Final calculation: `LM(type) × rate per meter`
 
-**`src/lib/types.ts`**
-- Add `MdfWidthType = 'narrow' | 'wide'`
-- Add `mdfWidthType: MdfWidthType` to `QuoteLineItem` (defaults to `'narrow'`)
-- Change `MdfPricing` to `{ narrow: { single: number; baySide: number; bayCentral: number }; wide: { single: number; baySide: number; bayCentral: number } }` — 6 rates total (narrow/wide × single/baySide/bayCentral)
+### Files to change
 
-**`src/lib/context.tsx`**
-- Update `DEFAULT_PRICING.mdfSelling` and `mdfCost` to nested structure with narrow/wide sub-objects
-- Update `createNewLineItem` to include `mdfWidthType: 'narrow'`
+**`src/lib/pricing.ts`** — Update trims calculation in both selling and cost breakdowns from flat rate to `calculateTypeLm(trimsType, w, h) * rate`
 
-**`src/lib/pricing.ts`**
-- MDF calculation becomes: `calculateTypeLm(mdfRevealType, w, h) × pricing.mdf[mdfWidthType][mdfRevealType]`
-- Update both selling and cost breakdowns
+**`src/components/PricingEditor.tsx`** — Update Trims section header from "per item" to "per LM"
 
-**`src/pages/QuoteBuilder.tsx`**
-- Add a second dropdown next to MDF Reveal for "MDF Width" with Narrow/Wide options
-- Only show width dropdown when mdfRevealType is not 'none'
-
-**`src/components/PricingEditor.tsx`**
-- Update MDF settings section to show 6 rate inputs grouped by Narrow and Wide, each with Single/Bay Side/Bay Central sub-rates
-
-### No migration needed
-All MDF data is stored in the JSONB `line_items` column. Existing items without `mdfWidthType` will default to `'narrow'` via fallback logic.
+No changes needed to types, context defaults, or QuoteBuilder — Trims already uses the same `single/baySide/bayCentral` type system and dropdown as Architrave.
 
