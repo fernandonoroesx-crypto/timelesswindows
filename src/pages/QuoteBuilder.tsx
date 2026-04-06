@@ -11,10 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, SlidersHorizontal, Send } from 'lucide-react';
+import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
-import PricingEditor from '@/components/PricingEditor';
+
 import PdfImportDialog from '@/components/PdfImportDialog';
 
 const WINDOW_TYPES: WindowType[] = [
@@ -56,18 +56,6 @@ export default function QuoteBuilder() {
     updateProject({ settings: { ...project.settings, [key]: value } });
   };
 
-  const updatePricing = (path: string, value: number) => {
-    const currentPricing = project.pricing || getProjectPricing(project);
-    const next = JSON.parse(JSON.stringify({ ...DEFAULT_PRICING, ...currentPricing, uplift: currentPricing.uplift || DEFAULT_PRICING.uplift }));
-    const keys = path.split('.');
-    let obj = next;
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (obj[keys[i]] === undefined) obj[keys[i]] = {};
-      obj = obj[keys[i]];
-    }
-    obj[keys[keys.length - 1]] = value;
-    updateProject({ pricing: next });
-  };
 
   const selectClient = (clientId: string) => {
     if (clientId === '_none') {
@@ -320,7 +308,7 @@ export default function QuoteBuilder() {
       <Tabs defaultValue="items" className="space-y-4">
         <TabsList>
           <TabsTrigger value="items">Line Items ({project.lineItems.length})</TabsTrigger>
-          <TabsTrigger value="pricing" className="gap-1.5"><SlidersHorizontal className="w-3.5 h-3.5" /> Quote Pricing</TabsTrigger>
+          
         </TabsList>
 
         <TabsContent value="items" className="space-y-6">
@@ -441,9 +429,6 @@ export default function QuoteBuilder() {
           </div>
         </TabsContent>
 
-        <TabsContent value="pricing" className="space-y-6">
-          <QuotePricingEditor pricing={quotePricing} onUpdate={updatePricing} />
-        </TabsContent>
       </Tabs>
 
       <AlertDialog open={showWonConfirm} onOpenChange={setShowWonConfirm}>
@@ -493,9 +478,6 @@ export default function QuoteBuilder() {
   );
 }
 
-function QuotePricingEditor({ pricing, onUpdate }: { pricing: PricingData; onUpdate: (path: string, value: number) => void }) {
-  return <PricingEditor pricing={pricing} onUpdate={onUpdate} sellingOnly />;
-}
 
 function LineItemCard({
   item, index, settings, quotePricing, suppliers, onUpdate, onRemove, onDuplicate,
