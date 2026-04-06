@@ -366,8 +366,9 @@ export default function UserManagement() {
           <Separator />
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
-            <Button onClick={handleInvite} disabled={inviting || !inviteEmail} className="bg-primary text-primary-foreground">
-              {inviting ? 'Sending…' : 'Send Invite'}
+            <Button onClick={handleInvite} disabled={inviting || !inviteEmail || !invitePassword} className="bg-primary text-primary-foreground">
+              {inviting ? 'Creating…' : 'Create User'}
+            </Button>
             </Button>
           </DialogFooter>
         </DialogContent>
