@@ -38,6 +38,7 @@ export default function QuoteBuilder() {
   });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [showWonConfirm, setShowWonConfirm] = useState(false);
+  const hasInitializedPricing = useRef(!!currentProject);
 
   useEffect(() => {
     if (currentProject) setProject(currentProject);
@@ -45,8 +46,12 @@ export default function QuoteBuilder() {
 
   // Sync pricing with saved global settings once they load (for new quotes only)
   useEffect(() => {
-    if (!currentProject && !project.projectManagerId) {
-      setProject(prev => ({ ...prev, pricing: { ...globalPricing } }));
+    if (!hasInitializedPricing.current && !currentProject && !project.projectManagerId) {
+      // Only sync once globalPricing has actually loaded from DB (not still DEFAULT_PRICING)
+      if (globalPricing !== DEFAULT_PRICING) {
+        setProject(prev => ({ ...prev, pricing: { ...globalPricing } }));
+        hasInitializedPricing.current = true;
+      }
     }
   }, [globalPricing]);
 
