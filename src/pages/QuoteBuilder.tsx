@@ -56,18 +56,6 @@ export default function QuoteBuilder() {
     updateProject({ settings: { ...project.settings, [key]: value } });
   };
 
-  const updatePricing = (path: string, value: number) => {
-    const currentPricing = project.pricing || getProjectPricing(project);
-    const next = JSON.parse(JSON.stringify({ ...DEFAULT_PRICING, ...currentPricing, uplift: currentPricing.uplift || DEFAULT_PRICING.uplift }));
-    const keys = path.split('.');
-    let obj = next;
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (obj[keys[i]] === undefined) obj[keys[i]] = {};
-      obj = obj[keys[i]];
-    }
-    obj[keys[keys.length - 1]] = value;
-    updateProject({ pricing: next });
-  };
 
   const selectClient = (clientId: string) => {
     if (clientId === '_none') {
