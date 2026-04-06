@@ -1,40 +1,59 @@
 
 
-## Plan: Improve Excel Report Design
+## Plan: Fix "Add New User" Functionality
 
-### Current limitation
+### Root cause
 
-The current export uses SheetJS (`xlsx`), which does **not support cell styling** (colors, borders, bold, fills) in the free/community version. The report outputs plain unformatted data.
+Two issues:
 
-### Solution: Switch to ExcelJS
+1. **Email invites require SMTP configuration** — The edge function uses `inviteUserByEmail`, which tries to send an email. Lovable Cloud doesn't have SMTP configured by default, so the invite silently fails or errors.
 
-Replace `xlsx` with `exceljs` — a free library that supports full formatting: bold headers, colored fills, borders, number formatting (£), merged cells, and conditional styling.
+2. **Error handling is broken** — `supabase.functions.invoke()` puts HTTP 400 responses in `data`, not `error`. So when the edge function returns `{ error: "..." }` with status 400, the client code doesn't catch it — the toast never shows the real error.
 
-### Design improvements
+### Solution
 
-1. **Header row**: Bold white text on dark blue background, centered alignment
-2. **Currency formatting**: All monetary cells display as `£#,##0.00`
-3. **Totals row**: Bold with light grey background and top border
-4. **Breakdown section**: Section title in bold with colored background; alternating row shading for readability
-5. **Summary block** (Total Selling / Cost / Profit / Margin): Bold with green fill for profit, red fill if negative
-6. **Borders**: Thin borders around all data cells; thicker border separating items from breakdown
-7. **Column auto-width**: Better fit to content
-8. **Project header**: Client name, date, and project ref displayed above the table in a merged-cell header area
+**Switch from email invite to direct user creation with a password.**
 
-### Files to change
+Instead of inviting by email (which requires SMTP), the admin will set an initial password when creating a user. The edge function will use `adminClient.auth.admin.createUser()` instead of `inviteUserByEmail()`.
 
-| File | Change |
-|---|---|
-| `package.json` | Replace `xlsx` with `exceljs` |
-| `src/lib/excel-export.ts` | Rewrite using ExcelJS API with full formatting |
+### Changes
 
-### Key ExcelJS features used
+**1. Edge function (`supabase/functions/admin-users/index.ts`)**
+- Replace `inviteUserByEmail` with `createUser` in the `invite` action
+- Accept a `password` field in the request body
+- Create user with `email_confirm: true` so they can log in immediately
 
-- `worksheet.getRow(n).font = { bold: true, color: { argb: 'FFFFFF' } }`
-- `worksheet.getRow(n).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '2B3A67' } }`
-- `cell.numFmt = '£#,##0.00'` for currency
-- `cell.border = { top: { style: 'thin' }, ... }` for borders
-- `worksheet.mergeCells('A1:U1')` for project header
+**2. UI (`src/components/UserManagement.tsx`)**
+- Add a password field to the "Register New User" dialog
+- Require both email and password before submitting
+- Send password in the request body
+- Fix error handling: check `data?.error` in addition to `error` from `functions.invoke()`
 
-The data logic stays the same — only the rendering layer changes to produce a professionally styled spreadsheet.
+### Updated invite flow
+
+```text
+Admin fills: email + name + role + password
+  → Edge function: createUser(email, password, email_confirm: true)
+  → Insert profile + role
+  → New user can log in immediately with email/password
+```
+
+### Technical details
+
+Edge function change (invite action):
+```typescript
+const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+  email,
+  password,
+  email_confirm: true,
+  user_metadata: { display_name: displayName || email },
+});
+```
+
+Client error handling fix:
+```typescript
+const { data, error } = await supabase.functions.invoke('admin-users', { body: { ... } });
+if (error) throw error;
+if (data?.error) throw new Error(data.error);
+```
 
