@@ -138,7 +138,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     b.installation = pricing.installationCost[item.type] || 0;
 
     if (item.architraveType !== 'none') {
-      const archLm = calculateArchitraveLm(item.widthMm, item.heightMm);
+      const archLm = calculateTypeLm(item.architraveType, item.widthMm, item.heightMm);
       b.architrave = archLm * (pricing.architraveCost[item.architraveType] || 0);
     }
 
@@ -147,7 +147,8 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     }
 
     if (item.mdfRevealType !== 'none') {
-      b.mdfReveal = pricing.mdfCost[item.mdfRevealType] || 0;
+      const mdfLm = calculateTypeLm(item.mdfRevealType, item.widthMm, item.heightMm);
+      b.mdfReveal = mdfLm * (pricing.mdfCost[item.mdfRevealType] || 0);
     }
 
     if (settings.includeInternalMakingGood) {

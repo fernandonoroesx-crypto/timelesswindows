@@ -164,8 +164,9 @@ export interface TrimsPricing {
 }
 
 export interface MdfPricing {
-  narrow: number;
-  wide: number;
+  single: number;
+  baySide: number;
+  bayCentral: number;
 }
 
 export interface MakingGoodPricing {

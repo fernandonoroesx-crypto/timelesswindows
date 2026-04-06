@@ -146,10 +146,10 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
       </div>
       {!sellingOnly && (
         <div className={cardClass}>
-          <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal — Cost</h3>
+          <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal (per LM) — Cost</h3>
           <div className="space-y-2">
             {Object.entries(pricing.mdfCost).map(([key, price]) => (
-              <EditRow key={key} label={MDF_LABELS[key] || key} value={price} path={`mdfCost.${key}`} onUpdate={onUpdate} />
+              <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`mdfCost.${key}`} onUpdate={onUpdate} />
             ))}
           </div>
         </div>
