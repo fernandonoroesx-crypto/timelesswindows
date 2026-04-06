@@ -101,8 +101,6 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
     // Waste Disposal
     if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
 
-    // Delivery/Stock and FENSA/Survey are cost-only — not included in selling
-
     // Extras from slots
     if (item.extra1 !== 'none') b.extras += pricing.extras[item.extra1] || 0;
     if (item.extra2 !== 'none') b.extras += pricing.extras[item.extra2] || 0;
