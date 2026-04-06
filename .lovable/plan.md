@@ -1,59 +1,47 @@
 
 
-## Plan: Fix "Add New User" Functionality
+## Plan: Fix New Quote Pricing Initialization
 
-### Root cause
+### Problem
 
-Two issues:
+When creating a new quote, the pricing should snapshot the current global Settings (both selling and cost rates). Once saved, that quote keeps its snapshot forever — future Settings changes don't affect it.
 
-1. **Email invites require SMTP configuration** — The edge function uses `inviteUserByEmail`, which tries to send an email. Lovable Cloud doesn't have SMTP configured by default, so the invite silently fails or errors.
+The current code already attempts this but has a race condition: `createNewProject()` runs before `globalPricing` is fetched from the database, so it captures `DEFAULT_PRICING` (hardcoded defaults) instead of the user's saved Settings.
 
-2. **Error handling is broken** — `supabase.functions.invoke()` puts HTTP 400 responses in `data`, not `error`. So when the edge function returns `{ error: "..." }` with status 400, the client code doesn't catch it — the toast never shows the real error.
+### Current flow (buggy)
 
-### Solution
+1. `useState` initializer calls `createNewProject()` → sets `pricing = globalPricing`
+2. But `globalPricing` is still `DEFAULT_PRICING` at this point (DB fetch is async)
+3. Effect at line 47-51 tries to fix this, but only runs if `!currentProject && !project.projectManagerId`
 
-**Switch from email invite to direct user creation with a password.**
+### Fix
 
-Instead of inviting by email (which requires SMTP), the admin will set an initial password when creating a user. The edge function will use `adminClient.auth.admin.createUser()` instead of `inviteUserByEmail()`.
+**1. `src/pages/QuoteBuilder.tsx`** — Strengthen the initialization sync:
+
+- Keep the existing effect that syncs `globalPricing` for new quotes (line 47-51)
+- Add a guard so this sync only runs **once** when `globalPricing` first loads from DB, not on every subsequent render
+- Use a ref (`hasInitializedPricing`) to track whether the new quote has received its DB-loaded pricing
+- For existing quotes (`currentProject` is set), never overwrite — they keep their saved snapshot
+
+```text
+New quote flow:
+  1. Create with DEFAULT_PRICING (placeholder)
+  2. globalPricing loads from DB → sync once → set flag
+  3. Quote now has correct Settings rates
+  4. On save → snapshot is persisted
+  5. Future Settings changes don't affect this saved quote
+```
 
 ### Changes
 
-**1. Edge function (`supabase/functions/admin-users/index.ts`)**
-- Replace `inviteUserByEmail` with `createUser` in the `invite` action
-- Accept a `password` field in the request body
-- Create user with `email_confirm: true` so they can log in immediately
+| File | Change |
+|---|---|
+| `src/pages/QuoteBuilder.tsx` | Add `useRef` flag to ensure new quotes get DB-loaded global pricing exactly once; existing quotes are never overwritten |
 
-**2. UI (`src/components/UserManagement.tsx`)**
-- Add a password field to the "Register New User" dialog
-- Require both email and password before submitting
-- Send password in the request body
-- Fix error handling: check `data?.error` in addition to `error` from `functions.invoke()`
+### What stays the same
 
-### Updated invite flow
-
-```text
-Admin fills: email + name + role + password
-  → Edge function: createUser(email, password, email_confirm: true)
-  → Insert profile + role
-  → New user can log in immediately with email/password
-```
-
-### Technical details
-
-Edge function change (invite action):
-```typescript
-const { data: created, error: createError } = await adminClient.auth.admin.createUser({
-  email,
-  password,
-  email_confirm: true,
-  user_metadata: { display_name: displayName || email },
-});
-```
-
-Client error handling fix:
-```typescript
-const { data, error } = await supabase.functions.invoke('admin-users', { body: { ... } });
-if (error) throw error;
-if (data?.error) throw new Error(data.error);
-```
+- Existing/saved quotes keep their pricing snapshot untouched
+- PM-assigned quotes use PM pricing
+- Deselecting a PM reverts to current global pricing
+- Per-item overrides (installation override, custom uplift) are preserved
 
