@@ -1,47 +1,43 @@
 
 
-## Plan: Fix New Quote Pricing Initialization
+## Plan: Fix Quote Pricing Initialization from Settings
 
 ### Problem
 
-When creating a new quote, the pricing should snapshot the current global Settings (both selling and cost rates). Once saved, that quote keeps its snapshot forever — future Settings changes don't affect it.
+The current fix uses `globalPricing !== DEFAULT_PRICING` (reference equality) to detect when DB pricing has loaded. This fails when the user's saved settings happen to match defaults or when no settings are saved — because `fetchGlobalPricing` returns the same `DEFAULT_PRICING` reference, so the sync never triggers.
 
-The current code already attempts this but has a race condition: `createNewProject()` runs before `globalPricing` is fetched from the database, so it captures `DEFAULT_PRICING` (hardcoded defaults) instead of the user's saved Settings.
+### Solution
 
-### Current flow (buggy)
-
-1. `useState` initializer calls `createNewProject()` → sets `pricing = globalPricing`
-2. But `globalPricing` is still `DEFAULT_PRICING` at this point (DB fetch is async)
-3. Effect at line 47-51 tries to fix this, but only runs if `!currentProject && !project.projectManagerId`
-
-### Fix
-
-**1. `src/pages/QuoteBuilder.tsx`** — Strengthen the initialization sync:
-
-- Keep the existing effect that syncs `globalPricing` for new quotes (line 47-51)
-- Add a guard so this sync only runs **once** when `globalPricing` first loads from DB, not on every subsequent render
-- Use a ref (`hasInitializedPricing`) to track whether the new quote has received its DB-loaded pricing
-- For existing quotes (`currentProject` is set), never overwrite — they keep their saved snapshot
-
-```text
-New quote flow:
-  1. Create with DEFAULT_PRICING (placeholder)
-  2. globalPricing loads from DB → sync once → set flag
-  3. Quote now has correct Settings rates
-  4. On save → snapshot is persisted
-  5. Future Settings changes don't affect this saved quote
-```
+Use the `loading` flag from context instead of comparing object references. Don't initialize pricing until data has finished loading.
 
 ### Changes
 
 | File | Change |
 |---|---|
-| `src/pages/QuoteBuilder.tsx` | Add `useRef` flag to ensure new quotes get DB-loaded global pricing exactly once; existing quotes are never overwritten |
+| `src/pages/QuoteBuilder.tsx` | Pull `loading` from `useApp()`. Replace the ref-based pricing sync with a simpler approach: when `loading` becomes `false` and it's a new quote (no `currentProject`), set `project.pricing = globalPricing`. Use `loading` as the reliable signal that DB data is ready. |
+
+### Updated logic
+
+```text
+New quote:
+  1. While loading → project has DEFAULT_PRICING (placeholder)
+  2. loading becomes false → globalPricing is now DB values
+  3. Effect fires once → sets project.pricing = globalPricing
+  4. hasInitializedPricing ref prevents re-runs
+  5. On save → snapshot persisted, future Settings changes don't affect it
+
+Existing quote:
+  - hasInitializedPricing starts as true → effect never fires
+  - Quote keeps its saved snapshot
+
+PM assigned:
+  - PM pricing applied via selectPM handler (unchanged)
+```
 
 ### What stays the same
 
-- Existing/saved quotes keep their pricing snapshot untouched
-- PM-assigned quotes use PM pricing
-- Deselecting a PM reverts to current global pricing
-- Per-item overrides (installation override, custom uplift) are preserved
+- Existing quotes keep their saved pricing snapshot
+- PM pricing overrides work as before
+- Deselecting PM reverts to current global pricing
+- Per-item overrides preserved
 
