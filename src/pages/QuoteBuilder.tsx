@@ -308,7 +308,7 @@ export default function QuoteBuilder() {
       <Tabs defaultValue="items" className="space-y-4">
         <TabsList>
           <TabsTrigger value="items">Line Items ({project.lineItems.length})</TabsTrigger>
-          <TabsTrigger value="pricing" className="gap-1.5"><SlidersHorizontal className="w-3.5 h-3.5" /> Quote Pricing</TabsTrigger>
+          
         </TabsList>
 
         <TabsContent value="items" className="space-y-6">
