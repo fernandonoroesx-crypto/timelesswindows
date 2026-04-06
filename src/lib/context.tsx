@@ -122,6 +122,7 @@ export function createNewLineItem(): QuoteLineItem {
     architraveType: 'none',
     trimsType: 'none',
     mdfRevealType: 'none',
+    mdfWidthType: 'narrow',
     extra1: 'none',
     extra2: 'none',
     customExtra: 0,
