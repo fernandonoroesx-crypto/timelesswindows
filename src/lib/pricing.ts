@@ -70,7 +70,7 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
 
     // Architrave: LM × rate per type
     if (item.architraveType !== 'none') {
-      const archLm = calculateArchitraveLm(item.widthMm, item.heightMm);
+      const archLm = calculateTypeLm(item.architraveType, item.widthMm, item.heightMm);
       b.architrave = archLm * (pricing.architraveSelling[item.architraveType] || 0);
     }
 
@@ -79,9 +79,10 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
       b.trims = pricing.trimsSelling[item.trimsType] || 0;
     }
 
-    // MDF Reveal: flat rate per width
+    // MDF Reveal: LM × rate per type
     if (item.mdfRevealType !== 'none') {
-      b.mdfReveal = pricing.mdfSelling[item.mdfRevealType] || 0;
+      const mdfLm = calculateTypeLm(item.mdfRevealType, item.widthMm, item.heightMm);
+      b.mdfReveal = mdfLm * (pricing.mdfSelling[item.mdfRevealType] || 0);
     }
 
     // Making Good
