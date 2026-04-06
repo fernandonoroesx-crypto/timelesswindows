@@ -14,9 +14,18 @@ export function calculateLm(widthMm: number, heightMm: number): number {
   return ((2 * widthMm) + (2 * heightMm)) / 1000;
 }
 
-/** Architrave LM = (Width + 2×Height) / 1000 */
-export function calculateArchitraveLm(widthMm: number, heightMm: number): number {
-  return (widthMm + 2 * heightMm) / 1000;
+/** Calculate LM based on placement type:
+ *  Single: (2×Height + Width) / 1000
+ *  Bay Side: (Height + Width) / 1000
+ *  Bay Central: Width / 1000
+ */
+export function calculateTypeLm(type: string, widthMm: number, heightMm: number): number {
+  switch (type) {
+    case 'single': return (widthMm + 2 * heightMm) / 1000;
+    case 'baySide': return (widthMm + heightMm) / 1000;
+    case 'bayCentral': return widthMm / 1000;
+    default: return 0;
+  }
 }
 
 export interface PriceBreakdown {
