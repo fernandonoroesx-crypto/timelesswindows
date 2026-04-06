@@ -1,19 +1,35 @@
 
 
-## Plan: Convert Trims from Flat Rate to Per Linear Meter
+## Plan: Verify and Align Cost Calculations with LM
 
-Trims currently use a flat rate per type. This change makes Trims use the same LM formulas as Architrave and MDF:
-- **Single**: `(Width + 2×Height) / 1000`
-- **Bay Side**: `(Width + Height) / 1000`
-- **Bay Central**: `Width / 1000`
+After reviewing `src/lib/pricing.ts`, the cost breakdown functions for **Architrave**, **Trims**, and **MDF** already use the `calculateTypeLm` formula — they were updated alongside selling. No code changes are needed for the calculation engine.
 
-Final calculation: `LM(type) × rate per meter`
+However, the **PricingEditor** labels for cost sections should be verified to say "per LM" consistently.
 
-### Files to change
+### Files to check/update
 
-**`src/lib/pricing.ts`** — Update trims calculation in both selling and cost breakdowns from flat rate to `calculateTypeLm(trimsType, w, h) * rate`
+**`src/components/PricingEditor.tsx`**
+- Confirm Architrave Cost header says "(per LM)"
+- Confirm Trims Cost header says "(per LM)"
+- Confirm MDF Cost header says "(per LM)"
+- Update any that still show flat-rate labeling
 
-**`src/components/PricingEditor.tsx`** — Update Trims section header from "per item" to "per LM"
+### Current state (already correct in pricing.ts)
 
-No changes needed to types, context defaults, or QuoteBuilder — Trims already uses the same `single/baySide/bayCentral` type system and dropdown as Architrave.
+```typescript
+// Architrave cost — already uses LM
+const archLm = calculateTypeLm(item.architraveType, item.widthMm, item.heightMm);
+b.architrave = archLm * (pricing.architraveCost[item.architraveType] || 0);
+
+// Trims cost — already uses LM
+const trimLm = calculateTypeLm(item.trimsType, item.widthMm, item.heightMm);
+b.trims = trimLm * (pricing.trimsCost[item.trimsType] || 0);
+
+// MDF cost — already uses LM with width dimension
+const mdfLm = calculateTypeLm(item.mdfRevealType, item.widthMm, item.heightMm);
+const mdfRates = pricing.mdfCost[widthType] || pricing.mdfCost.narrow;
+b.mdfReveal = mdfLm * (mdfRates[item.mdfRevealType] || 0);
+```
+
+This is a label-only fix in PricingEditor to ensure cost section headers match the selling headers.
 
