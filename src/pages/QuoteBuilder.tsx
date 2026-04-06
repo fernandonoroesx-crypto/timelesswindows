@@ -261,7 +261,16 @@ export default function QuoteBuilder() {
       {/* Summary at the top */}
       {project.lineItems.length > 0 && (
         <div className="elevated-card rounded-xl p-6 border-l-4 border-l-secondary">
-          <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading text-lg font-semibold">Quote Summary</h2>
+            {!project.settings.supplyOnly && (
+              <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-muted/30">
+                <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Est. Days</Label>
+                <Input type="number" min="0" step="0.5" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.overheadDays}
+                  onChange={e => updateSettings('overheadDays', parseFloat(e.target.value) || 0)} />
+              </div>
+            )}
+          </div>
           
           {(() => {
             const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0 };
