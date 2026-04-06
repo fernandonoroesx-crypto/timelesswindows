@@ -270,7 +270,8 @@ export default function SettingsPage() {
                   ))}
                   <div className="pt-3 border-t space-y-2">
                     <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposal} onChange={v => update('wasteDisposal', v)} />
-                    <EditRow label="Overhead / day" value={pricing.overheadPerDay} onChange={v => update('overheadPerDay', v)} />
+                     <EditRow label="Overhead / day" value={pricing.overheadPerDay} onChange={v => update('overheadPerDay', v)} />
+                     <EditRow label="Overhead per item rate" value={pricing.overheadPerItemRate ?? 0.1} onChange={v => update('overheadPerItemRate', v)} unit="×" />
                   </div>
                 </div>
               </div>

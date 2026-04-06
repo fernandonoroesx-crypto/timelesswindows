@@ -200,7 +200,7 @@ export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectS
   for (const item of items) {
     const sb = getItemSellingBreakdown(item, settings, quotePricing);
     const cb = getItemCostBreakdown(item, settings, quotePricing);
-    const keys: (keyof PriceBreakdown)[] = ['material', 'installation', 'internalMakingGood', 'externalMakingGood', 'architrave', 'trims', 'mdfReveal', 'wasteDisposal', 'deliveryStock', 'fensaSurvey', 'extras', 'consumables'];
+    const keys: (keyof PriceBreakdown)[] = ['material', 'installation', 'internalMakingGood', 'externalMakingGood', 'architrave', 'trims', 'mdfReveal', 'wasteDisposal', 'deliveryStock', 'fensaSurvey', 'extras', 'consumables', 'overhead'];
     for (const k of keys) {
       sp[k] += sb[k] * item.qty;
       cp[k] += cb[k] * item.qty;

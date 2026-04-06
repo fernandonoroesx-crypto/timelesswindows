@@ -181,6 +181,7 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
             <div className="pt-2 border-t space-y-2">
               <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposal} path="wasteDisposal" onUpdate={onUpdate} />
               <EditRow label="Overhead / day" value={pricing.overheadPerDay} path="overheadPerDay" onUpdate={onUpdate} />
+              <EditRow label="Overhead per item rate" value={pricing.overheadPerItemRate ?? 0.1} path="overheadPerItemRate" onUpdate={onUpdate} unit="×" />
             </div>
           )}
         </div>
