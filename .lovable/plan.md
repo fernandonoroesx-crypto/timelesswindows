@@ -1,35 +1,30 @@
 
 
-## Plan: Fix Standard Pricing Fallback When PM Has No Custom Rates
+## Plan: Ensure New Quotes Always Use Saved Global Pricing
 
 ### Problem
 
-In `QuoteBuilder.tsx` line 86-93, when a PM is selected but has no custom pricing (`pm.pricing` is falsy), the code does **not** set `updates.pricing`. This means the quote retains whatever pricing was previously set — which could be stale defaults or rates from a previously selected PM. The global standard rates are not applied.
+When creating a new quote, the pricing is set from `globalPricing` — but this value is still the hardcoded `DEFAULT_PRICING` at that moment because the database fetch hasn't completed yet. So the quote gets stale default rates instead of the user's saved settings rates.
 
 ### Fix
 
-**`src/pages/QuoteBuilder.tsx`** — In the `selectPM` function, always set pricing: use PM rates if available, otherwise fall back to `globalPricing`.
+**`src/pages/QuoteBuilder.tsx`** — Add a `useEffect` that syncs the project's pricing with `globalPricing` once it finishes loading, but only for new projects (no PM selected, no existing custom pricing from a saved quote).
 
-Change lines 86-93 from:
 ```typescript
-const pm = clientPMs.find(p => p.id === pmId);
-if (pm) {
-  const updates: Partial<Project> = { projectManagerId: pm.id, projectManagerName: pm.name };
-  if (pm.pricing) {
-    updates.pricing = { ...pm.pricing };
+// After globalPricing loads, apply it to new unsaved projects
+useEffect(() => {
+  if (!currentProject && !project.projectManagerId) {
+    setProject(prev => ({ ...prev, pricing: { ...globalPricing } }));
   }
-  updateProject(updates);
-}
+}, [globalPricing]);
 ```
 
-To:
-```typescript
-const pm = clientPMs.find(p => p.id === pmId);
-if (pm) {
-  const pricing = pm.pricing ? { ...pm.pricing } : { ...globalPricing };
-  updateProject({ projectManagerId: pm.id, projectManagerName: pm.name, pricing });
-}
-```
+This ensures:
+- New quotes pick up saved global settings rates (both selling and cost)
+- Existing quotes keep their saved pricing
+- PM-assigned quotes keep their PM pricing
 
-This ensures that selecting a PM without custom rates always applies the current global standard pricing, and selecting a PM with custom rates applies theirs.
+### Files to change
+
+**`src/pages/QuoteBuilder.tsx`** — Add one `useEffect` (~5 lines) after the existing `useEffect` on line 40-42.
 
