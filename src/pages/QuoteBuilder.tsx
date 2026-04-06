@@ -288,7 +288,7 @@ export default function QuoteBuilder() {
             const labourCost = costTotals.installation + costTotals.internalMakingGood + costTotals.externalMakingGood
               + costTotals.architrave + costTotals.trims + costTotals.mdfReveal
               + costTotals.deliveryStock + costTotals.fensaSurvey
-              + costTotals.consumables + costTotals.overhead + overheadDays;
+              + costTotals.consumables + costTotals.overhead;
 
             const summaryRows = [
               { label: 'Materials', selling: totals.material, cost: costTotals.material },
