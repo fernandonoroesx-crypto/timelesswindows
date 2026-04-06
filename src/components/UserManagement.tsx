@@ -60,6 +60,8 @@ export default function UserManagement() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('field');
+  const [invitePassword, setInvitePassword] = useState('');
+  const [showInvitePassword, setShowInvitePassword] = useState(false);
   const [inviting, setInviting] = useState(false);
 
   const [editOpen, setEditOpen] = useState(false);
@@ -84,21 +86,23 @@ export default function UserManagement() {
   useEffect(() => { loadUsers(); }, []);
 
   const handleInvite = async () => {
-    if (!inviteEmail) return;
+    if (!inviteEmail || !invitePassword) return;
     setInviting(true);
     try {
-      const { error } = await supabase.functions.invoke('admin-users', {
-        body: { action: 'invite', email: inviteEmail, displayName: inviteName, role: inviteRole },
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'invite', email: inviteEmail, password: invitePassword, displayName: inviteName, role: inviteRole },
       });
       if (error) throw error;
-      toast.success(`Invite sent to ${inviteEmail}`);
+      if (data?.error) throw new Error(data.error);
+      toast.success(`User ${inviteEmail} created successfully`);
       setInviteOpen(false);
       setInviteEmail('');
       setInviteName('');
+      setInvitePassword('');
       setInviteRole('field');
       loadUsers();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to invite user');
+      toast.error(e?.message || 'Failed to create user');
     }
     setInviting(false);
   };
@@ -116,7 +120,7 @@ export default function UserManagement() {
     if (!editUser) return;
     setSaving(true);
     try {
-      const { error } = await supabase.functions.invoke('admin-users', {
+      const { data, error } = await supabase.functions.invoke('admin-users', {
         body: {
           action: 'update',
           userId: editUser.id,
@@ -126,6 +130,7 @@ export default function UserManagement() {
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success('User updated successfully');
       setEditOpen(false);
       setEditUser(null);
@@ -309,7 +314,26 @@ export default function UserManagement() {
                 value={inviteEmail}
                 onChange={e => setInviteEmail(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">An invite email will be sent to this address</p>
+              <p className="text-xs text-muted-foreground">The user will log in with this email</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Initial Password</Label>
+              <div className="relative">
+                <Input
+                  type={showInvitePassword ? 'text' : 'password'}
+                  placeholder="Min 6 characters"
+                  value={invitePassword}
+                  onChange={e => setInvitePassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowInvitePassword(!showInvitePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showInvitePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Display Name</Label>
@@ -342,8 +366,8 @@ export default function UserManagement() {
           <Separator />
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
-            <Button onClick={handleInvite} disabled={inviting || !inviteEmail} className="bg-primary text-primary-foreground">
-              {inviting ? 'Sending…' : 'Send Invite'}
+            <Button onClick={handleInvite} disabled={inviting || !inviteEmail || !invitePassword} className="bg-primary text-primary-foreground">
+              {inviting ? 'Creating…' : 'Create User'}
             </Button>
           </DialogFooter>
         </DialogContent>
