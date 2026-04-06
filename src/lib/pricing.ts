@@ -146,7 +146,8 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     }
 
     if (item.trimsType !== 'none') {
-      b.trims = pricing.trimsCost[item.trimsType] || 0;
+      const trimLm = calculateTypeLm(item.trimsType, item.widthMm, item.heightMm);
+      b.trims = trimLm * (pricing.trimsCost[item.trimsType] || 0);
     }
 
     if (item.mdfRevealType !== 'none') {
