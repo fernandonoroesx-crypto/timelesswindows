@@ -1,25 +1,27 @@
 
 
-## Plan: Generate Pricing Formulas PDF
+## Current State: Already Working as Requested
 
-Create a professional PDF document summarizing all pricing formulas currently implemented in the system, using Python's reportlab library.
+After reviewing the code, the system **already behaves this way**:
 
-### Content
+1. **PM with custom rates selected** → `pm.pricing` (full PricingData with both selling and cost fields) replaces the quote's pricing → both selling and cost calculations use PM rates
 
-The PDF will contain all the formulas from the previous Mermaid diagram, organized into clear sections:
+2. **No PM selected / PM without custom rates** → global standard pricing is used for both selling and cost
 
-1. **Linear Meter Formulas** — Single, Bay Side, Bay Central
-2. **Selling Price Breakdown** — Material, Installation, Architrave, Trims, MDF, Making Good, Delivery/Stock, Waste Disposal, FENSA/Survey, Extras
-3. **Cost Price Breakdown** — Same categories plus Consumables
-4. **Totals** — Unit Total, Line Total, Profit, Margin
+### How it works (QuoteBuilder.tsx, line 80-93):
+```
+selectPM(pmId):
+  if PM has pricing → quote.pricing = pm.pricing  (both selling + cost)
+  if no PM → quote.pricing = globalPricing         (standard rates)
+```
 
-### Technical approach
+### Pricing engine (pricing.ts):
+- `getItemSellingBreakdown(item, settings, quotePricing)` — uses quotePricing for selling rates
+- `getItemCostBreakdown(item, settings, quotePricing)` — uses quotePricing for cost rates
 
-- Use `reportlab` (already available in sandbox) to generate a clean, structured PDF
-- Write to `/mnt/documents/pricing_formulas.pdf`
-- Visual QA via `pdftoppm` before delivering
+Both functions read from the same `quotePricing` object, so whichever rates are on the quote (PM or global) apply to everything.
 
-### No codebase changes needed
+### No changes needed
 
-This is a standalone artifact generation task — no project files will be modified.
+The current implementation matches your requirement. When a PM has personal rates added, those rates are used for both selling and cost. When no PM rates exist, global standard rates apply.
 
