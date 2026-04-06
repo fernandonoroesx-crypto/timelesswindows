@@ -1,47 +1,49 @@
 
 
-## Plan: Add Per-Item Overhead Cost with Configurable Rate
+## Plan: Replace Per-Item Overhead with Project-Level Estimated Days
 
-### What the user wants
+### What changes
 
-Currently, overhead is calculated only at the quote level: `overheadDays × overheadPerDay`. The user wants an additional **per-item overhead cost** calculated as a fraction of the overhead rate (e.g., `0.1 × overheadPerDay`), and a configurable field to change that fraction.
+Remove `overheadPerItemRate` entirely. Overhead is calculated only at the project level as `overheadDays × overheadPerDay`. Add a visible "Estimated days" input field in the quote header so the user can set how long the project will take.
 
 ### Changes
 
-#### 1. `src/lib/types.ts` — Add new field to `PricingData`
-- Add `overheadPerItemRate: number` (default `0.1`) — the fraction of `overheadPerDay` applied per item
+#### 1. `src/lib/types.ts` — Remove `overheadPerItemRate` from `PricingData`
 
-#### 2. `src/lib/context.tsx` — Set default
-- Add `overheadPerItemRate: 0.1` to `DEFAULT_PRICING`
+#### 2. `src/lib/context.tsx` — Remove `overheadPerItemRate` from `DEFAULT_PRICING`
 
-#### 3. `src/lib/pricing.ts` — Apply per-item overhead in cost breakdown
-- In `getItemCostBreakdown`: add `b.overhead = pricing.overheadPerItemRate * pricing.overheadPerDay` (when not supply-only)
-- Add `overhead` to the `PriceBreakdown` interface
-- Include `overhead` in `b.unitTotal` sum
-- In `calculateQuoteSummary`: accumulate per-item overhead into the summary, keep the existing `overheadDays` calculation as a separate total-level overhead
+#### 3. `src/lib/pricing.ts` — Remove per-item overhead from cost breakdown
+- In `getItemCostBreakdown`: remove `b.overhead` calculation (set to 0 or remove)
+- Remove `overhead` from `unitTotal` sum in cost breakdown
+- Keep the project-level overhead in `calculateQuoteSummary` (`settings.overheadDays × pricing.overheadPerDay`)
 
-#### 4. `src/components/PricingEditor.tsx` — Add editable field
-- Add an `EditRow` for "Overhead per item rate" (`overheadPerItemRate`) in the "Other Costs" section, with unit "×"
+#### 4. `src/pages/QuoteBuilder.tsx` — Add "Estimated days" field
+- Add an input field for `overheadDays` in the quote header settings area (next to toggles or in the project details grid)
+- Remove "Overhead (per item)" row from the breakdown table
+- Keep "Overhead (days)" row showing the project-level overhead cost
 
-#### 5. `src/pages/SettingsPage.tsx` — Add field in General/Cost tab
-- Add an `EditRow` for "Overhead per item rate" next to the existing "Overhead / day" field
+#### 5. `src/components/PricingEditor.tsx` — Remove the `overheadPerItemRate` EditRow
+
+#### 6. `src/pages/SettingsPage.tsx` — Remove the `overheadPerItemRate` EditRow
 
 ### How it works
 
 ```text
-Per-item overhead cost = overheadPerItemRate × overheadPerDay
-Example: 0.1 × £2000 = £200 per item
+Overhead = overheadDays × overheadPerDay
+Example: 3 days × £2000/day = £6000 total project overhead
 
-Total overhead = (per-item overhead × total items) + (overheadDays × overheadPerDay)
+User sets "Estimated days" per quote in the quote header.
+overheadPerDay rate comes from Settings (or quote-level pricing override).
 ```
 
 ### Files to update
 
 | File | Change |
 |---|---|
-| `src/lib/types.ts` | Add `overheadPerItemRate` to `PricingData` |
-| `src/lib/context.tsx` | Add default `0.1` |
-| `src/lib/pricing.ts` | Add `overhead` to `PriceBreakdown`, calculate per-item overhead in cost breakdown |
-| `src/components/PricingEditor.tsx` | Add editable field for the rate |
-| `src/pages/SettingsPage.tsx` | Add editable field for the rate |
+| `src/lib/types.ts` | Remove `overheadPerItemRate` |
+| `src/lib/context.tsx` | Remove from defaults |
+| `src/lib/pricing.ts` | Remove per-item overhead from cost breakdown |
+| `src/pages/QuoteBuilder.tsx` | Add "Estimated days" input field, remove per-item overhead row |
+| `src/components/PricingEditor.tsx` | Remove `overheadPerItemRate` field |
+| `src/pages/SettingsPage.tsx` | Remove `overheadPerItemRate` field |
 
