@@ -725,8 +725,7 @@ function LineItemCard({
                     {sellingBreakdown.architrave > 0 && <FormulaRow label={`Architrave (${item.architraveType})`} value={sellingBreakdown.architrave} formula={`LM × rate`} />}
                     {sellingBreakdown.trims > 0 && <FormulaRow label={`Trims (${item.trimsType})`} value={sellingBreakdown.trims} />}
                     {sellingBreakdown.mdfReveal > 0 && <FormulaRow label={`MDF Reveal (${item.mdfRevealType})`} value={sellingBreakdown.mdfReveal} />}
-                    {sellingBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={sellingBreakdown.deliveryStock} formula="Area SM × rate" />}
-                    {sellingBreakdown.fensaSurvey > 0 && <FormulaRow label="Fensa/Survey" value={sellingBreakdown.fensaSurvey} />}
+                    {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
                     {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
                     {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} />}
                   </>
