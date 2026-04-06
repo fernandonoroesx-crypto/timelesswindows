@@ -369,7 +369,6 @@ export default function UserManagement() {
             <Button onClick={handleInvite} disabled={inviting || !inviteEmail || !invitePassword} className="bg-primary text-primary-foreground">
               {inviting ? 'Creating…' : 'Create User'}
             </Button>
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
