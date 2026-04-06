@@ -256,10 +256,10 @@ export default function QuoteBuilder() {
           <ToggleSetting label="External Making Good" checked={project.settings.includeExternalMakingGood} onChange={v => updateSettings('includeExternalMakingGood', v)} />
           <ToggleSetting label="Supply Only" checked={project.settings.supplyOnly} onChange={v => updateSettings('supplyOnly', v)} />
           {!project.settings.supplyOnly && (
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Est. Days</Label>
-              <Input type="number" min="0" step="1" className="h-8 w-20 text-sm" value={project.settings.overheadDays}
-                onChange={e => updateSettings('overheadDays', parseInt(e.target.value) || 0)} />
+            <div className="flex items-center gap-2 ml-auto border rounded-lg px-3 py-1.5 bg-muted/30">
+              <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Est. Days</Label>
+              <Input type="number" min="0" step="0.5" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.overheadDays}
+                onChange={e => updateSettings('overheadDays', parseFloat(e.target.value) || 0)} />
             </div>
           )}
         </div>
