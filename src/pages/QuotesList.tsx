@@ -37,8 +37,7 @@ export default function QuotesList() {
   });
 
   const handleNew = () => {
-    const project = createNewProject();
-    setCurrentProject(project);
+    setCurrentProject(null);
     navigate('/quotes/new');
   };
 
