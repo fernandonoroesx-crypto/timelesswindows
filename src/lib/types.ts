@@ -201,4 +201,5 @@ export interface PricingData {
   deliveryStockCost: number;
   fensaSurveyCost: number;
   overheadPerDay: number;
+  overheadPerItemRate: number;
 }

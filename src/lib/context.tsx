@@ -35,6 +35,7 @@ export const DEFAULT_PRICING: PricingData = {
   deliveryStockCost: 40.00,
   fensaSurveyCost: 15.00,
   overheadPerDay: 2000.00,
+  overheadPerItemRate: 0.1,
 };
 
 interface AppContextType {
