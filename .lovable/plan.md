@@ -1,38 +1,40 @@
 
 
-## Plan: Persist Data with Supabase Cloud Database
+## Plan: Update Linear Meter Formulas + Convert MDF to Per-LM with Single/Side/Central Types
 
-### Problem
-All clients, quotes, and settings are stored in **browser localStorage** — data is lost when clearing browser data, switching devices, or browsers.
+### What's changing
 
-### Solution
-Connect Lovable Cloud (Supabase) to store clients and projects in a real database, synced across all devices.
+**1. Different LM formulas per type** (applies to both Architrave and MDF):
+- **Single**: `(2 × Height + Width) / 1000` — already correct
+- **Bay Side**: `(Height + Width) / 1000` — new formula  
+- **Bay Central**: `Width / 1000` — new formula
 
-### Technical Steps
+**2. MDF changes from flat-rate to per-linear-meter**, using the same three types (single/baySide/bayCentral) instead of narrow/wide.
 
-1. **Enable Lovable Cloud** — Set up Supabase integration with database tables.
+### Files to change
 
-2. **Create database tables** via migrations:
-   - `clients` — id, name, email, phone, address, notes, created_at
-   - `project_managers` — id, client_id (FK), name, email, phone
-   - `projects` — id, date, client, client_id, project_ref, settings (jsonb), pricing (jsonb), status, created_at, updated_at
-   - `line_items` — id, project_id (FK), all line item fields
+**`src/lib/pricing.ts`**
+- Replace the single `calculateArchitraveLm()` function with a new function that takes the type and returns the correct LM:
+  - `single` → `(width + 2*height) / 1000`
+  - `baySide` → `(width + height) / 1000`
+  - `bayCentral` → `width / 1000`
+- Update architrave calculation in both selling and cost breakdowns to use the type-specific LM
+- Change MDF calculation from flat rate to: `LM(type) × rate per meter` using the same LM function
 
-3. **Create a Supabase client** — `src/integrations/supabase/client.ts`
+**`src/lib/types.ts`**
+- Change `MdfRevealType` from `'none' | 'narrow' | 'wide'` to `'none' | 'single' | 'baySide' | 'bayCentral'`
+- Update `MdfPricing` interface to match: `{ single: number; baySide: number; bayCentral: number }`
 
-4. **Update `src/lib/context.tsx`**:
-   - Replace `localStorage.getItem/setItem` calls with Supabase queries
-   - Load clients and projects from database on app start
-   - Save changes to database when `setClients` or `setProjects` are called
-   - Keep localStorage as offline fallback/cache
+**`src/lib/context.tsx`**
+- Update `DEFAULT_PRICING.mdfSelling` and `mdfCost` keys from `narrow/wide` to `single/baySide/bayCentral`
 
-5. **Add RLS policies** — Enable row-level security (initially open, tighten when auth is added later)
+**`src/components/PricingEditor.tsx`**
+- Remove the separate `MDF_LABELS` map; reuse `ARCH_TRIM_LABELS` for MDF sections
+- Update MDF section header to show "per LM" instead of flat rate
 
-### What Stays the Same
-- All UI components unchanged
-- All pricing calculation logic unchanged
-- Same app flow — just backed by a real database
+**`src/pages/QuoteBuilder.tsx`** (or wherever line item MDF dropdown is rendered)
+- Update dropdown options from narrow/wide to Single/Bay Side/Bay Central
 
-### Result
-Data persists permanently, accessible from any device/browser.
+### No database migration needed
+MDF type is stored inside the `line_items` JSONB column on `projects`. Existing quotes with `narrow`/`wide` values will gracefully default to 0 cost (no match in pricing lookup), which is safe.
 
