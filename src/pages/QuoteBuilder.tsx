@@ -15,6 +15,7 @@ import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator,
 import PricingEditor from '@/components/PricingEditor';
 import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
+import { exportQuoteExcel } from '@/lib/excel-export';
 
 import PdfImportDialog from '@/components/PdfImportDialog';
 
