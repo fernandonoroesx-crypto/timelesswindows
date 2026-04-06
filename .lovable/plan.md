@@ -1,30 +1,31 @@
 
 
-## Plan: Ensure New Quotes Always Use Saved Global Pricing
+## Plan: Lock Quote Rates to Global Settings (Override Only by PM)
 
 ### Problem
 
-When creating a new quote, the pricing is set from `globalPricing` — but this value is still the hardcoded `DEFAULT_PRICING` at that moment because the database fetch hasn't completed yet. So the quote gets stale default rates instead of the user's saved settings rates.
+The Quote Builder has a "Pricing" tab that lets users manually edit selling rates per-quote. This contradicts the requirement that rates should always match global Settings, only changing when a PM has custom rates assigned.
 
-### Fix
+### Changes
 
-**`src/pages/QuoteBuilder.tsx`** — Add a `useEffect` that syncs the project's pricing with `globalPricing` once it finishes loading, but only for new projects (no PM selected, no existing custom pricing from a saved quote).
+**`src/pages/QuoteBuilder.tsx`**
 
-```typescript
-// After globalPricing loads, apply it to new unsaved projects
-useEffect(() => {
-  if (!currentProject && !project.projectManagerId) {
-    setProject(prev => ({ ...prev, pricing: { ...globalPricing } }));
-  }
-}, [globalPricing]);
-```
+1. **Remove the Pricing tab** from the quote builder tabs. Users should not be able to edit rates on individual quotes — rates come from Settings (standard) or PM (custom).
 
-This ensures:
-- New quotes pick up saved global settings rates (both selling and cost)
-- Existing quotes keep their saved pricing
-- PM-assigned quotes keep their PM pricing
+2. **Remove the `updatePricing` function** (lines 59-70) and the `QuotePricingEditor` component (lines 496-498) since they are no longer needed.
+
+3. **Remove the pricing tab trigger and content** (the "Pricing" `TabsTrigger` and `TabsContent` on lines 444-446).
+
+### What stays the same
+
+- Global Settings page: full editing of all selling and cost rates (standard rates)
+- PM pricing on Clients page: selling-only overrides per PM
+- Quote pricing resolution: PM rates if PM has custom rates → global standard rates otherwise
+- The `project.pricing` field still stores a snapshot of whichever rates applied when the quote was created/PM was selected, so saved quotes retain their historical rates
 
 ### Files to change
 
-**`src/pages/QuoteBuilder.tsx`** — Add one `useEffect` (~5 lines) after the existing `useEffect` on line 40-42.
+| File | Change |
+|---|---|
+| `src/pages/QuoteBuilder.tsx` | Remove Pricing tab, `updatePricing` function, and `QuotePricingEditor` component |
 
