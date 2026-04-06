@@ -1,70 +1,40 @@
 
 
-## Plan: Add Excel Report Export to Quotes
+## Plan: Improve Excel Report Design
 
-### What the user wants
+### Current limitation
 
-An Excel (.xlsx) export from the Quote Builder that matches their draft layout, with a total breakdown section at the bottom.
+The current export uses SheetJS (`xlsx`), which does **not support cell styling** (colors, borders, bold, fills) in the free/community version. The report outputs plain unformatted data.
 
-### Draft layout (from uploaded file)
+### Solution: Switch to ExcelJS
 
-Columns: **Proj Ref, Item Ref, Qty, Type, Width (mm), Height (mm), Material, Internal Making Good, External Making Good, Waste Disposal, Extra1, Extra2, Extra3**
+Replace `xlsx` with `exceljs` — a free library that supports full formatting: bold headers, colored fills, borders, number formatting (£), merged cells, and conditional styling.
 
-Plus a **total breakdown** section below the items table summarizing all cost categories.
+### Design improvements
 
-### Implementation
+1. **Header row**: Bold white text on dark blue background, centered alignment
+2. **Currency formatting**: All monetary cells display as `£#,##0.00`
+3. **Totals row**: Bold with light grey background and top border
+4. **Breakdown section**: Section title in bold with colored background; alternating row shading for readability
+5. **Summary block** (Total Selling / Cost / Profit / Margin): Bold with green fill for profit, red fill if negative
+6. **Borders**: Thin borders around all data cells; thicker border separating items from breakdown
+7. **Column auto-width**: Better fit to content
+8. **Project header**: Client name, date, and project ref displayed above the table in a merged-cell header area
 
-**New file: `src/lib/excel-export.ts`**
-
-- Function `exportQuoteExcel(project: Project)` that:
-  1. Uses the `xlsx` (SheetJS) library to build a workbook in-browser
-  2. Creates a sheet with header row matching the draft columns
-  3. Populates one row per line item using `getItemSellingBreakdown()` for selling values
-  4. Adds a **totals row** summing each column
-  5. Adds a **breakdown section** below with:
-     - Materials total, Installation total, Internal Making Good, External Making Good, Architrave, Trims, MDF Reveal, Waste Disposal, Delivery/Stock, FENSA/Survey, Extras
-     - Selling total, Cost total, Profit, Margin %
-  6. Applies column widths and basic formatting
-  7. Triggers browser download as `.xlsx`
-
-**`src/pages/QuoteBuilder.tsx`**
-
-- Add an "Export Excel" button next to the existing PDF export buttons
-- Import and call `exportQuoteExcel`
-
-**Package**
-
-- Install `xlsx` (SheetJS) — works client-side, no server needed
-
-### Technical details
+### Files to change
 
 | File | Change |
 |---|---|
-| `package.json` | Add `xlsx` dependency |
-| `src/lib/excel-export.ts` | New file — builds workbook with items table + breakdown |
-| `src/pages/QuoteBuilder.tsx` | Add Excel export button |
+| `package.json` | Replace `xlsx` with `exceljs` |
+| `src/lib/excel-export.ts` | Rewrite using ExcelJS API with full formatting |
 
-### Column mapping from draft to data
+### Key ExcelJS features used
 
-| Excel Column | Source |
-|---|---|
-| Proj Ref | `project.projectRef` |
-| Item Ref | `item.itemRef` |
-| Qty | `item.qty` |
-| Type | `item.type` |
-| Width (mm) | `item.widthMm` |
-| Height (mm) | `item.heightMm` |
-| Material | `breakdown.material` |
-| Internal Making Good | `breakdown.internalMakingGood` |
-| External Making Good | `breakdown.externalMakingGood` |
-| Waste Disposal | `breakdown.wasteDisposal` |
-| Extra1 | `item.extra1` value from `pricing.extras` |
-| Extra2 | `item.extra2` value from `pricing.extras` |
-| Extra3 | `item.customExtra` |
+- `worksheet.getRow(n).font = { bold: true, color: { argb: 'FFFFFF' } }`
+- `worksheet.getRow(n).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '2B3A67' } }`
+- `cell.numFmt = '£#,##0.00'` for currency
+- `cell.border = { top: { style: 'thin' }, ... }` for borders
+- `worksheet.mergeCells('A1:U1')` for project header
 
-### Breakdown section (below items)
-
-- Selling: Material, Installation, Int. Making Good, Ext. Making Good, Architrave, Trims, MDF, Waste, Delivery, FENSA, Extras → **Total Selling**
-- Cost: same categories + Consumables + Overhead → **Total Cost**
-- Profit and Margin %
+The data logic stays the same — only the rendering layer changes to produce a professionally styled spreadsheet.
 
