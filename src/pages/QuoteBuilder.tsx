@@ -41,6 +41,13 @@ export default function QuoteBuilder() {
     if (currentProject) setProject(currentProject);
   }, [currentProject]);
 
+  // Sync pricing with saved global settings once they load (for new quotes only)
+  useEffect(() => {
+    if (!currentProject && !project.projectManagerId) {
+      setProject(prev => ({ ...prev, pricing: { ...globalPricing } }));
+    }
+  }, [globalPricing]);
+
   const updateProject = (updates: Partial<Project>) => {
     setProject(prev => ({ ...prev, ...updates, updatedAt: new Date().toISOString() }));
   };
