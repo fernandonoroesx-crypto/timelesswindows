@@ -178,6 +178,12 @@ export default function QuoteBuilder() {
           }}>
             <FileDown className="w-4 h-4 mr-2" /> Installation PDF
           </Button>
+          <Button variant="outline" onClick={() => {
+            exportQuoteExcel(project);
+            toast.success('Excel report exported');
+          }}>
+            <FileDown className="w-4 h-4 mr-2" /> Excel Report
+          </Button>
         </div>
       </div>
 
