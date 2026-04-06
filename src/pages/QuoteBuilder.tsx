@@ -478,9 +478,6 @@ export default function QuoteBuilder() {
   );
 }
 
-function QuotePricingEditor({ pricing, onUpdate }: { pricing: PricingData; onUpdate: (path: string, value: number) => void }) {
-  return <PricingEditor pricing={pricing} onUpdate={onUpdate} sellingOnly />;
-}
 
 function LineItemCard({
   item, index, settings, quotePricing, suppliers, onUpdate, onRemove, onDuplicate,
