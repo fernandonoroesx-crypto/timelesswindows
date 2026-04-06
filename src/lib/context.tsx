@@ -33,7 +33,6 @@ export const DEFAULT_PRICING: PricingData = {
   },
   wasteDisposal: 35.00,
   overheadPerDay: 2000.00,
-  overheadPerDay: 2000.00,
 };
 
 interface AppContextType {

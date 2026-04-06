@@ -169,16 +169,6 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
         </div>
       )}
 
-      {/* Add-ons & Logistics */}
-      <div className={cardClass}>
-        <h3 className="font-heading text-sm font-semibold mb-3">Add-ons & Logistics</h3>
-        <div className="space-y-2">
-          <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockSelling} path="deliveryStockSelling" onUpdate={onUpdate} />
-          {!sellingOnly && <EditRow label="Delivery/Stock cost (per SM)" value={pricing.deliveryStockCost} path="deliveryStockCost" onUpdate={onUpdate} />}
-          <EditRow label="Fensa/Survey (per item)" value={pricing.fensaSurveySelling} path="fensaSurveySelling" onUpdate={onUpdate} />
-          {!sellingOnly && <EditRow label="Fensa/Survey cost (per item)" value={pricing.fensaSurveyCost} path="fensaSurveyCost" onUpdate={onUpdate} />}
-        </div>
-      </div>
 
       {/* Extras & Other */}
       <div className={cardClass}>
