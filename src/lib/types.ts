@@ -16,6 +16,7 @@ export type Currency = 'GBP' | 'EUR';
 export type ArchitraveType = 'none' | 'single' | 'baySide' | 'bayCentral';
 export type TrimsType = 'none' | 'single' | 'baySide' | 'bayCentral';
 export type MdfRevealType = 'none' | 'single' | 'baySide' | 'bayCentral';
+export type MdfWidthType = 'narrow' | 'wide';
 
 export type ExtraType = 'Recess of reveal' | 'Shutters' | 'Cut Out of work top';
 
