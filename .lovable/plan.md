@@ -1,43 +1,101 @@
 
+## Plan: Fix New Quote Costs Not Matching Settings
 
-## Plan: Fix Quote Pricing Initialization from Settings
+### Root cause
 
-### Problem
+The issue is not the pricing sync effect itself. It is the way a “new quote” is opened.
 
-The current fix uses `globalPricing !== DEFAULT_PRICING` (reference equality) to detect when DB pricing has loaded. This fails when the user's saved settings happen to match defaults or when no settings are saved — because `fetchGlobalPricing` returns the same `DEFAULT_PRICING` reference, so the sync never triggers.
+Right now, the app creates a new project with default pricing first and stores it in `currentProject` before navigating to `/quotes/new`:
 
-### Solution
+- `src/pages/Dashboard.tsx`
+- `src/pages/QuotesList.tsx`
 
-Use the `loading` flag from context instead of comparing object references. Don't initialize pricing until data has finished loading.
+Then in `QuoteBuilder`, this is treated like an existing quote:
 
-### Changes
+- local state starts from `currentProject`
+- `hasInitializedPricing` starts as `true`
+- the “apply settings pricing after loading” effect never runs
 
-| File | Change |
-|---|---|
-| `src/pages/QuoteBuilder.tsx` | Pull `loading` from `useApp()`. Replace the ref-based pricing sync with a simpler approach: when `loading` becomes `false` and it's a new quote (no `currentProject`), set `project.pricing = globalPricing`. Use `loading` as the reliable signal that DB data is ready. |
+So the quote keeps default costs instead of the saved Settings costs.
 
-### Updated logic
+There is also a second issue: `currentProject` is never cleared, so opening “New Quote” from the sidebar can accidentally reuse the last open quote.
+
+### What to change
+
+#### 1. Make “New Quote” really start fresh
+Update all “new quote” entry points so they clear `currentProject` and navigate to `/quotes/new` without pre-creating a quote object.
+
+Files:
+- `src/pages/Dashboard.tsx`
+- `src/pages/QuotesList.tsx`
+- `src/components/AppLayout.tsx` (for the sidebar “New Quote” link)
+
+#### 2. Let `QuoteBuilder` create the new quote itself
+Adjust `QuoteBuilder` so:
+
+- if `currentProject` exists, it loads that saved/existing quote
+- if `currentProject` is `null`, it creates a fresh quote locally
+- after `loading` becomes `false`, it applies `globalPricing` once to that new quote
+- existing quotes are never overwritten
+
+File:
+- `src/pages/QuoteBuilder.tsx`
+
+#### 3. Reset the initialization flag correctly
+Make sure the one-time pricing initialization ref is based on whether the builder is editing an existing quote, not on whether some placeholder object was injected before navigation.
+
+### Expected behavior after fix
 
 ```text
-New quote:
-  1. While loading → project has DEFAULT_PRICING (placeholder)
-  2. loading becomes false → globalPricing is now DB values
-  3. Effect fires once → sets project.pricing = globalPricing
-  4. hasInitializedPricing ref prevents re-runs
-  5. On save → snapshot persisted, future Settings changes don't affect it
-
-Existing quote:
-  - hasInitializedPricing starts as true → effect never fires
-  - Quote keeps its saved snapshot
-
-PM assigned:
-  - PM pricing applied via selectPM handler (unchanged)
+Settings saved
+  ↓
+User clicks New Quote
+  ↓
+No quote object is preloaded
+  ↓
+QuoteBuilder creates a fresh local quote
+  ↓
+When settings finish loading, quote pricing is initialized from Settings
+  ↓
+Both selling and cost values match Settings
+  ↓
+If user edits quote pricing manually, those changes stay on that quote only
+  ↓
+If user selects a PM, PM pricing overrides the standard quote pricing
 ```
 
 ### What stays the same
 
-- Existing quotes keep their saved pricing snapshot
-- PM pricing overrides work as before
-- Deselecting PM reverts to current global pricing
-- Per-item overrides preserved
+- Previous/saved quotes keep their own pricing snapshot
+- Manual quote-level pricing edits still work
+- PM pricing still overrides standard pricing
+- Settings remain the source of truth for the starting rates of every new quote
 
+### Technical details
+
+Current problematic flow:
+```text
+New Quote button
+  → createNewProject()
+  → pricing = DEFAULT/global placeholder
+  → setCurrentProject(project)
+  → QuoteBuilder sees currentProject
+  → skips initialization from settings
+```
+
+Correct flow:
+```text
+New Quote button
+  → setCurrentProject(null)
+  → navigate('/quotes/new')
+  → QuoteBuilder creates fresh local project
+  → waits for loading=false
+  → copies globalPricing into project.pricing once
+```
+
+### Files to update
+
+- `src/pages/Dashboard.tsx`
+- `src/pages/QuotesList.tsx`
+- `src/components/AppLayout.tsx`
+- `src/pages/QuoteBuilder.tsx`
