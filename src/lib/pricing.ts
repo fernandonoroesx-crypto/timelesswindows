@@ -184,7 +184,7 @@ export function calculateItemCost(item: QuoteLineItem, settings: ProjectSettings
 }
 
 export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectSettings, quotePricing?: PricingData): QuoteSummary {
-  const sp = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0, total: 0 };
+  const sp = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, extras: 0, consumables: 0, overhead: 0, total: 0 };
   const cp = { ...sp };
   let totalSm = 0;
 
