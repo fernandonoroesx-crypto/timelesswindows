@@ -77,6 +77,8 @@ export interface CostBreakdown {
   trims: number;
   mdfReveal: number;
   wasteDisposal: number;
+  deliveryStock: number;
+  fensaSurvey: number;
   extras: number;
   consumables: number;
   overhead: number;
