@@ -135,11 +135,18 @@ export default function SettingsPage() {
               </div>
 
               <div className="elevated-card rounded-xl p-6">
-                <h2 className="font-heading text-lg font-semibold mb-4">MDF Reveal — Selling</h2>
+                <h2 className="font-heading text-lg font-semibold mb-4">MDF Reveal — Selling (per LM)</h2>
+                <p className="text-xs text-muted-foreground mb-2">Narrow</p>
                 <div className="space-y-2">
-                  {Object.entries(pricing.mdfSelling).map(([key, price]) => (
-                    <EditRow key={key} label={MDF_LABELS[key] || key} value={price} onChange={v => update(`mdfSelling.${key}`, v)} />
-                  ))}
+                  <EditRow label="Single" value={pricing.mdfSelling?.narrow?.single ?? 0} onChange={v => update('mdfSelling.narrow.single', v)} />
+                  <EditRow label="Bay Side" value={pricing.mdfSelling?.narrow?.baySide ?? 0} onChange={v => update('mdfSelling.narrow.baySide', v)} />
+                  <EditRow label="Bay Central" value={pricing.mdfSelling?.narrow?.bayCentral ?? 0} onChange={v => update('mdfSelling.narrow.bayCentral', v)} />
+                </div>
+                <p className="text-xs text-muted-foreground mb-2 mt-3">Wide</p>
+                <div className="space-y-2">
+                  <EditRow label="Single" value={pricing.mdfSelling?.wide?.single ?? 0} onChange={v => update('mdfSelling.wide.single', v)} />
+                  <EditRow label="Bay Side" value={pricing.mdfSelling?.wide?.baySide ?? 0} onChange={v => update('mdfSelling.wide.baySide', v)} />
+                  <EditRow label="Bay Central" value={pricing.mdfSelling?.wide?.bayCentral ?? 0} onChange={v => update('mdfSelling.wide.bayCentral', v)} />
                 </div>
               </div>
 
