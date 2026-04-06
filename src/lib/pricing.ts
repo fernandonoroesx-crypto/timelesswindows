@@ -76,7 +76,8 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
 
     // Trims: flat rate per type
     if (item.trimsType !== 'none') {
-      b.trims = pricing.trimsSelling[item.trimsType] || 0;
+      const trimLm = calculateTypeLm(item.trimsType, item.widthMm, item.heightMm);
+      b.trims = trimLm * (pricing.trimsSelling[item.trimsType] || 0);
     }
 
     // MDF Reveal: LM × rate per type
@@ -145,7 +146,8 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     }
 
     if (item.trimsType !== 'none') {
-      b.trims = pricing.trimsCost[item.trimsType] || 0;
+      const trimLm = calculateTypeLm(item.trimsType, item.widthMm, item.heightMm);
+      b.trims = trimLm * (pricing.trimsCost[item.trimsType] || 0);
     }
 
     if (item.mdfRevealType !== 'none') {

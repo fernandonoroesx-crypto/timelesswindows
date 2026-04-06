@@ -117,7 +117,7 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
 
       {/* Trims */}
       <div className={cardClass}>
-        <h3 className="font-heading text-sm font-semibold mb-3">Trims (per item){sellingOnly ? '' : ' — Selling'}</h3>
+        <h3 className="font-heading text-sm font-semibold mb-3">Trims (per LM){sellingOnly ? '' : ' — Selling'}</h3>
         <div className="space-y-2">
           {Object.entries(pricing.trimsSelling).map(([key, price]) => (
             <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`trimsSelling.${key}`} onUpdate={onUpdate} />
@@ -126,7 +126,7 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
       </div>
       {!sellingOnly && (
         <div className={cardClass}>
-          <h3 className="font-heading text-sm font-semibold mb-3">Trims (per item) — Cost</h3>
+          <h3 className="font-heading text-sm font-semibold mb-3">Trims (per LM) — Cost</h3>
           <div className="space-y-2">
             {Object.entries(pricing.trimsCost).map(([key, price]) => (
               <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`trimsCost.${key}`} onUpdate={onUpdate} />
