@@ -77,8 +77,6 @@ export interface CostBreakdown {
   trims: number;
   mdfReveal: number;
   wasteDisposal: number;
-  deliveryStock: number;
-  fensaSurvey: number;
   extras: number;
   consumables: number;
   overhead: number;
@@ -198,9 +196,5 @@ export interface PricingData {
   extras: Record<string, number>;
   consumables: Record<string, number>;
   wasteDisposal: number;
-  deliveryStockSelling: number;
-  deliveryStockCost: number;
-  fensaSurveySelling: number;
-  fensaSurveyCost: number;
   overheadPerDay: number;
 }

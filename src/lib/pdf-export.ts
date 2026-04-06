@@ -178,9 +178,7 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
       + summary.sellingPrice.externalMakingGood
       + summary.sellingPrice.architrave
       + summary.sellingPrice.trims
-      + summary.sellingPrice.mdfReveal
-      + summary.sellingPrice.deliveryStock
-      + summary.sellingPrice.fensaSurvey;
+      + summary.sellingPrice.mdfReveal;
     summaryLines.push({ label: 'Labour:', value: formatCurrency(labourTotal) });
   }
 

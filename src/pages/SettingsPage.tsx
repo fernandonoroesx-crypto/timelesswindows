@@ -157,13 +157,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="elevated-card rounded-xl p-6">
-                <h2 className="font-heading text-lg font-semibold mb-4">Delivery & Fensa — Selling</h2>
-                <div className="space-y-2">
-                  <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockSelling} onChange={v => update('deliveryStockSelling', v)} />
-                  <EditRow label="Fensa/Survey (per item)" value={pricing.fensaSurveySelling} onChange={v => update('fensaSurveySelling', v)} />
-                </div>
-              </div>
             </div>
           </TabsContent>
 
@@ -227,13 +220,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="elevated-card rounded-xl p-6">
-                <h2 className="font-heading text-lg font-semibold mb-4">Delivery & Fensa — Cost</h2>
-                <div className="space-y-2">
-                  <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockCost} onChange={v => update('deliveryStockCost', v)} />
-                  <EditRow label="Fensa/Survey (per item)" value={pricing.fensaSurveyCost} onChange={v => update('fensaSurveyCost', v)} />
-                </div>
-              </div>
 
               <div className="elevated-card rounded-xl p-6 lg:col-span-2">
                 <h2 className="font-heading text-lg font-semibold mb-4">Consumables (per item — cost only)</h2>
