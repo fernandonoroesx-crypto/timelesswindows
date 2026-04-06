@@ -37,6 +37,8 @@ export interface PriceBreakdown {
   trims: number;
   mdfReveal: number;
   wasteDisposal: number;
+  deliveryStock: number;
+  fensaSurvey: number;
   extras: number;
   consumables: number;
   unitTotal: number;
