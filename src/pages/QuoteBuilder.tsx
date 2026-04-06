@@ -262,7 +262,7 @@ export default function QuoteBuilder() {
           <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
           
           {(() => {
-            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0 };
+            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, extras: 0, consumables: 0 };
             const costTotals = { ...totals };
             for (const item of project.lineItems) {
               const sb = getItemSellingBreakdown(item, project.settings, quotePricing);
@@ -275,9 +275,9 @@ export default function QuoteBuilder() {
             const overhead = project.settings.overheadDays * (quotePricing.overheadPerDay || 0);
 
             const labourSelling = totals.installation + totals.internalMakingGood + totals.externalMakingGood
-              + totals.architrave + totals.trims + totals.mdfReveal + totals.deliveryStock + totals.fensaSurvey;
+              + totals.architrave + totals.trims + totals.mdfReveal;
             const labourCost = costTotals.installation + costTotals.internalMakingGood + costTotals.externalMakingGood
-              + costTotals.architrave + costTotals.trims + costTotals.mdfReveal + costTotals.deliveryStock + costTotals.fensaSurvey
+              + costTotals.architrave + costTotals.trims + costTotals.mdfReveal
               + costTotals.consumables + overhead;
 
             const breakdownRows = [
