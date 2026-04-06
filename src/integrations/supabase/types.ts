@@ -216,6 +216,65 @@ export type Database = {
           },
         ]
       }
+      quotes: {
+        Row: {
+          client: string
+          client_id: string | null
+          created_at: string
+          date: string
+          id: string
+          line_items: Json
+          pricing: Json | null
+          project_manager_id: string | null
+          project_manager_name: string | null
+          project_ref: string
+          sent_at: string | null
+          settings: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client?: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          line_items?: Json
+          pricing?: Json | null
+          project_manager_id?: string | null
+          project_manager_name?: string | null
+          project_ref?: string
+          sent_at?: string | null
+          settings?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client?: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          line_items?: Json
+          pricing?: Json | null
+          project_manager_id?: string | null
+          project_manager_name?: string | null
+          project_ref?: string
+          sent_at?: string | null
+          settings?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           contact_name: string | null
