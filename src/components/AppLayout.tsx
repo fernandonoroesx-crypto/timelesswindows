@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useApp } from '@/lib/context';
 
 const allNavItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'field'] },
@@ -16,6 +17,7 @@ const allNavItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { role, displayName, signOut } = useAuth();
+  const { setCurrentProject } = useApp();
   const navItems = allNavItems.filter(item => role && item.roles.includes(role));
 
   return (
@@ -32,6 +34,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               key={item.to}
               to={item.to}
               end={item.to === '/'}
+              onClick={() => { if (item.to === '/quotes/new') setCurrentProject(null); }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
@@ -89,7 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => { setMobileOpen(false); if (item.to === '/quotes/new') setCurrentProject(null); }}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     isActive

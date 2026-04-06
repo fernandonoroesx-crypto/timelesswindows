@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useApp, createNewProject, getProjectPricing } from '@/lib/context';
+import { useApp, getProjectPricing } from '@/lib/context';
 import { useAuth } from '@/lib/auth';
 import { calculateQuoteSummary, formatCurrency } from '@/lib/pricing';
 import type { ProjectStage, ManagedProject } from '@/lib/types';
@@ -45,9 +45,7 @@ export default function Dashboard() {
     : managedProjects;
 
   const handleNewProject = () => {
-    const project = createNewProject();
-    setProjects(prev => [...prev, project]);
-    setCurrentProject(project);
+    setCurrentProject(null);
     navigate('/quotes/new');
   };
 
