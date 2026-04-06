@@ -157,13 +157,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="elevated-card rounded-xl p-6">
-                <h2 className="font-heading text-lg font-semibold mb-4">Delivery & Fensa — Selling</h2>
-                <div className="space-y-2">
-                  <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockSelling} onChange={v => update('deliveryStockSelling', v)} />
-                  <EditRow label="Fensa/Survey (per item)" value={pricing.fensaSurveySelling} onChange={v => update('fensaSurveySelling', v)} />
-                </div>
-              </div>
             </div>
           </TabsContent>
 
