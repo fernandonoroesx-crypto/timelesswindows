@@ -82,7 +82,9 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
     // MDF Reveal: LM × rate per type
     if (item.mdfRevealType !== 'none') {
       const mdfLm = calculateTypeLm(item.mdfRevealType, item.widthMm, item.heightMm);
-      b.mdfReveal = mdfLm * (pricing.mdfSelling[item.mdfRevealType] || 0);
+      const widthType = item.mdfWidthType || 'narrow';
+      const mdfRates = pricing.mdfSelling[widthType] || pricing.mdfSelling.narrow || { single: 0, baySide: 0, bayCentral: 0 };
+      b.mdfReveal = mdfLm * (mdfRates[item.mdfRevealType] || 0);
     }
 
     // Making Good
@@ -148,7 +150,9 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
 
     if (item.mdfRevealType !== 'none') {
       const mdfLm = calculateTypeLm(item.mdfRevealType, item.widthMm, item.heightMm);
-      b.mdfReveal = mdfLm * (pricing.mdfCost[item.mdfRevealType] || 0);
+      const widthType = item.mdfWidthType || 'narrow';
+      const mdfRates = pricing.mdfCost[widthType] || pricing.mdfCost.narrow || { single: 0, baySide: 0, bayCentral: 0 };
+      b.mdfReveal = mdfLm * (mdfRates[item.mdfRevealType] || 0);
     }
 
     if (settings.includeInternalMakingGood) {

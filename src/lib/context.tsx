@@ -22,8 +22,8 @@ export const DEFAULT_PRICING: PricingData = {
   architraveCost: { single: 4.50, baySide: 4.50, bayCentral: 4.50 },
   trimsSelling: { single: 4.00, baySide: 4.00, bayCentral: 4.00 },
   trimsCost: { single: 1.00, baySide: 1.00, bayCentral: 1.00 },
-  mdfSelling: { single: 17.50, baySide: 17.50, bayCentral: 17.50 },
-  mdfCost: { single: 9.00, baySide: 9.00, bayCentral: 9.00 },
+  mdfSelling: { narrow: { single: 17.50, baySide: 17.50, bayCentral: 17.50 }, wide: { single: 17.50, baySide: 17.50, bayCentral: 17.50 } },
+  mdfCost: { narrow: { single: 9.00, baySide: 9.00, bayCentral: 9.00 }, wide: { single: 9.00, baySide: 9.00, bayCentral: 9.00 } },
   extras: { 'Recess of reveal': 75, 'Shutters': 100, 'Cut Out of work top': 125 },
   consumables: {
     'Carpet protection': 6.40, 'Correx': 5.25,
@@ -122,6 +122,7 @@ export function createNewLineItem(): QuoteLineItem {
     architraveType: 'none',
     trimsType: 'none',
     mdfRevealType: 'none',
+    mdfWidthType: 'narrow',
     extra1: 'none',
     extra2: 'none',
     customExtra: 0,

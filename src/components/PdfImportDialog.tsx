@@ -83,6 +83,7 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport }:
       architraveType: 'none',
       trimsType: 'none',
       mdfRevealType: 'none',
+      mdfWidthType: 'narrow',
       extra1: 'none',
       extra2: 'none',
       customExtra: 0,

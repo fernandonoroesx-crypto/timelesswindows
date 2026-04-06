@@ -16,6 +16,7 @@ export type Currency = 'GBP' | 'EUR';
 export type ArchitraveType = 'none' | 'single' | 'baySide' | 'bayCentral';
 export type TrimsType = 'none' | 'single' | 'baySide' | 'bayCentral';
 export type MdfRevealType = 'none' | 'single' | 'baySide' | 'bayCentral';
+export type MdfWidthType = 'narrow' | 'wide';
 
 export type ExtraType = 'Recess of reveal' | 'Shutters' | 'Cut Out of work top';
 
@@ -35,6 +36,7 @@ export interface QuoteLineItem {
   architraveType: ArchitraveType;
   trimsType: TrimsType;
   mdfRevealType: MdfRevealType;
+  mdfWidthType: MdfWidthType;
   extra1: ExtraType | 'none';
   extra2: ExtraType | 'none';
   customExtra: number;
@@ -163,10 +165,15 @@ export interface TrimsPricing {
   bayCentral: number;
 }
 
-export interface MdfPricing {
+export interface MdfPricingWidth {
   single: number;
   baySide: number;
   bayCentral: number;
+}
+
+export interface MdfPricing {
+  narrow: MdfPricingWidth;
+  wide: MdfPricingWidth;
 }
 
 export interface MakingGoodPricing {
