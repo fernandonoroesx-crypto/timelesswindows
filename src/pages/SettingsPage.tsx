@@ -221,6 +221,14 @@ export default function SettingsPage() {
               </div>
 
 
+              <div className="elevated-card rounded-xl p-6">
+                <h2 className="font-heading text-lg font-semibold mb-4">Delivery & FENSA — Cost</h2>
+                <div className="space-y-2">
+                  <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockCost} onChange={v => update('deliveryStockCost', v)} />
+                  <EditRow label="FENSA/Survey (per item)" value={pricing.fensaSurveyCost} onChange={v => update('fensaSurveyCost', v)} />
+                </div>
+              </div>
+
               <div className="elevated-card rounded-xl p-6 lg:col-span-2">
                 <h2 className="font-heading text-lg font-semibold mb-4">Consumables (per item — cost only)</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">

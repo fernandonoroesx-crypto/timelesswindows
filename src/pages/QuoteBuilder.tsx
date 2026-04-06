@@ -262,7 +262,7 @@ export default function QuoteBuilder() {
           <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
           
           {(() => {
-            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, extras: 0, consumables: 0 };
+            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0 };
             const costTotals = { ...totals };
             for (const item of project.lineItems) {
               const sb = getItemSellingBreakdown(item, project.settings, quotePricing);
@@ -278,6 +278,7 @@ export default function QuoteBuilder() {
               + totals.architrave + totals.trims + totals.mdfReveal;
             const labourCost = costTotals.installation + costTotals.internalMakingGood + costTotals.externalMakingGood
               + costTotals.architrave + costTotals.trims + costTotals.mdfReveal
+              + costTotals.deliveryStock + costTotals.fensaSurvey
               + costTotals.consumables + overhead;
 
             const breakdownRows = [
@@ -760,7 +761,8 @@ function LineItemCard({
                     {costBreakdown.architrave > 0 && <FormulaRow label="Architrave" value={costBreakdown.architrave} />}
                     {costBreakdown.trims > 0 && <FormulaRow label="Trims" value={costBreakdown.trims} />}
                     {costBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={costBreakdown.mdfReveal} />}
-                    {costBreakdown.consumables > 0 && <FormulaRow label="Consumables" value={costBreakdown.consumables} />}
+                    {costBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={costBreakdown.deliveryStock} />}
+                    {costBreakdown.fensaSurvey > 0 && <FormulaRow label="FENSA/Survey" value={costBreakdown.fensaSurvey} />}
                     {costBreakdown.consumables > 0 && <FormulaRow label="Consumables" value={costBreakdown.consumables} />}
                     {costBreakdown.extras > 0 && <FormulaRow label="Extras" value={costBreakdown.extras} />}
                     {costBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={costBreakdown.wasteDisposal} />}
