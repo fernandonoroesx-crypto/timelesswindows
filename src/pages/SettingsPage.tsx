@@ -11,14 +11,6 @@ import { fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
 import { useAuth } from '@/lib/auth';
 import UserManagement from '@/components/UserManagement';
 
-const MDF_LABELS: Record<string, string> = {
-  singleNarrow: 'Single · Narrow',
-  sideNarrow: 'Side · Narrow',
-  centralNarrow: 'Central · Narrow',
-  singleWide: 'Single · Wide',
-  sideWide: 'Side · Wide',
-  centralWide: 'Central · Wide',
-};
 
 type SettingsCategory = 'users' | 'pricing';
 
