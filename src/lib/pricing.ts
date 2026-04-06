@@ -175,7 +175,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
 
   b.unitTotal = b.material + b.installation + b.architrave + b.trims + b.mdfReveal
     + b.internalMakingGood + b.externalMakingGood + b.wasteDisposal
-    + b.extras + b.consumables;
+    + b.deliveryStock + b.fensaSurvey + b.extras + b.consumables;
   b.total = b.unitTotal * item.qty;
 
   return b;
