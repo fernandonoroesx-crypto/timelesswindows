@@ -7,8 +7,8 @@ import { Save, Users, PoundSterling } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PricingData } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
-import { fetchGlobalPricing, saveGlobalPricing } from '@/lib/database';
 import { useAuth } from '@/lib/auth';
+import { useApp } from '@/lib/context';
 import UserManagement from '@/components/UserManagement';
 
 
@@ -18,15 +18,12 @@ export default function SettingsPage() {
   const { role } = useAuth();
   const isAdmin = role === 'admin';
   const [category, setCategory] = useState<SettingsCategory>(isAdmin ? 'users' : 'pricing');
-  const [pricing, setPricing] = useState<PricingData>(DEFAULT_PRICING);
-  const [loading, setLoading] = useState(true);
+  const { globalPricing, saveGlobalPricingToDb, loading } = useApp();
+  const [pricing, setPricing] = useState<PricingData>(globalPricing);
 
   useEffect(() => {
-    fetchGlobalPricing().then(p => {
-      setPricing(p);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    setPricing(globalPricing);
+  }, [globalPricing]);
 
   const update = (path: string, value: number) => {
     setPricing(prev => {
