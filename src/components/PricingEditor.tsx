@@ -28,10 +28,6 @@ const ARCH_TRIM_LABELS: Record<string, string> = {
   bayCentral: 'Bay Central',
 };
 
-const MDF_LABELS: Record<string, string> = {
-  narrow: 'Narrow',
-  wide: 'Wide',
-};
 
 export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly }: PricingEditorProps) {
   const cardClass = compact ? "border rounded-lg p-4" : "elevated-card rounded-xl p-6";
