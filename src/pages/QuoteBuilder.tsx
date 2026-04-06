@@ -15,6 +15,7 @@ import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator,
 import PricingEditor from '@/components/PricingEditor';
 import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
+import { exportQuoteExcel } from '@/lib/excel-export';
 
 import PdfImportDialog from '@/components/PdfImportDialog';
 
@@ -176,6 +177,12 @@ export default function QuoteBuilder() {
             toast.success('Installation report exported');
           }}>
             <FileDown className="w-4 h-4 mr-2" /> Installation PDF
+          </Button>
+          <Button variant="outline" onClick={() => {
+            exportQuoteExcel(project);
+            toast.success('Excel report exported');
+          }}>
+            <FileDown className="w-4 h-4 mr-2" /> Excel Report
           </Button>
         </div>
       </div>
