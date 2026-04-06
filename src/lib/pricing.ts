@@ -190,14 +190,14 @@ export function calculateItemCost(item: QuoteLineItem, settings: ProjectSettings
 }
 
 export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectSettings, quotePricing?: PricingData): QuoteSummary {
-  const sp = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, extras: 0, consumables: 0, overhead: 0, total: 0 };
+  const sp = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0, total: 0 };
   const cp = { ...sp };
   let totalSm = 0;
 
   for (const item of items) {
     const sb = getItemSellingBreakdown(item, settings, quotePricing);
     const cb = getItemCostBreakdown(item, settings, quotePricing);
-    const keys: (keyof PriceBreakdown)[] = ['material', 'installation', 'internalMakingGood', 'externalMakingGood', 'architrave', 'trims', 'mdfReveal', 'wasteDisposal', 'extras', 'consumables'];
+    const keys: (keyof PriceBreakdown)[] = ['material', 'installation', 'internalMakingGood', 'externalMakingGood', 'architrave', 'trims', 'mdfReveal', 'wasteDisposal', 'deliveryStock', 'fensaSurvey', 'extras', 'consumables'];
     for (const k of keys) {
       sp[k] += sb[k] * item.qty;
       cp[k] += cb[k] * item.qty;
