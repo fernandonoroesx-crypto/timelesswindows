@@ -264,7 +264,7 @@ export default function QuoteBuilder() {
           <h2 className="font-heading text-lg font-semibold mb-4">Quote Summary</h2>
           
           {(() => {
-            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0 };
+            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0 };
             const costTotals = { ...totals };
             for (const item of project.lineItems) {
               const sb = getItemSellingBreakdown(item, project.settings, quotePricing);
@@ -274,16 +274,16 @@ export default function QuoteBuilder() {
                 costTotals[k] += cb[k] * item.qty;
               }
             }
-            const overhead = project.settings.overheadDays * (quotePricing.overheadPerDay || 0);
+            const overheadDays = project.settings.overheadDays * (quotePricing.overheadPerDay || 0);
 
             const labourSelling = totals.installation + totals.internalMakingGood + totals.externalMakingGood
               + totals.architrave + totals.trims + totals.mdfReveal;
             const labourCost = costTotals.installation + costTotals.internalMakingGood + costTotals.externalMakingGood
               + costTotals.architrave + costTotals.trims + costTotals.mdfReveal
               + costTotals.deliveryStock + costTotals.fensaSurvey
-              + costTotals.consumables + overhead;
+              + costTotals.consumables + costTotals.overhead + overheadDays;
 
-            const breakdownRows = [
+            const summaryRows = [
               { label: 'Materials', selling: totals.material, cost: costTotals.material },
               ...(!project.settings.supplyOnly ? [
                 { label: 'Labour', selling: labourSelling, cost: labourCost },
@@ -292,25 +292,61 @@ export default function QuoteBuilder() {
               ] : []),
             ];
 
-            return (
-              <div className="mb-4">
+            const detailRows = [
+              { label: 'Materials', selling: totals.material, cost: costTotals.material },
+              ...(!project.settings.supplyOnly ? [
+                { label: 'Installation', selling: totals.installation, cost: costTotals.installation },
+                ...(totals.internalMakingGood > 0 ? [{ label: 'Internal Making Good', selling: totals.internalMakingGood, cost: costTotals.internalMakingGood }] : []),
+                ...(totals.externalMakingGood > 0 ? [{ label: 'External Making Good', selling: totals.externalMakingGood, cost: costTotals.externalMakingGood }] : []),
+                ...(totals.architrave > 0 ? [{ label: 'Architrave', selling: totals.architrave, cost: costTotals.architrave }] : []),
+                ...(totals.trims > 0 ? [{ label: 'Trims', selling: totals.trims, cost: costTotals.trims }] : []),
+                ...(totals.mdfReveal > 0 ? [{ label: 'MDF Reveal', selling: totals.mdfReveal, cost: costTotals.mdfReveal }] : []),
+                ...(totals.wasteDisposal > 0 ? [{ label: 'Waste Disposal', selling: totals.wasteDisposal, cost: costTotals.wasteDisposal }] : []),
+                ...(totals.extras > 0 ? [{ label: 'Extras', selling: totals.extras, cost: costTotals.extras }] : []),
+                { label: 'Delivery & Stock', selling: 0, cost: costTotals.deliveryStock },
+                { label: 'FENSA / Survey', selling: 0, cost: costTotals.fensaSurvey },
+                { label: 'Consumables', selling: 0, cost: costTotals.consumables },
+                { label: 'Overhead (per item)', selling: 0, cost: costTotals.overhead },
+                { label: 'Overhead (days)', selling: 0, cost: overheadDays },
+              ] : []),
+            ];
+
+            const BreakdownTable = ({ rows, title }: { rows: typeof summaryRows; title: string }) => (
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{title}</h3>
                 <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 gap-y-1 text-sm">
                   <div className="text-xs font-medium text-muted-foreground">Category</div>
                   <div className="text-xs font-medium text-muted-foreground text-right">Selling</div>
                   <div className="text-xs font-medium text-muted-foreground text-right">Cost</div>
                   <div className="text-xs font-medium text-muted-foreground text-right">Margin</div>
-                  {breakdownRows.map(row => {
+                  {rows.map(row => {
                     const rowMargin = row.selling > 0 ? ((row.selling - row.cost) / row.selling) * 100 : 0;
                     return (
                       <React.Fragment key={row.label}>
                         <div className="text-muted-foreground">{row.label}</div>
                         <div className="text-right font-medium">{formatCurrency(row.selling)}</div>
                         <div className="text-right text-muted-foreground">{formatCurrency(row.cost)}</div>
-                        <div className={`text-right font-medium ${rowMargin > 0 ? 'text-green-600' : rowMargin < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>{rowMargin.toFixed(1)}%</div>
+                        <div className={`text-right font-medium ${rowMargin > 0 ? 'text-green-600' : rowMargin < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {row.selling > 0 ? `${rowMargin.toFixed(1)}%` : '—'}
+                        </div>
                       </React.Fragment>
                     );
                   })}
                 </div>
+              </div>
+            );
+
+            return (
+              <div className="mb-4 space-y-4">
+                <BreakdownTable rows={summaryRows} title="Summary" />
+                <details className="group">
+                  <summary className="cursor-pointer text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                    ▸ Full Breakdown
+                  </summary>
+                  <div className="mt-2">
+                    <BreakdownTable rows={detailRows} title="" />
+                  </div>
+                </details>
               </div>
             );
           })()}
