@@ -196,9 +196,5 @@ export interface PricingData {
   extras: Record<string, number>;
   consumables: Record<string, number>;
   wasteDisposal: number;
-  deliveryStockSelling: number;
-  deliveryStockCost: number;
-  fensaSurveySelling: number;
-  fensaSurveyCost: number;
   overheadPerDay: number;
 }

@@ -32,10 +32,7 @@ export const DEFAULT_PRICING: PricingData = {
     'Foam': 4.20, 'DPC': 0.15, 'Silicone': 0.45, 'Caulk': 1.17,
   },
   wasteDisposal: 35.00,
-  deliveryStockSelling: 40.00,
-  deliveryStockCost: 40.00,
-  fensaSurveySelling: 15.00,
-  fensaSurveyCost: 15.00,
+  overheadPerDay: 2000.00,
   overheadPerDay: 2000.00,
 };
 
