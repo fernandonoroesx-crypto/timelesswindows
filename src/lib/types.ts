@@ -36,6 +36,7 @@ export interface QuoteLineItem {
   architraveType: ArchitraveType;
   trimsType: TrimsType;
   mdfRevealType: MdfRevealType;
+  mdfWidthType: MdfWidthType;
   extra1: ExtraType | 'none';
   extra2: ExtraType | 'none';
   customExtra: number;
