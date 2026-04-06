@@ -103,12 +103,7 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
     // Waste Disposal
     if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
 
-    // Delivery/Stock: Area_SM × rate/SM
-    const areaSm = calculateSm(item.widthMm, item.heightMm);
-    b.deliveryStock = areaSm * pricing.deliveryStockSelling;
-
-    // Fensa/Survey
-    b.fensaSurvey = pricing.fensaSurveySelling;
+    // Delivery/Stock and FENSA/Survey are cost-only — not included in selling
 
     // Extras from slots
     if (item.extra1 !== 'none') b.extras += pricing.extras[item.extra1] || 0;
@@ -117,8 +112,7 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
   }
 
   b.unitTotal = b.material + b.installation + b.architrave + b.trims + b.mdfReveal
-    + b.internalMakingGood + b.externalMakingGood + b.wasteDisposal
-    + b.deliveryStock + b.fensaSurvey + b.extras;
+    + b.internalMakingGood + b.externalMakingGood + b.wasteDisposal + b.extras;
   b.total = b.unitTotal * item.qty;
 
   return b;
