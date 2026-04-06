@@ -27,7 +27,7 @@ const WINDOW_TYPES: WindowType[] = [
 const EXTRA_TYPES: ExtraType[] = ['Recess of reveal', 'Shutters', 'Cut Out of work top'];
 
 export default function QuoteBuilder() {
-  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers, saveProjectToDb, saveManagedProjectToDb, globalPricing } = useApp();
+  const { currentProject, setCurrentProject, projects, setProjects, clients, suppliers, saveProjectToDb, saveManagedProjectToDb, globalPricing, loading } = useApp();
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project>(() => {
@@ -46,14 +46,11 @@ export default function QuoteBuilder() {
 
   // Sync pricing with saved global settings once they load (for new quotes only)
   useEffect(() => {
-    if (!hasInitializedPricing.current && !currentProject && !project.projectManagerId) {
-      // Only sync once globalPricing has actually loaded from DB (not still DEFAULT_PRICING)
-      if (globalPricing !== DEFAULT_PRICING) {
-        setProject(prev => ({ ...prev, pricing: { ...globalPricing } }));
-        hasInitializedPricing.current = true;
-      }
+    if (!hasInitializedPricing.current && !currentProject && !loading) {
+      setProject(prev => ({ ...prev, pricing: { ...globalPricing } }));
+      hasInitializedPricing.current = true;
     }
-  }, [globalPricing]);
+  }, [loading, globalPricing, currentProject]);
 
   const updateProject = (updates: Partial<Project>) => {
     setProject(prev => ({ ...prev, ...updates, updatedAt: new Date().toISOString() }));
