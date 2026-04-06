@@ -17,6 +17,7 @@ const allNavItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { role, displayName, signOut } = useAuth();
+  const { setCurrentProject } = useApp();
   const navItems = allNavItems.filter(item => role && item.roles.includes(role));
 
   return (
