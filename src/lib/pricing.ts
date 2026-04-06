@@ -162,6 +162,10 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
 
     if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
 
+    const areaSm = calculateSm(item.widthMm, item.heightMm);
+    b.deliveryStock = areaSm * pricing.deliveryStockCost;
+    b.fensaSurvey = pricing.fensaSurveyCost;
+
     if (item.extra1 !== 'none') b.extras += pricing.extras[item.extra1] || 0;
     if (item.extra2 !== 'none') b.extras += pricing.extras[item.extra2] || 0;
     b.extras += item.customExtra || 0;
