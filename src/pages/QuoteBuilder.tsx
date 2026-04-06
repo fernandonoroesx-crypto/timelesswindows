@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
-import PricingEditor from '@/components/PricingEditor';
+
 import PdfImportDialog from '@/components/PdfImportDialog';
 
 const WINDOW_TYPES: WindowType[] = [
