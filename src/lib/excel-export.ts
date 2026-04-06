@@ -23,14 +23,14 @@ export async function exportQuoteExcel(project: Project) {
   const ws = wb.addWorksheet('Quote Report');
 
   // --- Project header ---
-  ws.mergeCells('A1:O1');
+  ws.mergeCells('A1:S1');
   const titleCell = ws.getCell('A1');
   titleCell.value = `${project.projectRef || 'Quote'} — ${project.client || 'Client'}`;
   titleCell.font = { bold: true, size: 14, color: { argb: DARK_BLUE } };
   titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
   ws.getRow(1).height = 28;
 
-  ws.mergeCells('A2:O2');
+  ws.mergeCells('A2:S2');
   ws.getCell('A2').value = `Date: ${project.date || '—'}`;
   ws.getCell('A2').font = { size: 10, color: { argb: 'FF666666' } };
   ws.getRow(2).height = 18;
@@ -40,7 +40,7 @@ export async function exportQuoteExcel(project: Project) {
     'Proj Ref', 'Item Ref', 'Qty', 'Type', 'Width (mm)', 'Height (mm)',
     'Material', 'Installation', 'Int. Making Good', 'Ext. Making Good',
     'Architrave', 'Trims', 'MDF Reveal', 'Waste Disposal',
-    'Delivery/Stock', 'FENSA/Survey', 'Extra1', 'Extra2', 'Custom Extra',
+    'Extra1', 'Extra2', 'Custom Extra',
     'Unit Total', 'Total'
   ];
 
@@ -55,15 +55,16 @@ export async function exportQuoteExcel(project: Project) {
   });
   headerRow.height = 24;
 
-  const widths = [14, 12, 6, 16, 10, 10, 12, 12, 14, 14, 12, 10, 12, 12, 12, 12, 10, 10, 12, 12, 12];
+  const widths = [14, 12, 6, 16, 10, 10, 12, 12, 14, 14, 12, 10, 12, 12, 10, 10, 12, 12, 12];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
-  const currCols = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+  // Currency columns (7 onwards except 3,4,5,6)
+  const currCols = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 
   const sellingTotals: Record<string, number> = {
     material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
     architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0,
-    deliveryStock: 0, fensaSurvey: 0, extras1: 0, extras2: 0, customExtra: 0,
+    extras1: 0, extras2: 0, customExtra: 0,
     unitTotal: 0, total: 0,
   };
 
@@ -77,8 +78,8 @@ export async function exportQuoteExcel(project: Project) {
       project.projectRef, item.itemRef, item.qty, item.type, item.widthMm, item.heightMm,
       sb.material, sb.installation, sb.internalMakingGood, sb.externalMakingGood,
       sb.architrave, sb.trims, sb.mdfReveal, sb.wasteDisposal,
-      sb.deliveryStock, sb.fensaSurvey, extra1Val, extra2Val,
-      item.customExtra || 0, sb.unitTotal, sb.total,
+      extra1Val, extra2Val, item.customExtra || 0,
+      sb.unitTotal, sb.total,
     ];
 
     const row = ws.getRow(rowNum);
@@ -97,7 +98,7 @@ export async function exportQuoteExcel(project: Project) {
     }
 
     const keys = ['material', 'installation', 'internalMakingGood', 'externalMakingGood',
-      'architrave', 'trims', 'mdfReveal', 'wasteDisposal', 'deliveryStock', 'fensaSurvey'];
+      'architrave', 'trims', 'mdfReveal', 'wasteDisposal'];
     keys.forEach(k => { sellingTotals[k] += (sb as any)[k] * item.qty; });
     sellingTotals.extras1 += extra1Val * item.qty;
     sellingTotals.extras2 += extra2Val * item.qty;
@@ -115,7 +116,7 @@ export async function exportQuoteExcel(project: Project) {
     sellingTotals.material, sellingTotals.installation,
     sellingTotals.internalMakingGood, sellingTotals.externalMakingGood,
     sellingTotals.architrave, sellingTotals.trims, sellingTotals.mdfReveal,
-    sellingTotals.wasteDisposal, sellingTotals.deliveryStock, sellingTotals.fensaSurvey,
+    sellingTotals.wasteDisposal,
     sellingTotals.extras1, sellingTotals.extras2, sellingTotals.customExtra,
     sellingTotals.unitTotal, sellingTotals.total,
   ];
@@ -152,7 +153,7 @@ export async function exportQuoteExcel(project: Project) {
 
   const labourTotal = sellingTotals.installation + sellingTotals.internalMakingGood
     + sellingTotals.externalMakingGood + sellingTotals.architrave + sellingTotals.trims
-    + sellingTotals.mdfReveal + sellingTotals.deliveryStock + sellingTotals.fensaSurvey;
+    + sellingTotals.mdfReveal;
 
   const extrasTotal = sellingTotals.extras1 + sellingTotals.extras2 + sellingTotals.customExtra;
 
