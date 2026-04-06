@@ -45,9 +45,7 @@ export default function Dashboard() {
     : managedProjects;
 
   const handleNewProject = () => {
-    const project = createNewProject();
-    setProjects(prev => [...prev, project]);
-    setCurrentProject(project);
+    setCurrentProject(null);
     navigate('/quotes/new');
   };
 
