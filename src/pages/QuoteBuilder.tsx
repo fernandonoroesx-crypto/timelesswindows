@@ -442,6 +442,12 @@ export default function QuoteBuilder() {
           </div>
         </TabsContent>
 
+        <TabsContent value="pricing">
+          <div className="elevated-card rounded-xl p-6">
+            <PricingEditor pricing={quotePricing} onUpdate={updatePricing} />
+          </div>
+        </TabsContent>
+
       </Tabs>
 
       <AlertDialog open={showWonConfirm} onOpenChange={setShowWonConfirm}>
