@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     try {
-      await saveGlobalPricing(pricing);
+      await saveGlobalPricingToDb(pricing);
       toast.success('Pricing saved successfully');
     } catch {
       toast.error('Failed to save pricing');
