@@ -49,8 +49,8 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
   const pricing = p(quotePricing);
   const b: PriceBreakdown = {
     material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
-    architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0,
-    extras: 0, consumables: 0, unitTotal: 0, total: 0,
+    architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0,
+    fensaSurvey: 0, extras: 0, consumables: 0, unitTotal: 0, total: 0,
   };
 
   // Material: ROUND(Manufacture_price_£ × Uplift, 0)
