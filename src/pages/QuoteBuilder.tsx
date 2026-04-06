@@ -313,8 +313,7 @@ export default function QuoteBuilder() {
                 { label: 'Delivery & Stock', selling: 0, cost: costTotals.deliveryStock },
                 { label: 'FENSA / Survey', selling: 0, cost: costTotals.fensaSurvey },
                 { label: 'Consumables', selling: 0, cost: costTotals.consumables },
-                { label: 'Overhead (per item)', selling: 0, cost: costTotals.overhead },
-                { label: 'Overhead (days)', selling: 0, cost: overheadDays },
+                { label: `Overhead (${project.settings.overheadDays} days)`, selling: 0, cost: overheadDays },
               ] : []),
             ];
 
