@@ -14,9 +14,18 @@ export function calculateLm(widthMm: number, heightMm: number): number {
   return ((2 * widthMm) + (2 * heightMm)) / 1000;
 }
 
-/** Architrave LM = (Width + 2×Height) / 1000 */
-export function calculateArchitraveLm(widthMm: number, heightMm: number): number {
-  return (widthMm + 2 * heightMm) / 1000;
+/** Calculate LM based on placement type:
+ *  Single: (2×Height + Width) / 1000
+ *  Bay Side: (Height + Width) / 1000
+ *  Bay Central: Width / 1000
+ */
+export function calculateTypeLm(type: string, widthMm: number, heightMm: number): number {
+  switch (type) {
+    case 'single': return (widthMm + 2 * heightMm) / 1000;
+    case 'baySide': return (widthMm + heightMm) / 1000;
+    case 'bayCentral': return widthMm / 1000;
+    default: return 0;
+  }
 }
 
 export interface PriceBreakdown {
@@ -61,7 +70,7 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
 
     // Architrave: LM × rate per type
     if (item.architraveType !== 'none') {
-      const archLm = calculateArchitraveLm(item.widthMm, item.heightMm);
+      const archLm = calculateTypeLm(item.architraveType, item.widthMm, item.heightMm);
       b.architrave = archLm * (pricing.architraveSelling[item.architraveType] || 0);
     }
 
@@ -70,9 +79,10 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
       b.trims = pricing.trimsSelling[item.trimsType] || 0;
     }
 
-    // MDF Reveal: flat rate per width
+    // MDF Reveal: LM × rate per type
     if (item.mdfRevealType !== 'none') {
-      b.mdfReveal = pricing.mdfSelling[item.mdfRevealType] || 0;
+      const mdfLm = calculateTypeLm(item.mdfRevealType, item.widthMm, item.heightMm);
+      b.mdfReveal = mdfLm * (pricing.mdfSelling[item.mdfRevealType] || 0);
     }
 
     // Making Good
@@ -128,7 +138,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     b.installation = pricing.installationCost[item.type] || 0;
 
     if (item.architraveType !== 'none') {
-      const archLm = calculateArchitraveLm(item.widthMm, item.heightMm);
+      const archLm = calculateTypeLm(item.architraveType, item.widthMm, item.heightMm);
       b.architrave = archLm * (pricing.architraveCost[item.architraveType] || 0);
     }
 
@@ -137,7 +147,8 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     }
 
     if (item.mdfRevealType !== 'none') {
-      b.mdfReveal = pricing.mdfCost[item.mdfRevealType] || 0;
+      const mdfLm = calculateTypeLm(item.mdfRevealType, item.widthMm, item.heightMm);
+      b.mdfReveal = mdfLm * (pricing.mdfCost[item.mdfRevealType] || 0);
     }
 
     if (settings.includeInternalMakingGood) {

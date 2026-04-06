@@ -28,10 +28,6 @@ const ARCH_TRIM_LABELS: Record<string, string> = {
   bayCentral: 'Bay Central',
 };
 
-const MDF_LABELS: Record<string, string> = {
-  narrow: 'Narrow',
-  wide: 'Wide',
-};
 
 export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly }: PricingEditorProps) {
   const cardClass = compact ? "border rounded-lg p-4" : "elevated-card rounded-xl p-6";
@@ -141,19 +137,19 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
 
       {/* MDF Reveal */}
       <div className={cardClass}>
-        <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal{sellingOnly ? '' : ' — Selling'}</h3>
+        <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal (per LM){sellingOnly ? '' : ' — Selling'}</h3>
         <div className="space-y-2">
           {Object.entries(pricing.mdfSelling).map(([key, price]) => (
-            <EditRow key={key} label={MDF_LABELS[key] || key} value={price} path={`mdfSelling.${key}`} onUpdate={onUpdate} />
+            <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`mdfSelling.${key}`} onUpdate={onUpdate} />
           ))}
         </div>
       </div>
       {!sellingOnly && (
         <div className={cardClass}>
-          <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal — Cost</h3>
+          <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal (per LM) — Cost</h3>
           <div className="space-y-2">
             {Object.entries(pricing.mdfCost).map(([key, price]) => (
-              <EditRow key={key} label={MDF_LABELS[key] || key} value={price} path={`mdfCost.${key}`} onUpdate={onUpdate} />
+              <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`mdfCost.${key}`} onUpdate={onUpdate} />
             ))}
           </div>
         </div>

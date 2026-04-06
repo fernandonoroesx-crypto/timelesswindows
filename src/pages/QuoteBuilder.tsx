@@ -643,8 +643,9 @@ function LineItemCard({
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                <SelectItem value="narrow">Narrow</SelectItem>
-                <SelectItem value="wide">Wide</SelectItem>
+                <SelectItem value="single">Single</SelectItem>
+                <SelectItem value="baySide">Bay Side</SelectItem>
+                <SelectItem value="bayCentral">Bay Central</SelectItem>
               </SelectContent>
             </Select>
           </div>
