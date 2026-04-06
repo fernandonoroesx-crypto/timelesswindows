@@ -314,7 +314,26 @@ export default function UserManagement() {
                 value={inviteEmail}
                 onChange={e => setInviteEmail(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">An invite email will be sent to this address</p>
+              <p className="text-xs text-muted-foreground">The user will log in with this email</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Initial Password</Label>
+              <div className="relative">
+                <Input
+                  type={showInvitePassword ? 'text' : 'password'}
+                  placeholder="Min 6 characters"
+                  value={invitePassword}
+                  onChange={e => setInvitePassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowInvitePassword(!showInvitePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showInvitePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Display Name</Label>
