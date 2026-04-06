@@ -302,27 +302,35 @@ export default function QuoteBuilder() {
               ] : []),
             ];
 
-            const detailRows = [
-              { label: 'Materials', selling: totals.material, cost: costTotals.material },
+            const makingGoodSelling = totals.internalMakingGood + totals.externalMakingGood;
+            const makingGoodCost = costTotals.internalMakingGood + costTotals.externalMakingGood;
+
+            type BreakdownRow = { label: string; selling: number; cost: number; indent?: boolean };
+
+            const detailRows: BreakdownRow[] = [
+              { label: 'Materials', selling: totals.material, cost: costTotals.material + costTotals.deliveryStock },
+              ...(costTotals.deliveryStock > 0 ? [{ label: 'Delivery & Stock', selling: 0, cost: costTotals.deliveryStock, indent: true }] : []),
               ...(!project.settings.supplyOnly ? [
                 { label: 'Installation', selling: totals.installation, cost: costTotals.installation },
-                ...(totals.internalMakingGood > 0 ? [{ label: 'Internal Making Good', selling: totals.internalMakingGood, cost: costTotals.internalMakingGood }] : []),
-                ...(totals.externalMakingGood > 0 ? [{ label: 'External Making Good', selling: totals.externalMakingGood, cost: costTotals.externalMakingGood }] : []),
+                ...((makingGoodSelling > 0 || makingGoodCost > 0) ? [
+                  { label: 'Making Good', selling: makingGoodSelling, cost: makingGoodCost + costTotals.consumables },
+                  ...(totals.internalMakingGood > 0 ? [{ label: 'Internal', selling: totals.internalMakingGood, cost: costTotals.internalMakingGood, indent: true }] : []),
+                  ...(totals.externalMakingGood > 0 ? [{ label: 'External', selling: totals.externalMakingGood, cost: costTotals.externalMakingGood, indent: true }] : []),
+                  ...(costTotals.consumables > 0 ? [{ label: 'Consumables', selling: 0, cost: costTotals.consumables, indent: true }] : []),
+                ] : []),
                 ...(totals.architrave > 0 ? [{ label: 'Architrave', selling: totals.architrave, cost: costTotals.architrave }] : []),
                 ...(totals.trims > 0 ? [{ label: 'Trims', selling: totals.trims, cost: costTotals.trims }] : []),
                 ...(totals.mdfReveal > 0 ? [{ label: 'MDF Reveal', selling: totals.mdfReveal, cost: costTotals.mdfReveal }] : []),
                 ...(totals.wasteDisposal > 0 ? [{ label: 'Waste Disposal', selling: totals.wasteDisposal, cost: costTotals.wasteDisposal }] : []),
                 ...(totals.extras > 0 ? [{ label: 'Extras', selling: totals.extras, cost: costTotals.extras }] : []),
-                { label: 'Delivery & Stock', selling: 0, cost: costTotals.deliveryStock },
                 { label: 'FENSA / Survey', selling: 0, cost: costTotals.fensaSurvey },
-                { label: 'Consumables', selling: 0, cost: costTotals.consumables },
-                { label: `Overhead (${project.settings.overheadDays} days)`, selling: 0, cost: overheadDays },
+                ...(overheadDays > 0 ? [{ label: `Overhead (${project.settings.overheadDays} days)`, selling: 0, cost: overheadDays }] : []),
               ] : []),
             ];
 
-            const BreakdownTable = ({ rows, title }: { rows: typeof summaryRows; title: string }) => (
+            const BreakdownTable = ({ rows, title }: { rows: BreakdownRow[]; title: string }) => (
               <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{title}</h3>
+                {title && <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{title}</h3>}
                 <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 gap-y-1 text-sm">
                   <div className="text-xs font-medium text-muted-foreground">Category</div>
                   <div className="text-xs font-medium text-muted-foreground text-right">Selling</div>
@@ -332,10 +340,10 @@ export default function QuoteBuilder() {
                     const rowMargin = row.selling > 0 ? ((row.selling - row.cost) / row.selling) * 100 : 0;
                     return (
                       <React.Fragment key={row.label}>
-                        <div className="text-muted-foreground">{row.label}</div>
-                        <div className="text-right font-medium">{formatCurrency(row.selling)}</div>
-                        <div className="text-right text-muted-foreground">{formatCurrency(row.cost)}</div>
-                        <div className={`text-right font-medium ${rowMargin > 0 ? 'text-green-600' : rowMargin < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        <div className={`text-muted-foreground ${row.indent ? 'pl-4 text-xs italic' : ''}`}>{row.indent ? '↳ ' : ''}{row.label}</div>
+                        <div className={`text-right ${row.indent ? 'text-xs text-muted-foreground' : 'font-medium'}`}>{row.indent && row.selling === 0 ? '—' : formatCurrency(row.selling)}</div>
+                        <div className={`text-right ${row.indent ? 'text-xs' : ''} text-muted-foreground`}>{formatCurrency(row.cost)}</div>
+                        <div className={`text-right ${row.indent ? 'text-xs' : 'font-medium'} ${rowMargin > 0 ? 'text-green-600' : rowMargin < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                           {row.selling > 0 ? `${rowMargin.toFixed(1)}%` : '—'}
                         </div>
                       </React.Fragment>
