@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useApp } from '@/lib/context';
 
 const allNavItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'field'] },
