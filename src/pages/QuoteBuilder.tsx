@@ -255,13 +255,6 @@ export default function QuoteBuilder() {
           <ToggleSetting label="Internal Making Good" checked={project.settings.includeInternalMakingGood} onChange={v => updateSettings('includeInternalMakingGood', v)} />
           <ToggleSetting label="External Making Good" checked={project.settings.includeExternalMakingGood} onChange={v => updateSettings('includeExternalMakingGood', v)} />
           <ToggleSetting label="Supply Only" checked={project.settings.supplyOnly} onChange={v => updateSettings('supplyOnly', v)} />
-          {!project.settings.supplyOnly && (
-            <div className="flex items-center gap-2 ml-auto border rounded-lg px-3 py-1.5 bg-muted/30">
-              <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Est. Days</Label>
-              <Input type="number" min="0" step="0.5" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.overheadDays}
-                onChange={e => updateSettings('overheadDays', parseFloat(e.target.value) || 0)} />
-            </div>
-          )}
         </div>
       </div>
 
