@@ -177,12 +177,12 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
           {Object.entries(pricing.extras).map(([name, price]) => (
             <EditRow key={name} label={name} value={price} path={`extras.${name}`} onUpdate={onUpdate} />
           ))}
-          {!sellingOnly && (
-            <div className="pt-2 border-t space-y-2">
-              <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposal} path="wasteDisposal" onUpdate={onUpdate} />
+          <div className="pt-2 border-t space-y-2">
+            <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposal} path="wasteDisposal" onUpdate={onUpdate} />
+            {!sellingOnly && (
               <EditRow label="Overhead / day" value={pricing.overheadPerDay} path="overheadPerDay" onUpdate={onUpdate} />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
