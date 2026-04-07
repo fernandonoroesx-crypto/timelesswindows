@@ -49,14 +49,15 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
 
       // Generate original + cleaned PDFs
       if (onPdfFiles) {
+        const original = await fileToBase64(file);
+        let clean = '';
         try {
-          const original = await fileToBase64(file);
           const ab = await file.arrayBuffer();
-          const clean = await stripPricesFromPdf(ab);
-          onPdfFiles(original, clean, file.name);
+          clean = await stripPricesFromPdf(ab);
         } catch (pdfErr) {
           console.error('PDF price strip error:', pdfErr);
         }
+        onPdfFiles(original, clean, file.name);
       }
 
       if (result.items.length === 0) {
