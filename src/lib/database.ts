@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Client, Supplier, Project, PricingData, ManagedProject } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
+import { normalizePricingData } from '@/lib/pricing-normalize';
 
 // ── Clients ──────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ export async function fetchProjects(): Promise<Project[]> {
     projectRef: row.project_ref || '',
     settings: row.settings as any,
     lineItems: (row.line_items as any[]) || [],
-    pricing: row.pricing ? (row.pricing as unknown as PricingData) : undefined,
+    pricing: row.pricing ? normalizePricingData(row.pricing as unknown as Partial<PricingData>) : undefined,
     status: (row.status as Project['status']) || 'draft',
     sentAt: row.sent_at || undefined,
     createdAt: row.created_at,
@@ -137,10 +138,9 @@ export async function fetchGlobalPricing(): Promise<PricingData> {
     .maybeSingle();
   if (error) throw error;
   if (data?.value) {
-    const val = data.value as unknown as Record<string, unknown>;
-    return { ...DEFAULT_PRICING, ...val } as PricingData;
+    return normalizePricingData(data.value as unknown as Partial<PricingData>);
   }
-  return DEFAULT_PRICING;
+  return JSON.parse(JSON.stringify(DEFAULT_PRICING));
 }
 
 export async function saveGlobalPricing(pricing: PricingData): Promise<void> {
