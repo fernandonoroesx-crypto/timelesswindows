@@ -110,7 +110,7 @@ export default function ClientsPage() {
     setEditingPricingPmId(null);
   };
 
-  const handleUpdatePMPricing = (pmId: string, path: string, value: number) => {
+  const handleUpdatePMPricing = (pmId: string, path: string, value: number | boolean) => {
     setForm(f => ({
       ...f,
       projectManagers: f.projectManagers.map(pm => {

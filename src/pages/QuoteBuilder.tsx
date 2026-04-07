@@ -60,7 +60,7 @@ export default function QuoteBuilder() {
   const updateSettings = (key: string, value: any) => {
     updateProject({ settings: { ...project.settings, [key]: value } });
   };
-  const updatePricing = (path: string, value: number) => {
+  const updatePricing = (path: string, value: number | boolean) => {
     const keys = path.split('.');
     setProject(prev => {
       const pricing = normalizePricingData(prev.pricing || quotePricing) as any;
@@ -703,7 +703,7 @@ function LineItemCard({
           </div>
           <div>
             <Label className="text-xs">Architrave</Label>
-            <Select value={item.architraveType} onValueChange={(v: ArchitraveType) => onUpdate({ architraveType: v })}>
+            <Select value={item.architraveType} onValueChange={(v: ArchitraveType) => onUpdate({ architraveType: v, architraveOverride: undefined })}>
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
@@ -713,6 +713,20 @@ function LineItemCard({
               </SelectContent>
             </Select>
           </div>
+          {item.architraveType !== 'none' && quotePricing.architraveFlat && (
+            <div>
+              <Label className="text-xs">Architrave £</Label>
+              <Input type="number" step="0.01" className="h-9 text-xs"
+                value={item.architraveOverride ?? quotePricing.architraveSelling[item.architraveType] ?? 0}
+                onChange={e => {
+                  const val = parseFloat(e.target.value);
+                  const defaultVal = quotePricing.architraveSelling[item.architraveType] || 0;
+                  onUpdate({ architraveOverride: val === defaultVal ? undefined : val });
+                }}
+                placeholder="Auto"
+              />
+            </div>
+          )}
           <div>
             <Label className="text-xs">Trims</Label>
             <Select value={item.trimsType} onValueChange={(v: TrimsType) => onUpdate({ trimsType: v })}>
