@@ -140,13 +140,13 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
         <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal (per LM){sellingOnly ? '' : ' — Selling'}</h3>
         <p className="text-xs text-muted-foreground mb-2">Narrow</p>
         <div className="space-y-2">
-          {Object.entries(pricing.mdfSelling.narrow || {}).map(([key, price]) => (
+          {Object.entries(pricing.mdfSelling?.narrow || DEFAULT_PRICING.mdfSelling.narrow).map(([key, price]) => (
             <EditRow key={`narrow-${key}`} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`mdfSelling.narrow.${key}`} onUpdate={onUpdate} />
           ))}
         </div>
         <p className="text-xs text-muted-foreground mb-2 mt-3">Wide</p>
         <div className="space-y-2">
-          {Object.entries(pricing.mdfSelling.wide || {}).map(([key, price]) => (
+          {Object.entries(pricing.mdfSelling?.wide || DEFAULT_PRICING.mdfSelling.wide).map(([key, price]) => (
             <EditRow key={`wide-${key}`} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`mdfSelling.wide.${key}`} onUpdate={onUpdate} />
           ))}
         </div>
@@ -156,13 +156,13 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
           <h3 className="font-heading text-sm font-semibold mb-3">MDF Reveal (per LM) — Cost</h3>
           <p className="text-xs text-muted-foreground mb-2">Narrow</p>
           <div className="space-y-2">
-            {Object.entries(pricing.mdfCost.narrow || {}).map(([key, price]) => (
+            {Object.entries(pricing.mdfCost?.narrow || DEFAULT_PRICING.mdfCost.narrow).map(([key, price]) => (
               <EditRow key={`narrow-${key}`} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`mdfCost.narrow.${key}`} onUpdate={onUpdate} />
             ))}
           </div>
           <p className="text-xs text-muted-foreground mb-2 mt-3">Wide</p>
           <div className="space-y-2">
-            {Object.entries(pricing.mdfCost.wide || {}).map(([key, price]) => (
+            {Object.entries(pricing.mdfCost?.wide || DEFAULT_PRICING.mdfCost.wide).map(([key, price]) => (
               <EditRow key={`wide-${key}`} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`mdfCost.wide.${key}`} onUpdate={onUpdate} />
             ))}
           </div>
