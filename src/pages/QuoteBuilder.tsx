@@ -196,6 +196,26 @@ export default function QuoteBuilder() {
               }}>
                 Excel Quote
               </DropdownMenuItem>
+              {project.supplierPdfOriginal && (
+                <DropdownMenuItem onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = project.supplierPdfOriginal!;
+                  link.download = project.supplierPdfName || 'supplier-original.pdf';
+                  link.click();
+                }}>
+                  Supplier PDF (Original)
+                </DropdownMenuItem>
+              )}
+              {project.supplierPdfClean && (
+                <DropdownMenuItem onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = project.supplierPdfClean!;
+                  link.download = `${(project.supplierPdfName || 'supplier').replace('.pdf', '')}-no-prices.pdf`;
+                  link.click();
+                }}>
+                  Supplier PDF (No Prices)
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -426,6 +446,7 @@ export default function QuoteBuilder() {
                   projectRef={project.projectRef}
                   existingCount={project.lineItems.length}
                   onImport={(items) => updateProject({ lineItems: [...project.lineItems, ...items] })}
+                  onPdfFiles={(original, clean, fileName) => updateProject({ supplierPdfOriginal: original, supplierPdfClean: clean, supplierPdfName: fileName })}
                 />
                 <Button onClick={addLineItem} size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
                   <Plus className="w-4 h-4 mr-2" /> Add Item

@@ -66,6 +66,9 @@ export interface Project {
   pricing?: PricingData;
   status: 'draft' | 'sent' | 'won' | 'lost' | 'on-hold';
   sentAt?: string;
+  supplierPdfOriginal?: string;
+  supplierPdfClean?: string;
+  supplierPdfName?: string;
   createdAt: string;
   updatedAt: string;
 }
