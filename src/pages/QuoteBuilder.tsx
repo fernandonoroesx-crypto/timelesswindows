@@ -60,7 +60,7 @@ export default function QuoteBuilder() {
   const updateSettings = (key: string, value: any) => {
     updateProject({ settings: { ...project.settings, [key]: value } });
   };
-  const updatePricing = (path: string, value: number) => {
+  const updatePricing = (path: string, value: number | boolean) => {
     const keys = path.split('.');
     setProject(prev => {
       const pricing = normalizePricingData(prev.pricing || quotePricing) as any;
