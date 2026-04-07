@@ -6,8 +6,12 @@ import { PDFDocument, rgb } from 'pdf-lib';
  * Returns the cleaned PDF as a base64 data URI string.
  */
 export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
+  // Create independent copies to prevent "detached ArrayBuffer" errors
+  const copyForPdfJs = arrayBuffer.slice(0);
+  const copyForPdfLib = arrayBuffer.slice(0);
+
   // 1. Use pdfjs-dist to find price text coordinates
-  const pdfJs = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+  const pdfJs = await pdfjsLib.getDocument({ data: new Uint8Array(copyForPdfJs) }).promise;
   const priceRegions: Array<{ page: number; x: number; y: number; width: number; height: number }> = [];
 
   for (let i = 1; i <= pdfJs.numPages; i++) {
@@ -50,7 +54,7 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
   }
 
   // 2. Use pdf-lib to draw white rectangles over price regions
-  const pdfDoc = await PDFDocument.load(arrayBuffer);
+  const pdfDoc = await PDFDocument.load(copyForPdfLib);
   const pages = pdfDoc.getPages();
 
   for (const region of priceRegions) {
