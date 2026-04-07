@@ -18,7 +18,9 @@ export async function fetchClients(): Promise<Client[]> {
     phone: row.phone || '',
     address: row.address || '',
     notes: row.notes || '',
-    projectManagers: (row.project_managers as any[]) || [],
+    projectManagers: ((row.project_managers as any[]) || []).map((pm: any) => 
+      pm.pricing ? { ...pm, pricing: normalizePricingData(pm.pricing) } : pm
+    ),
     createdAt: row.created_at,
   }));
 }
