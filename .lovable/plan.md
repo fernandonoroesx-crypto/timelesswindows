@@ -1,30 +1,38 @@
 
 
-## Plan: Consolidate Excel Report Columns
+## Plan: Store Original & Cleaned Supplier PDF, Add to Reports Dropdown
+
+### What this does
+When you import a supplier PDF, the system stores both the original PDF and a price-stripped copy. The Reports dropdown gets two new options: "Supplier PDF (Original)" to view/download the original, and "Supplier PDF (No Prices)" to download the cleaned version.
 
 ### Changes
 
-**1. Rename "Excel Report" to "Excel Quote" in dropdown** (`src/pages/QuoteBuilder.tsx`)
-- Change the dropdown label from "Excel Report" to "Excel Quote"
-- Change the toast message accordingly
+**1. Add PDF storage fields to Project type** (`src/lib/types.ts`)
+- Add `supplierPdfOriginal?: string` (base64), `supplierPdfClean?: string` (base64), `supplierPdfName?: string`
 
-**2. Consolidate columns in the Excel export** (`src/lib/excel-export.ts`)
+**2. Create price-stripping utility** (`src/lib/pdf-price-strip.ts` — new file)
+- Takes a PDF as `ArrayBuffer`, uses `pdfjs-dist` to locate price text coordinates (reusing regex patterns from `pdf-reader.ts`: `NUMBER,-`, `£/€ NUMBER`, dimension-adjacent prices)
+- Uses `pdf-lib` (new dependency) to load the same PDF and draw white rectangles over price regions
+- Returns cleaned PDF as base64
 
-Current 13 value columns → reduced to 5 value columns:
+**3. Update PdfImportDialog** (`src/components/PdfImportDialog.tsx`)
+- Add callback prop `onPdfFiles?: (original: string, clean: string, fileName: string) => void`
+- After file upload, convert original to base64 and run price-strip, then call the callback
 
-| Current columns | New columns |
-|---|---|
-| Material | **Material** (unchanged) |
-| Installation, Int. Making Good, Ext. Making Good, Architrave, Trims, MDF Reveal | **Labour** (sum of all six) |
-| Waste Disposal | **Waste Disposal** (unchanged) |
-| Extra1, Extra2, Custom Extra | **Extras** (sum of all three) |
-| Unit Total, Total | **Unit Total, Total** (unchanged) |
+**4. Update QuoteBuilder** (`src/pages/QuoteBuilder.tsx`)
+- Pass `onPdfFiles` to `PdfImportDialog`, store results on project state
+- Add two new items to Reports dropdown:
+  - **Supplier PDF (Original)** — downloads the stored original PDF
+  - **Supplier PDF (No Prices)** — downloads the price-stripped PDF
+- Both disabled/hidden when no supplier PDF has been imported
 
-New headers: `Proj Ref, Item Ref, Qty, Type, Width (mm), Height (mm), Material, Labour, Waste Disposal, Extras, Unit Total, Total` — 12 columns total.
-
-Per-row values will sum the consolidated fields. Totals row and summary section remain the same (already grouped this way). Merge cells in header row updated to match new column count. Column widths adjusted.
+**5. Install dependency**
+- Add `pdf-lib` package
 
 ### Files modified
-- `src/pages/QuoteBuilder.tsx` — rename dropdown item
-- `src/lib/excel-export.ts` — consolidate columns
+- `package.json` — add `pdf-lib`
+- `src/lib/types.ts` — 3 new optional fields on `Project`
+- `src/lib/pdf-price-strip.ts` — new file
+- `src/components/PdfImportDialog.tsx` — emit PDF data via new callback
+- `src/pages/QuoteBuilder.tsx` — store PDFs, add 2 dropdown items
 
