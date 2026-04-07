@@ -1,4 +1,6 @@
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { DEFAULT_PRICING } from '@/lib/context';
 import type { PricingData } from '@/lib/types';
 
@@ -97,7 +99,13 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
 
       {/* Architrave */}
       <div className={cardClass}>
-        <h3 className="font-heading text-sm font-semibold mb-3">Architrave (per LM){sellingOnly ? '' : ' — Selling'}</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-heading text-sm font-semibold">Architrave{pricing.architraveFlat ? ' (flat)' : ' (per LM)'}{sellingOnly ? '' : ' — Selling'}</h3>
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Switch checked={!!pricing.architraveFlat} onCheckedChange={(v) => onUpdate('architraveFlat', v ? 1 : 0)} className="scale-75" />
+            Flat
+          </label>
+        </div>
         <div className="space-y-2">
           {Object.entries(pricing.architraveSelling).map(([key, price]) => (
             <EditRow key={key} label={ARCH_TRIM_LABELS[key] || key} value={price} path={`architraveSelling.${key}`} onUpdate={onUpdate} />

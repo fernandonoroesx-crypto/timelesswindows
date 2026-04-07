@@ -33,6 +33,7 @@ export interface QuoteLineItem {
   uplift: number;
   installationType: InstallationType;
   installationOverride?: number;
+  architraveOverride?: number;
   architraveType: ArchitraveType;
   trimsType: TrimsType;
   mdfRevealType: MdfRevealType;
@@ -202,4 +203,5 @@ export interface PricingData {
   deliveryStockCost: number;
   fensaSurveyCost: number;
   overheadPerDay: number;
+  architraveFlat?: boolean;
 }
