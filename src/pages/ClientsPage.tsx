@@ -68,6 +68,27 @@ export default function ClientsPage() {
     setEditingPricingPmId(prev => prev === pmId ? null : pmId);
   };
 
+  const deepMergePricing = (base: PricingData, override: Partial<PricingData>): PricingData => {
+    const result = JSON.parse(JSON.stringify(base)) as PricingData;
+    for (const key of Object.keys(override) as (keyof PricingData)[]) {
+      const val = override[key];
+      if (val !== undefined && val !== null && typeof val === 'object' && !Array.isArray(val)) {
+        (result as any)[key] = { ...(result as any)[key] };
+        for (const subKey of Object.keys(val)) {
+          const subVal = (val as any)[subKey];
+          if (subVal !== undefined && subVal !== null && typeof subVal === 'object' && !Array.isArray(subVal)) {
+            (result as any)[key][subKey] = { ...(result as any)[key][subKey], ...subVal };
+          } else if (subVal !== undefined) {
+            (result as any)[key][subKey] = subVal;
+          }
+        }
+      } else if (val !== undefined) {
+        (result as any)[key] = val;
+      }
+    }
+    return result;
+  };
+
   const handleEnablePMPricing = (pmId: string) => {
     setForm(f => ({
       ...f,
@@ -93,9 +114,9 @@ export default function ClientsPage() {
       ...f,
       projectManagers: f.projectManagers.map(pm => {
         if (pm.id !== pmId || !pm.pricing) return pm;
-        const next = JSON.parse(JSON.stringify({ ...DEFAULT_PRICING, ...pm.pricing }));
+        const next = deepMergePricing(DEFAULT_PRICING, pm.pricing);
         const keys = path.split('.');
-        let obj = next;
+        let obj: any = next;
         for (let i = 0; i < keys.length - 1; i++) {
           if (obj[keys[i]] === undefined) obj[keys[i]] = {};
           obj = obj[keys[i]];
