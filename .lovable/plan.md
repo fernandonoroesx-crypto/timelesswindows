@@ -1,19 +1,37 @@
 
 
-## Plan: Fix MDF Reveal Editing in PM Pricing
+## Plan: Fix MDF Reveal Editing in PM Pricing (Comprehensive)
 
 ### Root cause
 
-When PM pricing is loaded from the database and merged with defaults via `{ ...DEFAULT_PRICING, ...pm.pricing }`, the spread is **shallow**. If `pm.pricing.mdfSelling` was saved as an incomplete or empty object, it replaces the full `DEFAULT_PRICING.mdfSelling` entirely, resulting in missing `narrow`/`wide` sub-objects. The `Object.entries(pricing.mdfSelling.narrow || {})` then iterates over nothing, so no editable fields appear.
+Three places fail to ensure PM pricing has the full nested structure:
+
+1. **`handleEdit`** — loads PM pricing from DB as-is. If saved data has `mdfSelling: {}` or `mdfSelling: { narrow: {} }`, the nested keys are missing.
+2. **`handleEnablePMPricing`** — uses `{ ...DEFAULT_PRICING }` (shallow copy). Nested objects like `mdfSelling` are shared references, which can cause stale data if mutated elsewhere.
+3. **First edit attempt** — `handleUpdatePMPricing` uses `deepMergePricing` correctly, but the initial render before any edit shows broken/missing fields if the raw DB data is incomplete.
 
 ### Fix
 
-Deep-merge PM pricing with defaults so nested objects like `mdfSelling` always have the correct structure.
-
-### Files to update
-
 | File | Change |
 |---|---|
-| `src/pages/ClientsPage.tsx` | In `handleUpdatePMPricing` (line 96) and `handleEnablePMPricing` (line 75), use a deep-merge utility instead of shallow spread to ensure `mdfSelling.narrow`, `mdfSelling.wide`, and all other nested pricing objects are always fully populated |
-| `src/components/PricingEditor.tsx` | Add defensive fallbacks: replace `pricing.mdfSelling.narrow || {}` with `pricing.mdfSelling?.narrow || DEFAULT_PRICING.mdfSelling.narrow` (and same for `wide`) so fields always render even if data is partially missing |
+| `src/pages/ClientsPage.tsx` | **`handleEdit`**: Deep-merge each PM's pricing with `DEFAULT_PRICING` when loading a client for editing, so incomplete DB data always gets filled with defaults |
+| `src/pages/ClientsPage.tsx` | **`handleEnablePMPricing`**: Use `JSON.parse(JSON.stringify(DEFAULT_PRICING))` instead of `{ ...DEFAULT_PRICING }` to deep-clone all nested objects |
+
+### Details
+
+**`handleEdit`** change (line 163):
+```typescript
+projectManagers: (client.projectManagers || []).map(pm =>
+  pm.pricing
+    ? { ...pm, pricing: deepMergePricing(DEFAULT_PRICING, pm.pricing) }
+    : pm
+),
+```
+
+**`handleEnablePMPricing`** change (line 96):
+```typescript
+{ ...pm, pricing: JSON.parse(JSON.stringify(DEFAULT_PRICING)) }
+```
+
+This ensures PM pricing always has the complete `mdfSelling.narrow` and `mdfSelling.wide` structure regardless of what was stored in the database.
 
