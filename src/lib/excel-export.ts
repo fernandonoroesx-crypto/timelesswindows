@@ -23,14 +23,14 @@ export async function exportQuoteExcel(project: Project) {
   const ws = wb.addWorksheet('Quote Report');
 
   // --- Project header ---
-  ws.mergeCells('A1:Q1');
+  ws.mergeCells('A1:L1');
   const titleCell = ws.getCell('A1');
   titleCell.value = `${project.projectRef || 'Quote'} — ${project.client || 'Client'}`;
   titleCell.font = { bold: true, size: 14, color: { argb: DARK_BLUE } };
   titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
   ws.getRow(1).height = 28;
 
-  ws.mergeCells('A2:Q2');
+  ws.mergeCells('A2:L2');
   ws.getCell('A2').value = `Date: ${project.date || '—'}`;
   ws.getCell('A2').font = { size: 10, color: { argb: 'FF666666' } };
   ws.getRow(2).height = 18;
@@ -38,9 +38,7 @@ export async function exportQuoteExcel(project: Project) {
   // --- Column headers (row 4) ---
   const headers = [
     'Proj Ref', 'Item Ref', 'Qty', 'Type', 'Width (mm)', 'Height (mm)',
-    'Material', 'Installation', 'Int. Making Good', 'Ext. Making Good',
-    'Architrave', 'Trims', 'MDF Reveal', 'Waste Disposal',
-    'Extra1', 'Extra2', 'Custom Extra',
+    'Material', 'Labour', 'Waste Disposal', 'Extras',
     'Unit Total', 'Total'
   ];
 
@@ -55,15 +53,14 @@ export async function exportQuoteExcel(project: Project) {
   });
   headerRow.height = 24;
 
-  const widths = [14, 12, 6, 16, 10, 10, 12, 12, 14, 14, 12, 10, 12, 12, 10, 10, 12, 12, 12];
+  const widths = [14, 12, 6, 16, 10, 10, 12, 12, 14, 12, 12, 12];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
-  const currCols = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+  // Columns that get currency formatting (1-indexed): Material(7), Labour(8), Waste(9), Extras(10), UnitTotal(11), Total(12)
+  const currCols = [7, 8, 9, 10, 11, 12];
 
-  const sellingTotals: Record<string, number> = {
-    material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
-    architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0,
-    extras1: 0, extras2: 0, customExtra: 0,
+  const sellingTotals = {
+    material: 0, labour: 0, wasteDisposal: 0, extras: 0,
     unitTotal: 0, total: 0,
   };
 
@@ -73,11 +70,13 @@ export async function exportQuoteExcel(project: Project) {
     const extra1Val = item.extra1 !== 'none' ? (pricing.extras[item.extra1] || 0) : 0;
     const extra2Val = item.extra2 !== 'none' ? (pricing.extras[item.extra2] || 0) : 0;
 
+    const labour = sb.installation + sb.internalMakingGood + sb.externalMakingGood
+      + sb.architrave + sb.trims + sb.mdfReveal;
+    const extras = extra1Val + extra2Val + (item.customExtra || 0);
+
     const values = [
       project.projectRef, item.itemRef, item.qty, item.type, item.widthMm, item.heightMm,
-      sb.material, sb.installation, sb.internalMakingGood, sb.externalMakingGood,
-      sb.architrave, sb.trims, sb.mdfReveal, sb.wasteDisposal,
-      extra1Val, extra2Val, item.customExtra || 0,
+      sb.material, labour, sb.wasteDisposal, extras,
       sb.unitTotal, sb.total,
     ];
 
@@ -96,12 +95,10 @@ export async function exportQuoteExcel(project: Project) {
       });
     }
 
-    const keys = ['material', 'installation', 'internalMakingGood', 'externalMakingGood',
-      'architrave', 'trims', 'mdfReveal', 'wasteDisposal'];
-    keys.forEach(k => { sellingTotals[k] += (sb as any)[k] * item.qty; });
-    sellingTotals.extras1 += extra1Val * item.qty;
-    sellingTotals.extras2 += extra2Val * item.qty;
-    sellingTotals.customExtra += (item.customExtra || 0) * item.qty;
+    sellingTotals.material += sb.material * item.qty;
+    sellingTotals.labour += labour * item.qty;
+    sellingTotals.wasteDisposal += sb.wasteDisposal * item.qty;
+    sellingTotals.extras += extras * item.qty;
     sellingTotals.unitTotal += sb.unitTotal * item.qty;
     sellingTotals.total += sb.total;
 
@@ -112,11 +109,8 @@ export async function exportQuoteExcel(project: Project) {
   const totalQty = project.lineItems.reduce((s, i) => s + i.qty, 0);
   const totalsValues = [
     '', 'TOTALS', totalQty, '', '', '',
-    sellingTotals.material, sellingTotals.installation,
-    sellingTotals.internalMakingGood, sellingTotals.externalMakingGood,
-    sellingTotals.architrave, sellingTotals.trims, sellingTotals.mdfReveal,
-    sellingTotals.wasteDisposal,
-    sellingTotals.extras1, sellingTotals.extras2, sellingTotals.customExtra,
+    sellingTotals.material, sellingTotals.labour,
+    sellingTotals.wasteDisposal, sellingTotals.extras,
     sellingTotals.unitTotal, sellingTotals.total,
   ];
 
@@ -137,7 +131,7 @@ export async function exportQuoteExcel(project: Project) {
   });
   rowNum += 2;
 
-  // --- Summary breakdown (selling only) ---
+  // --- Summary breakdown ---
   const summaryHeaderRow = ws.getRow(rowNum);
   ws.mergeCells(`A${rowNum}:C${rowNum}`);
   ['SUMMARY', '', '', 'Amount'].forEach((h, i) => {
@@ -150,17 +144,11 @@ export async function exportQuoteExcel(project: Project) {
   });
   rowNum++;
 
-  const labourTotal = sellingTotals.installation + sellingTotals.internalMakingGood
-    + sellingTotals.externalMakingGood + sellingTotals.architrave + sellingTotals.trims
-    + sellingTotals.mdfReveal;
-
-  const extrasTotal = sellingTotals.extras1 + sellingTotals.extras2 + sellingTotals.customExtra;
-
   const summaryCategories: [string, number][] = [
     ['Materials', sellingTotals.material],
-    ['Labour', labourTotal],
+    ['Labour', sellingTotals.labour],
     ['Waste Disposal', sellingTotals.wasteDisposal],
-    ['Extras', extrasTotal],
+    ['Extras', sellingTotals.extras],
   ];
 
   summaryCategories.forEach(([label, amount], idx) => {

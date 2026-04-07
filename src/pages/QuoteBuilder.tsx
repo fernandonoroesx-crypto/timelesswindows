@@ -192,9 +192,9 @@ export default function QuoteBuilder() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={async () => {
                 await exportQuoteExcel(project);
-                toast.success('Excel report exported');
+                toast.success('Excel quote exported');
               }}>
-                Excel Report
+                Excel Quote
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
