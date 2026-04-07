@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '@/lib/context';
 import { DEFAULT_PRICING } from '@/lib/context';
+import { normalizePricingData } from '@/lib/pricing-normalize';
 import type { Client, ProjectManager, PricingData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,7 +94,7 @@ export default function ClientsPage() {
     setForm(f => ({
       ...f,
       projectManagers: f.projectManagers.map(pm =>
-        pm.id === pmId && !pm.pricing ? { ...pm, pricing: JSON.parse(JSON.stringify(DEFAULT_PRICING)) } : pm
+        pm.id === pmId && !pm.pricing ? { ...pm, pricing: normalizePricingData(null) } : pm
       ),
     }));
     setEditingPricingPmId(pmId);
@@ -114,7 +115,7 @@ export default function ClientsPage() {
       ...f,
       projectManagers: f.projectManagers.map(pm => {
         if (pm.id !== pmId || !pm.pricing) return pm;
-        const next = deepMergePricing(DEFAULT_PRICING, pm.pricing);
+        const next = normalizePricingData(pm.pricing);
         const keys = path.split('.');
         let obj: any = next;
         for (let i = 0; i < keys.length - 1; i++) {
@@ -162,7 +163,7 @@ export default function ClientsPage() {
       notes: client.notes,
       projectManagers: (client.projectManagers || []).map(pm =>
         pm.pricing
-          ? { ...pm, pricing: deepMergePricing(DEFAULT_PRICING, pm.pricing) }
+          ? { ...pm, pricing: normalizePricingData(pm.pricing) }
           : pm
       ),
     });
