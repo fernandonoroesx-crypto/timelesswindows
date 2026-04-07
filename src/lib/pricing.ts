@@ -96,16 +96,17 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
       b.mdfReveal = mdfLm * (mdfRates[item.mdfRevealType] || 0);
     }
 
-    // Making Good
+    // Making Good: LM (single formula) × rate
+    const mkgLm = calculateTypeLm('single', item.widthMm, item.heightMm);
     if (settings.includeInternalMakingGood) {
-      b.internalMakingGood = item.installationType === 'Internal'
+      b.internalMakingGood = mkgLm * (item.installationType === 'Internal'
         ? pricing.makingGoodSelling.intMkgInternal
-        : pricing.makingGoodSelling.intMkgExternal;
+        : pricing.makingGoodSelling.intMkgExternal);
     }
     if (settings.includeExternalMakingGood) {
-      b.externalMakingGood = item.installationType === 'Internal'
+      b.externalMakingGood = mkgLm * (item.installationType === 'Internal'
         ? pricing.makingGoodSelling.extMkgInternal
-        : pricing.makingGoodSelling.extMkgExternal;
+        : pricing.makingGoodSelling.extMkgExternal);
     }
 
     // Waste Disposal
@@ -158,15 +159,17 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
       b.mdfReveal = mdfLm * (mdfRates[item.mdfRevealType] || 0);
     }
 
+    // Making Good cost: LM (single formula) × rate
+    const mkgLm = calculateTypeLm('single', item.widthMm, item.heightMm);
     if (settings.includeInternalMakingGood) {
-      b.internalMakingGood = item.installationType === 'Internal'
+      b.internalMakingGood = mkgLm * (item.installationType === 'Internal'
         ? pricing.makingGoodCost.intMkgInternal
-        : pricing.makingGoodCost.intMkgExternal;
+        : pricing.makingGoodCost.intMkgExternal);
     }
     if (settings.includeExternalMakingGood) {
-      b.externalMakingGood = item.installationType === 'Internal'
+      b.externalMakingGood = mkgLm * (item.installationType === 'Internal'
         ? pricing.makingGoodCost.extMkgInternal
-        : pricing.makingGoodCost.extMkgExternal;
+        : pricing.makingGoodCost.extMkgExternal);
     }
 
     if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
