@@ -19,6 +19,7 @@ interface PdfImportDialogProps {
   projectRef: string;
   existingCount: number;
   onImport: (items: QuoteLineItem[]) => void;
+  onPdfFiles?: (original: string, clean: string, fileName: string) => void;
 }
 
 export default function PdfImportDialog({ projectRef, existingCount, onImport }: PdfImportDialogProps) {
