@@ -26,8 +26,8 @@ function EditRow({ label, value, path, onUpdate, unit }: { label: string; value:
 
 const ARCH_TRIM_LABELS: Record<string, string> = {
   single: 'Single',
-  baySide: 'Bay Side',
-  bayCentral: 'Bay Central',
+  baySide: 'Side',
+  bayCentral: 'Central',
 };
 
 

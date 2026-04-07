@@ -708,8 +708,8 @@ function LineItemCard({
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
                 <SelectItem value="single">Single</SelectItem>
-                <SelectItem value="baySide">Bay Side</SelectItem>
-                <SelectItem value="bayCentral">Bay Central</SelectItem>
+                <SelectItem value="baySide">Side</SelectItem>
+                <SelectItem value="bayCentral">Central</SelectItem>
               </SelectContent>
             </Select>
           </div>
