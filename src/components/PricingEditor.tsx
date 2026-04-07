@@ -69,7 +69,7 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
 
       {/* Making Good */}
       <div className={cardClass}>
-        <h3 className="font-heading text-sm font-semibold mb-3">Making Good{sellingOnly ? '' : ' — Selling'}</h3>
+        <h3 className="font-heading text-sm font-semibold mb-3">Making Good (per LM){sellingOnly ? '' : ' — Selling'}</h3>
         <p className="text-xs text-muted-foreground mb-2">Internal Installation</p>
         <div className="space-y-2">
           <EditRow label="Internal MG" value={pricing.makingGoodSelling.intMkgInternal} path="makingGoodSelling.intMkgInternal" onUpdate={onUpdate} />
@@ -83,7 +83,7 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
       </div>
       {!sellingOnly && (
         <div className={cardClass}>
-          <h3 className="font-heading text-sm font-semibold mb-3">Making Good — Cost</h3>
+          <h3 className="font-heading text-sm font-semibold mb-3">Making Good (per LM) — Cost</h3>
           <p className="text-xs text-muted-foreground mb-2">Internal Installation</p>
           <div className="space-y-2">
             <EditRow label="Internal MG" value={pricing.makingGoodCost.intMkgInternal} path="makingGoodCost.intMkgInternal" onUpdate={onUpdate} />
