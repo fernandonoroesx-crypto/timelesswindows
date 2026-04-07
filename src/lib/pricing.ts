@@ -1,9 +1,10 @@
 import type { QuoteLineItem, ProjectSettings, QuoteSummary, PricingData } from './types';
 import { DEFAULT_PRICING } from './context';
 
+import { normalizePricingData } from './pricing-normalize';
+
 function p(quotePricing?: PricingData): PricingData {
-  if (!quotePricing) return DEFAULT_PRICING;
-  return { ...DEFAULT_PRICING, ...quotePricing, uplift: quotePricing.uplift || DEFAULT_PRICING.uplift };
+  return normalizePricingData(quotePricing);
 }
 
 export function calculateSm(widthMm: number, heightMm: number): number {

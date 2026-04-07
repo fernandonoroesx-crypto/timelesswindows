@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
+import { normalizePricingData } from '@/lib/pricing-normalize';
 import { calculateItemSelling, calculateItemCost, calculateQuoteSummary, formatCurrency, getItemSellingBreakdown, getItemCostBreakdown } from '@/lib/pricing';
 import type { Project, QuoteLineItem, WindowType, ExtraType, ProjectSettings, PricingData, ProjectManager, ArchitraveType, TrimsType, MdfRevealType, MdfWidthType, Supplier, ManagedProject } from '@/lib/types';
 import type { PriceBreakdown } from '@/lib/pricing';
@@ -62,8 +63,10 @@ export default function QuoteBuilder() {
   const updatePricing = (path: string, value: number) => {
     const keys = path.split('.');
     setProject(prev => {
-      const pricing = { ...(prev.pricing || quotePricing) } as any;
-      if (keys.length === 2) {
+      const pricing = normalizePricingData(prev.pricing || quotePricing) as any;
+      if (keys.length === 3) {
+        pricing[keys[0]] = { ...pricing[keys[0]], [keys[1]]: { ...pricing[keys[0]][keys[1]], [keys[2]]: value } };
+      } else if (keys.length === 2) {
         pricing[keys[0]] = { ...pricing[keys[0]], [keys[1]]: value };
       } else {
         pricing[keys[0]] = value;
@@ -90,13 +93,12 @@ export default function QuoteBuilder() {
 
   const selectPM = (pmId: string) => {
     if (pmId === '_none') {
-      const defaultPricing = { ...globalPricing };
-      updateProject({ projectManagerId: undefined, projectManagerName: '', pricing: defaultPricing });
+      updateProject({ projectManagerId: undefined, projectManagerName: '', pricing: normalizePricingData(globalPricing) });
       return;
     }
     const pm = clientPMs.find(p => p.id === pmId);
     if (pm) {
-      const pricing = pm.pricing ? { ...pm.pricing } : { ...globalPricing };
+      const pricing = normalizePricingData(pm.pricing || globalPricing);
       updateProject({ projectManagerId: pm.id, projectManagerName: pm.name, pricing });
     }
   };

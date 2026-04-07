@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier, ManagedProject } from '@/lib/types';
 import { fetchClients, upsertClient, deleteClient as dbDeleteClient, fetchSuppliers, upsertSupplier, deleteSupplier as dbDeleteSupplier, fetchProjects, upsertProject, deleteProject as dbDeleteProject, fetchGlobalPricing, saveGlobalPricing, fetchManagedProjects, upsertManagedProject, deleteManagedProject as dbDeleteManagedProject } from '@/lib/database';
+import { normalizePricingData } from '@/lib/pricing-normalize';
 import { toast } from 'sonner';
 
 export const DEFAULT_PRICING: PricingData = {
@@ -74,8 +75,8 @@ const DEFAULT_SETTINGS: ProjectSettings = {
 };
 
 export function getProjectPricing(project: Project): PricingData {
-  if (project.pricing) return { ...DEFAULT_PRICING, ...project.pricing, uplift: project.pricing.uplift || DEFAULT_PRICING.uplift };
-  return DEFAULT_PRICING;
+  if (project.pricing) return normalizePricingData(project.pricing);
+  return JSON.parse(JSON.stringify(DEFAULT_PRICING));
 }
 
 export function generateQuoteRef(clientName: string, existingProjects: Project[]): string {
