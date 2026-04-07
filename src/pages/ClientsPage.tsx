@@ -93,7 +93,7 @@ export default function ClientsPage() {
     setForm(f => ({
       ...f,
       projectManagers: f.projectManagers.map(pm =>
-        pm.id === pmId && !pm.pricing ? { ...pm, pricing: { ...DEFAULT_PRICING } } : pm
+        pm.id === pmId && !pm.pricing ? { ...pm, pricing: JSON.parse(JSON.stringify(DEFAULT_PRICING)) } : pm
       ),
     }));
     setEditingPricingPmId(pmId);
@@ -160,7 +160,11 @@ export default function ClientsPage() {
       phone: client.phone,
       address: client.address,
       notes: client.notes,
-      projectManagers: client.projectManagers || [],
+      projectManagers: (client.projectManagers || []).map(pm =>
+        pm.pricing
+          ? { ...pm, pricing: deepMergePricing(DEFAULT_PRICING, pm.pricing) }
+          : pm
+      ),
     });
     setEditingId(client.id);
     setShowForm(true);
