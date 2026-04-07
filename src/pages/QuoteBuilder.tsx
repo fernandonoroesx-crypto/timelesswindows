@@ -394,7 +394,7 @@ export default function QuoteBuilder() {
                   <SummaryCard label="Margin" value={`${(mcdPercent > 0 ? adjustedMargin : summary.margin).toFixed(1)}%`} highlight={(mcdPercent > 0 ? adjustedMargin : summary.margin) > 0} />
                 </div>
               </>
-            );
+          })()}
         </div>
       )}
 
