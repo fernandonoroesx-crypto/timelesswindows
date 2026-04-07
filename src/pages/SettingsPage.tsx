@@ -128,14 +128,14 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground mb-2">Narrow</p>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.mdfSelling?.narrow?.single ?? 0} onChange={v => update('mdfSelling.narrow.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.mdfSelling?.narrow?.baySide ?? 0} onChange={v => update('mdfSelling.narrow.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.mdfSelling?.narrow?.bayCentral ?? 0} onChange={v => update('mdfSelling.narrow.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.mdfSelling?.narrow?.baySide ?? 0} onChange={v => update('mdfSelling.narrow.baySide', v)} />
+                  <EditRow label="Central" value={pricing.mdfSelling?.narrow?.bayCentral ?? 0} onChange={v => update('mdfSelling.narrow.bayCentral', v)} />
                 </div>
                 <p className="text-xs text-muted-foreground mb-2 mt-3">Wide</p>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.mdfSelling?.wide?.single ?? 0} onChange={v => update('mdfSelling.wide.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.mdfSelling?.wide?.baySide ?? 0} onChange={v => update('mdfSelling.wide.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.mdfSelling?.wide?.bayCentral ?? 0} onChange={v => update('mdfSelling.wide.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.mdfSelling?.wide?.baySide ?? 0} onChange={v => update('mdfSelling.wide.baySide', v)} />
+                  <EditRow label="Central" value={pricing.mdfSelling?.wide?.bayCentral ?? 0} onChange={v => update('mdfSelling.wide.bayCentral', v)} />
                 </div>
               </div>
 
@@ -143,8 +143,8 @@ export default function SettingsPage() {
                 <h2 className="font-heading text-lg font-semibold mb-4">Architrave — Selling (per LM)</h2>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.architraveSelling.single} onChange={v => update('architraveSelling.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.architraveSelling.baySide} onChange={v => update('architraveSelling.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.architraveSelling.bayCentral} onChange={v => update('architraveSelling.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.architraveSelling.baySide} onChange={v => update('architraveSelling.baySide', v)} />
+                  <EditRow label="Central" value={pricing.architraveSelling.bayCentral} onChange={v => update('architraveSelling.bayCentral', v)} />
                 </div>
               </div>
 
@@ -152,8 +152,8 @@ export default function SettingsPage() {
                 <h2 className="font-heading text-lg font-semibold mb-4">Trims — Selling (per item)</h2>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.trimsSelling.single} onChange={v => update('trimsSelling.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.trimsSelling.baySide} onChange={v => update('trimsSelling.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.trimsSelling.bayCentral} onChange={v => update('trimsSelling.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.trimsSelling.baySide} onChange={v => update('trimsSelling.baySide', v)} />
+                  <EditRow label="Central" value={pricing.trimsSelling.bayCentral} onChange={v => update('trimsSelling.bayCentral', v)} />
                 </div>
               </div>
 
@@ -191,14 +191,14 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground mb-2">Narrow</p>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.mdfCost?.narrow?.single ?? 0} onChange={v => update('mdfCost.narrow.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.mdfCost?.narrow?.baySide ?? 0} onChange={v => update('mdfCost.narrow.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.mdfCost?.narrow?.bayCentral ?? 0} onChange={v => update('mdfCost.narrow.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.mdfCost?.narrow?.baySide ?? 0} onChange={v => update('mdfCost.narrow.baySide', v)} />
+                  <EditRow label="Central" value={pricing.mdfCost?.narrow?.bayCentral ?? 0} onChange={v => update('mdfCost.narrow.bayCentral', v)} />
                 </div>
                 <p className="text-xs text-muted-foreground mb-2 mt-3">Wide</p>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.mdfCost?.wide?.single ?? 0} onChange={v => update('mdfCost.wide.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.mdfCost?.wide?.baySide ?? 0} onChange={v => update('mdfCost.wide.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.mdfCost?.wide?.bayCentral ?? 0} onChange={v => update('mdfCost.wide.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.mdfCost?.wide?.baySide ?? 0} onChange={v => update('mdfCost.wide.baySide', v)} />
+                  <EditRow label="Central" value={pricing.mdfCost?.wide?.bayCentral ?? 0} onChange={v => update('mdfCost.wide.bayCentral', v)} />
                 </div>
               </div>
 
@@ -206,8 +206,8 @@ export default function SettingsPage() {
                 <h2 className="font-heading text-lg font-semibold mb-4">Architrave — Cost (per LM)</h2>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.architraveCost.single} onChange={v => update('architraveCost.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.architraveCost.baySide} onChange={v => update('architraveCost.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.architraveCost.bayCentral} onChange={v => update('architraveCost.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.architraveCost.baySide} onChange={v => update('architraveCost.baySide', v)} />
+                  <EditRow label="Central" value={pricing.architraveCost.bayCentral} onChange={v => update('architraveCost.bayCentral', v)} />
                 </div>
               </div>
 
@@ -215,8 +215,8 @@ export default function SettingsPage() {
                 <h2 className="font-heading text-lg font-semibold mb-4">Trims — Cost (per item)</h2>
                 <div className="space-y-2">
                   <EditRow label="Single" value={pricing.trimsCost.single} onChange={v => update('trimsCost.single', v)} />
-                  <EditRow label="Bay Side" value={pricing.trimsCost.baySide} onChange={v => update('trimsCost.baySide', v)} />
-                  <EditRow label="Bay Central" value={pricing.trimsCost.bayCentral} onChange={v => update('trimsCost.bayCentral', v)} />
+                  <EditRow label="Side" value={pricing.trimsCost.baySide} onChange={v => update('trimsCost.baySide', v)} />
+                  <EditRow label="Central" value={pricing.trimsCost.bayCentral} onChange={v => update('trimsCost.bayCentral', v)} />
                 </div>
               </div>
 
