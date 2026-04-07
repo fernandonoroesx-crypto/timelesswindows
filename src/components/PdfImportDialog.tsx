@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { stripPricesFromPdf, fileToBase64 } from '@/lib/pdf-price-strip';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,7 +23,7 @@ interface PdfImportDialogProps {
   onPdfFiles?: (original: string, clean: string, fileName: string) => void;
 }
 
-export default function PdfImportDialog({ projectRef, existingCount, onImport }: PdfImportDialogProps) {
+export default function PdfImportDialog({ projectRef, existingCount, onImport, onPdfFiles }: PdfImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rawText, setRawText] = useState('');
@@ -45,6 +46,18 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport }:
       const result = await extractPdfText(file);
       setRawText(result.rawText);
       setExtractedItems(result.items);
+
+      // Generate original + cleaned PDFs
+      if (onPdfFiles) {
+        try {
+          const original = await fileToBase64(file);
+          const ab = await file.arrayBuffer();
+          const clean = await stripPricesFromPdf(ab);
+          onPdfFiles(original, clean, file.name);
+        } catch (pdfErr) {
+          console.error('PDF price strip error:', pdfErr);
+        }
+      }
 
       if (result.items.length === 0) {
         toast.info('No line items auto-detected. Check the raw text tab to manually identify items.');
