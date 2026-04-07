@@ -6,7 +6,7 @@ import type { PricingData } from '@/lib/types';
 
 interface PricingEditorProps {
   pricing: PricingData;
-  onUpdate: (path: string, value: number) => void;
+  onUpdate: (path: string, value: number | boolean) => void;
   compact?: boolean;
   sellingOnly?: boolean;
 }
