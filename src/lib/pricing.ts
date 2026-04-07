@@ -70,7 +70,7 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
       ? item.installationOverride
       : (pricing.installationSelling[item.type] || 0);
 
-    // Architrave: flat override, flat rate, or LM × rate per type
+    // Architrave selling: flat override, flat rate (if architraveFlat), or LM × rate
     if (item.architraveType !== 'none') {
       if (item.architraveOverride != null) {
         b.architrave = item.architraveOverride;
@@ -140,13 +140,10 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
   if (!settings.supplyOnly) {
     b.installation = pricing.installationCost[item.type] || 0;
 
+    // Architrave cost: always LM × rate regardless of flat selling flag
     if (item.architraveType !== 'none') {
-      if (pricing.architraveFlat) {
-        b.architrave = pricing.architraveCost[item.architraveType] || 0;
-      } else {
-        const archLm = calculateTypeLm(item.architraveType, item.widthMm, item.heightMm);
-        b.architrave = archLm * (pricing.architraveCost[item.architraveType] || 0);
-      }
+      const archLm = calculateTypeLm(item.architraveType, item.widthMm, item.heightMm);
+      b.architrave = archLm * (pricing.architraveCost[item.architraveType] || 0);
     }
 
     if (item.trimsType !== 'none') {
