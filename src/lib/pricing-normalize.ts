@@ -32,13 +32,14 @@ export function normalizePricingData(raw?: Partial<PricingData> | null): Pricing
     if (val === undefined || val === null) continue;
 
     if (key === 'mdfSelling' || key === 'mdfCost') {
-      // Handle MDF specially — may contain legacy scalars
       const mdfVal = val as any;
       const defaultMdf = base[key];
       base[key] = {
         narrow: normalizeMdfWidth(mdfVal?.narrow, defaultMdf.narrow),
         wide: normalizeMdfWidth(mdfVal?.wide, defaultMdf.wide),
       };
+    } else if (key === 'architraveFlat') {
+      base.architraveFlat = !!val;
     } else if (typeof val === 'object' && !Array.isArray(val)) {
       // Deep merge nested objects (e.g. makingGoodSelling, installationSelling, etc.)
       (base as any)[key] = { ...(base as any)[key], ...(val as any) };
