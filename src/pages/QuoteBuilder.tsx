@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
 import { normalizePricingData } from '@/lib/pricing-normalize';
@@ -169,25 +170,34 @@ export default function QuoteBuilder() {
           >
             <Send className="w-4 h-4 mr-2" /> Send
           </Button>
-          <Button variant="outline" onClick={async () => {
-            const client = clients.find(c => c.id === project.clientId);
-            await exportQuotePdf(project, client?.address);
-            toast.success('Quote PDF exported');
-          }}>
-            <FileDown className="w-4 h-4 mr-2" /> Quote PDF
-          </Button>
-          <Button variant="outline" onClick={async () => {
-            await exportInstallationPdf(project);
-            toast.success('Installation report exported');
-          }}>
-            <FileDown className="w-4 h-4 mr-2" /> Installation PDF
-          </Button>
-          <Button variant="outline" onClick={async () => {
-            await exportQuoteExcel(project);
-            toast.success('Excel report exported');
-          }}>
-            <FileDown className="w-4 h-4 mr-2" /> Excel Report
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <FileDown className="w-4 h-4 mr-2" /> Reports <ChevronDown className="w-4 h-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={async () => {
+                const client = clients.find(c => c.id === project.clientId);
+                await exportQuotePdf(project, client?.address);
+                toast.success('Quote PDF exported');
+              }}>
+                Quote PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={async () => {
+                await exportInstallationPdf(project);
+                toast.success('Installation report exported');
+              }}>
+                Installation PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={async () => {
+                await exportQuoteExcel(project);
+                toast.success('Excel report exported');
+              }}>
+                Excel Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
