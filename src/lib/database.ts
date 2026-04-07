@@ -102,6 +102,9 @@ export async function fetchProjects(): Promise<Project[]> {
     pricing: row.pricing ? normalizePricingData(row.pricing as unknown as Partial<PricingData>) : undefined,
     status: (row.status as Project['status']) || 'draft',
     sentAt: row.sent_at || undefined,
+    supplierPdfOriginal: row.supplier_pdf_original || undefined,
+    supplierPdfClean: row.supplier_pdf_clean || undefined,
+    supplierPdfName: row.supplier_pdf_name || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
@@ -121,7 +124,10 @@ export async function upsertProject(project: Project): Promise<void> {
     pricing: project.pricing as any,
     status: project.status,
     sent_at: project.sentAt || null,
-  });
+    supplier_pdf_original: project.supplierPdfOriginal || null,
+    supplier_pdf_clean: project.supplierPdfClean || null,
+    supplier_pdf_name: project.supplierPdfName || null,
+  } as any);
   if (error) throw error;
 }
 

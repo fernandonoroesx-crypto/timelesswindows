@@ -231,6 +231,9 @@ export type Database = {
           sent_at: string | null
           settings: Json
           status: string
+          supplier_pdf_clean: string | null
+          supplier_pdf_name: string | null
+          supplier_pdf_original: string | null
           updated_at: string
         }
         Insert: {
@@ -247,6 +250,9 @@ export type Database = {
           sent_at?: string | null
           settings?: Json
           status?: string
+          supplier_pdf_clean?: string | null
+          supplier_pdf_name?: string | null
+          supplier_pdf_original?: string | null
           updated_at?: string
         }
         Update: {
@@ -263,6 +269,9 @@ export type Database = {
           sent_at?: string | null
           settings?: Json
           status?: string
+          supplier_pdf_clean?: string | null
+          supplier_pdf_name?: string | null
+          supplier_pdf_original?: string | null
           updated_at?: string
         }
         Relationships: [
