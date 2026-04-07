@@ -263,13 +263,20 @@ export default function QuoteBuilder() {
         <div className="elevated-card rounded-xl p-6 border-l-4 border-l-secondary">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading text-lg font-semibold">Quote Summary</h2>
-            {!project.settings.supplyOnly && (
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-muted/30">
-                <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Est. Days</Label>
-                <Input type="number" min="0" step="0.5" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.overheadDays}
-                  onChange={e => updateSettings('overheadDays', parseFloat(e.target.value) || 0)} />
+                <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">MCD %</Label>
+                <Input type="number" min="0" max="100" step="0.5" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.mcdPercent || 0}
+                  onChange={e => updateSettings('mcdPercent', parseFloat(e.target.value) || 0)} />
               </div>
-            )}
+              {!project.settings.supplyOnly && (
+                <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-muted/30">
+                  <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Est. Days</Label>
+                  <Input type="number" min="0" step="0.5" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.overheadDays}
+                    onChange={e => updateSettings('overheadDays', parseFloat(e.target.value) || 0)} />
+                </div>
+              )}
+            </div>
           </div>
           
           {(() => {
@@ -292,6 +299,14 @@ export default function QuoteBuilder() {
               + costTotals.deliveryStock + costTotals.fensaSurvey
               + costTotals.consumables + costTotals.overhead;
 
+            const mcdPercent = project.settings.mcdPercent || 0;
+            const subtotalSelling = totals.material + (!project.settings.supplyOnly ? (labourSelling + totals.wasteDisposal + totals.extras) : 0);
+            const mcdAmount = subtotalSelling * (mcdPercent / 100);
+            const discountedSelling = subtotalSelling - mcdAmount;
+            const totalCostAll = costTotals.material + (!project.settings.supplyOnly ? (labourCost + costTotals.wasteDisposal + costTotals.extras + overheadDays) : 0);
+            const adjustedProfit = discountedSelling - totalCostAll;
+            const adjustedMargin = discountedSelling > 0 ? (adjustedProfit / discountedSelling) * 100 : 0;
+
             const summaryRows = [
               { label: 'Materials', selling: totals.material, cost: costTotals.material },
               ...(!project.settings.supplyOnly ? [
@@ -300,6 +315,7 @@ export default function QuoteBuilder() {
                 ...(totals.extras > 0 ? [{ label: 'Extras', selling: totals.extras, cost: costTotals.extras }] : []),
                 ...(overheadDays > 0 ? [{ label: `Overhead (${project.settings.overheadDays} days)`, selling: 0, cost: overheadDays }] : []),
               ] : []),
+              ...(mcdPercent > 0 ? [{ label: `MCD (${mcdPercent}%)`, selling: -mcdAmount, cost: 0 }] : []),
             ];
 
             const makingGoodSelling = totals.internalMakingGood + totals.externalMakingGood;
@@ -371,12 +387,12 @@ export default function QuoteBuilder() {
           <div className="border-t pt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
             <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
             <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
-            <SummaryCard label="Selling Price" value={formatCurrency(summary.sellingPrice.total)} highlight />
-            <SummaryCard label="Cost" value={formatCurrency(summary.costPrice.total)} />
+            <SummaryCard label="Selling Price" value={formatCurrency(mcdPercent > 0 ? discountedSelling : summary.sellingPrice.total)} highlight />
+            <SummaryCard label="Cost" value={formatCurrency(totalCostAll)} />
           </div>
           <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
-            <SummaryCard label="Profit" value={formatCurrency(summary.profit)} highlight={summary.profit > 0} />
-            <SummaryCard label="Margin" value={`${summary.margin.toFixed(1)}%`} highlight={summary.margin > 0} />
+            <SummaryCard label="Profit" value={formatCurrency(mcdPercent > 0 ? adjustedProfit : summary.profit)} highlight={(mcdPercent > 0 ? adjustedProfit : summary.profit) > 0} />
+            <SummaryCard label="Margin" value={`${(mcdPercent > 0 ? adjustedMargin : summary.margin).toFixed(1)}%`} highlight={(mcdPercent > 0 ? adjustedMargin : summary.margin) > 0} />
           </div>
         </div>
       )}

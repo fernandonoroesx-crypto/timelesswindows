@@ -49,6 +49,7 @@ export interface ProjectSettings {
   includeExternalMakingGood: boolean;
   supplyOnly: boolean;
   overheadDays: number;
+  mcdPercent: number;
 }
 
 export interface Project {

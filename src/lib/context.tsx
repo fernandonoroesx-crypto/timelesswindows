@@ -70,6 +70,7 @@ const DEFAULT_SETTINGS: ProjectSettings = {
   includeExternalMakingGood: true,
   supplyOnly: false,
   overheadDays: 0,
+  mcdPercent: 0,
 };
 
 export function getProjectPricing(project: Project): PricingData {
