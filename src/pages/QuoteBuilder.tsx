@@ -370,30 +370,31 @@ export default function QuoteBuilder() {
             );
 
             return (
-              <div className="mb-4 space-y-4">
-                <BreakdownTable rows={summaryRows} title="Summary" />
-                <details className="group">
-                  <summary className="cursor-pointer text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
-                    ▸ Full Breakdown
-                  </summary>
-                  <div className="mt-2">
-                    <BreakdownTable rows={detailRows} title="" />
-                  </div>
-                </details>
-              </div>
-            );
-          })()}
+              <>
+                <div className="mb-4 space-y-4">
+                  <BreakdownTable rows={summaryRows} title="Summary" />
+                  <details className="group">
+                    <summary className="cursor-pointer text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                      ▸ Full Breakdown
+                    </summary>
+                    <div className="mt-2">
+                      <BreakdownTable rows={detailRows} title="" />
+                    </div>
+                  </details>
+                </div>
 
-          <div className="border-t pt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
-            <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
-            <SummaryCard label="Selling Price" value={formatCurrency(mcdPercent > 0 ? discountedSelling : summary.sellingPrice.total)} highlight />
-            <SummaryCard label="Cost" value={formatCurrency(totalCostAll)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
-            <SummaryCard label="Profit" value={formatCurrency(mcdPercent > 0 ? adjustedProfit : summary.profit)} highlight={(mcdPercent > 0 ? adjustedProfit : summary.profit) > 0} />
-            <SummaryCard label="Margin" value={`${(mcdPercent > 0 ? adjustedMargin : summary.margin).toFixed(1)}%`} highlight={(mcdPercent > 0 ? adjustedMargin : summary.margin) > 0} />
-          </div>
+                <div className="border-t pt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <SummaryCard label="Total Items" value={summary.totalItems.toString()} />
+                  <SummaryCard label="Total SM" value={summary.totalSm.toFixed(2)} />
+                  <SummaryCard label="Selling Price" value={formatCurrency(mcdPercent > 0 ? discountedSelling : summary.sellingPrice.total)} highlight />
+                  <SummaryCard label="Cost" value={formatCurrency(totalCostAll)} />
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                  <SummaryCard label="Profit" value={formatCurrency(mcdPercent > 0 ? adjustedProfit : summary.profit)} highlight={(mcdPercent > 0 ? adjustedProfit : summary.profit) > 0} />
+                  <SummaryCard label="Margin" value={`${(mcdPercent > 0 ? adjustedMargin : summary.margin).toFixed(1)}%`} highlight={(mcdPercent > 0 ? adjustedMargin : summary.margin) > 0} />
+                </div>
+              </>
+            );
         </div>
       )}
 
