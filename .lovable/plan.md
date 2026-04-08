@@ -1,39 +1,22 @@
 
 
-## Plan: Extract Glass Thickness from Supplier PDFs
+## Plan: Fix Glass Spec Detection for Space-Joined PDF Text
 
-### What it does
-Adds glass thickness detection to the PDF reader. The thickness is calculated by summing the numeric parts of the glass specification string found in field "4. Glass:" — e.g. `4Tgh-6Ar-4TghLowE` → 4+6+4 = **14mm**. This value is stored per item and displayed in the import dialog and Extract to Excel output.
+### Problem
+The `detectGlassSpec` function uses `(?:\n|$)` as a line boundary, but pdfjs joins all text on a page with spaces (no newlines). The lazy `.+?` match captures almost nothing, missing the glass spec like `(4-16Ar-4LowE)` which should yield 24mm.
 
-### How it works
-The glass spec follows a pattern like `4Tgh-6Ar-4TghLowE` or `6-16Ar-6LowE` — numbers separated by dashes with text suffixes. We extract all leading numbers from each dash-separated segment and sum them.
+### Fix
 
-### Changes
+**`src/lib/pdf-reader.ts`** — update `detectGlassSpec`
 
-**`src/lib/pdf-reader.ts`**
-- Add `glassThicknessMm?: number` and `glassSpec?: string` to `ExtractedLineItem` interface
-- Add `detectGlassSpec(text)` function that finds field "4. Glass:" and extracts the parenthesized spec (e.g. `4Tgh-6Ar-4TghLowE`)
-- Add `calcGlassThickness(spec)` function that sums numeric prefixes from dash-separated segments
-- Call these in `parseSupplierFormat` using the preceding text context (same as type detection)
+Instead of trying to extract the full "4. Glass:" line and then searching for the spec within it, search the preceding text directly for the parenthesized glass spec pattern near "4. Glass":
 
-**`src/lib/excel-reader.ts`**
-- Add header detection for "glass" / "glass thickness" columns in `detectColumns`
-- Map to `glassThicknessMm` on extracted items
+1. Change the approach: look for `4.\s*Glass` followed by any text, then find a parenthesized spec pattern `(\d+-\d+\w*-\d+\w*)` nearby
+2. Use a single regex that matches `4\.\s*Glass[^()]*\((\d+\w*(?:-\d+\w*)+)\)` to directly capture the spec from within parentheses after the Glass field label
+3. This handles both space-joined and newline-separated text
 
-**`src/lib/types.ts`**
-- Add `glassThicknessMm?: number` and `glassSpec?: string` to `QuoteLineItem`
-
-**`src/components/PdfImportDialog.tsx`**
-- Show glass thickness in the extracted items preview grid
-- Pass through to `QuoteLineItem` on import
-
-**`src/pages/PdfEditorPage.tsx`**
-- Add "Glass (mm)" column to the Extract to Excel preview table and Excel output
+The `calcGlassThickness` function is correct and unchanged — `4-16Ar-4LowE` → 4+16+4 = 24mm.
 
 ### Files modified
-- `src/lib/pdf-reader.ts` — add glass detection logic + interface field
-- `src/lib/excel-reader.ts` — add glass column detection
-- `src/lib/types.ts` — add optional glass fields to QuoteLineItem
-- `src/components/PdfImportDialog.tsx` — display + pass through glass data
-- `src/pages/PdfEditorPage.tsx` — include in Excel extract output
+- `src/lib/pdf-reader.ts` — rewrite `detectGlassSpec` regex to directly match parenthesized spec after "Glass" label
 
