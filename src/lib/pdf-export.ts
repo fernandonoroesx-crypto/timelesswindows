@@ -3,21 +3,7 @@ import autoTable from 'jspdf-autotable';
 import type { Project, QuoteLineItem } from './types';
 import { getItemSellingBreakdown, getItemCostBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
 import { getProjectPricing } from './context';
-
-async function loadLogoBase64(): Promise<string | null> {
-  try {
-    const response = await fetch('/images/timeless-logo.png');
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-}
+import { loadLogoAsBase64 } from './logo';
 
 export async function exportQuotePdf(project: Project, clientAddress?: string) {
   const doc = new jsPDF();

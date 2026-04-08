@@ -2,6 +2,7 @@ import ExcelJS from 'exceljs';
 import type { Project } from './types';
 import { getItemSellingBreakdown } from './pricing';
 import { getProjectPricing } from './context';
+import { loadLogoAsArrayBuffer } from './logo';
 
 const DARK_CHARCOAL = 'FF2D2D2D';
 const LIGHT_GREY = 'FFF2F2F2';
@@ -17,15 +18,8 @@ const thinBorder: Partial<ExcelJS.Borders> = {
 
 const currencyFmt = '£#,##0.00';
 
-async function loadLogoForExcel(): Promise<ArrayBuffer | null> {
-  try {
-    const response = await fetch('/images/timeless-logo.png');
-    const blob = await response.blob();
-    return blob.arrayBuffer();
-  } catch {
-    return null;
-  }
-}
+// Columns that get currency formatting (1-indexed)
+const currCols = [7, 8, 9, 10, 11, 12];
 
 export async function exportQuoteExcel(project: Project) {
   const pricing = project.pricing || getProjectPricing(project);

@@ -4,7 +4,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 /* ── Company branding constants ─────────────────────────────── */
 const COMPANY_NAME = 'Timeless Windows Ltd';
 const COMPANY_ADDRESS = '2 New Kings Rd London SW6 4SA';
-const LOGO_PATH = '/images/timeless-logo.png';
+// Logo is now loaded from the storage bucket via logo.ts
 
 /* ── Types ──────────────────────────────────────────────────── */
 
