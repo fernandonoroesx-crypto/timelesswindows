@@ -127,7 +127,7 @@ function detectColumns(headerRow: any[]): Record<string, number> {
       map['width'] = c;
     }
     // Height (explicit)
-    else if (!map['height'] && /\b(height|h)\b/i.test(h) && !/total/i.test(h)) {
+    else if (!map['height'] && /\b(height|hight|h)\b/i.test(h) && !/total/i.test(h)) {
       map['height'] = c;
     }
     // Combined dimensions
