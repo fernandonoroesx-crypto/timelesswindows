@@ -83,7 +83,8 @@ export interface CostBreakdown {
   mdfReveal: number;
   wasteDisposal: number;
   deliveryStock: number;
-  fensaSurvey: number;
+  fensa: number;
+  survey: number;
   extras: number;
   consumables: number;
   overhead: number;
@@ -206,7 +207,8 @@ export interface PricingData {
   wasteDisposalSelling: number;
   wasteDisposalCost: number;
   deliveryStockCost: number;
-  fensaSurveyCost: number;
+  fensaCost: number;
+  surveyCost: number;
   overheadPerDay: number;
   architraveFlat?: boolean;
 }

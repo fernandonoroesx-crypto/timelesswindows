@@ -307,7 +307,7 @@ export default function QuoteBuilder() {
           </div>
           
           {(() => {
-            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0 };
+            const totals = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensa: 0, survey: 0, extras: 0, consumables: 0, overhead: 0 };
             const costTotals = { ...totals };
             for (const item of project.lineItems) {
               const sb = getItemSellingBreakdown(item, project.settings, quotePricing);
@@ -323,7 +323,7 @@ export default function QuoteBuilder() {
               + totals.architrave + totals.trims + totals.mdfReveal;
             const labourCost = costTotals.installation + costTotals.internalMakingGood + costTotals.externalMakingGood
               + costTotals.architrave + costTotals.trims + costTotals.mdfReveal
-              + costTotals.deliveryStock + costTotals.fensaSurvey
+              + costTotals.deliveryStock + costTotals.fensa + costTotals.survey
               + costTotals.consumables + costTotals.overhead;
 
             const mcdPercent = project.settings.mcdPercent || 0;
@@ -366,7 +366,8 @@ export default function QuoteBuilder() {
                 ...(totals.mdfReveal > 0 ? [{ label: 'MDF Reveal', selling: totals.mdfReveal, cost: costTotals.mdfReveal }] : []),
                 ...(totals.wasteDisposal > 0 ? [{ label: 'Waste Disposal', selling: totals.wasteDisposal, cost: costTotals.wasteDisposal }] : []),
                 ...(totals.extras > 0 ? [{ label: 'Extras', selling: totals.extras, cost: costTotals.extras }] : []),
-                { label: 'FENSA / Survey', selling: 0, cost: costTotals.fensaSurvey },
+                { label: 'FENSA', selling: 0, cost: costTotals.fensa },
+                { label: 'Survey', selling: 0, cost: costTotals.survey },
                 ...(overheadDays > 0 ? [{ label: `Overhead (${project.settings.overheadDays} days)`, selling: 0, cost: overheadDays }] : []),
               ] : []),
             ];
@@ -904,7 +905,8 @@ function LineItemCard({
                     {costBreakdown.trims > 0 && <FormulaRow label="Trims" value={costBreakdown.trims} />}
                     {costBreakdown.mdfReveal > 0 && <FormulaRow label="MDF Reveal" value={costBreakdown.mdfReveal} />}
                     {costBreakdown.deliveryStock > 0 && <FormulaRow label="Delivery/Stock" value={costBreakdown.deliveryStock} />}
-                    {costBreakdown.fensaSurvey > 0 && <FormulaRow label="FENSA/Survey" value={costBreakdown.fensaSurvey} />}
+                    {costBreakdown.fensa > 0 && <FormulaRow label="FENSA" value={costBreakdown.fensa} />}
+                    {costBreakdown.survey > 0 && <FormulaRow label="Survey" value={costBreakdown.survey} />}
                     {costBreakdown.consumables > 0 && <FormulaRow label="Consumables" value={costBreakdown.consumables} />}
                     {costBreakdown.extras > 0 && <FormulaRow label="Extras" value={costBreakdown.extras} />}
                     {costBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={costBreakdown.wasteDisposal} />}

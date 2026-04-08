@@ -36,7 +36,8 @@ export const DEFAULT_PRICING: PricingData = {
   wasteDisposalSelling: 35.00,
   wasteDisposalCost: 35.00,
   deliveryStockCost: 40.00,
-  fensaSurveyCost: 15.00,
+  fensaCost: 15.00,
+  surveyCost: 15.00,
   overheadPerDay: 2000.00,
 };
 

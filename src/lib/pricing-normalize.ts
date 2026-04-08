@@ -47,7 +47,7 @@ export function normalizePricingData(raw?: Partial<PricingData> | null): Pricing
     }
   }
 
-  // --- Backward compatibility: migrate legacy `extras` and `wasteDisposal` ---
+  // --- Backward compatibility: migrate legacy fields ---
   const rawAny = raw as any;
   if (rawAny.extras && !rawAny.extrasSelling) {
     base.extrasSelling = { ...base.extrasSelling, ...rawAny.extras };
@@ -56,6 +56,11 @@ export function normalizePricingData(raw?: Partial<PricingData> | null): Pricing
   if (rawAny.wasteDisposal != null && rawAny.wasteDisposalSelling == null) {
     base.wasteDisposalSelling = rawAny.wasteDisposal;
     base.wasteDisposalCost = rawAny.wasteDisposal;
+  }
+  // Migrate legacy combined fensaSurveyCost into separate fields
+  if (rawAny.fensaSurveyCost != null && rawAny.fensaCost == null && rawAny.surveyCost == null) {
+    base.fensaCost = rawAny.fensaSurveyCost;
+    base.surveyCost = rawAny.fensaSurveyCost;
   }
 
   return base;

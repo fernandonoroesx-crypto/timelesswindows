@@ -237,7 +237,8 @@ export default function SettingsPage() {
                 <h2 className="font-heading text-lg font-semibold mb-4">Delivery & FENSA — Cost</h2>
                 <div className="space-y-2">
                   <EditRow label="Delivery/Stock (per SM)" value={pricing.deliveryStockCost} onChange={v => update('deliveryStockCost', v)} />
-                  <EditRow label="FENSA/Survey (per item)" value={pricing.fensaSurveyCost} onChange={v => update('fensaSurveyCost', v)} />
+                  <EditRow label="FENSA (per item)" value={pricing.fensaCost} onChange={v => update('fensaCost', v)} />
+                  <EditRow label="Survey (per item)" value={pricing.surveyCost} onChange={v => update('surveyCost', v)} />
                 </div>
               </div>
 
