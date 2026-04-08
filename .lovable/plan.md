@@ -1,31 +1,41 @@
 
 
-## Plan: Add Logo to Excel & PDF Exports, Change Excel Colour Scheme
+## Plan: Automate Supplier PDF Editing (Remove Prices + Add Logo/Footer)
+
+### What you do manually today
+Looking at your Before/After PDFs, you:
+1. Remove the "Price, EUR" and "Total, EUR" columns from the pricing table (keeping Size, Area, Quantity)
+2. Remove the "Order No." prefix from the header
+3. Add the Timeless Windows logo to the top-right
+4. Add a footer with "Timeless Windows Ltd 2 New Kings Rd London SW6 4SA" and page numbers ("1 of 3")
 
 ### What changes
-1. Copy the uploaded high-quality PNG logo into the project
-2. Add the logo to the top-right of the Excel quote report
-3. Update the PDF export to use the new PNG logo instead of the existing JPG
-4. Change the Excel colour scheme from dark blue to grey/black
+Upgrade the `stripPricesFromPdf` function so the "cleaned" PDF matches your manual edits — not just whiting out prices, but also branding it with your logo and footer.
 
 ### Changes
 
-**1. Copy logo (`public/images/timeless-logo.png`)**
-- Replace the existing file with the uploaded high-quality version using `lov-copy user-uploads://logo.png public/images/timeless-logo.png`
+**1. Improve price redaction (`src/lib/pdf-price-strip.ts`)**
+- Current approach whites out detected price text but misses column headers ("Price, EUR", "Total, EUR")
+- Add explicit patterns to also redact the column header text "Price, EUR" and "Total, EUR" (both the header labels and the data values)
+- Expand the redaction to cover the full table cells, not just the number text
 
-**2. Excel export (`src/lib/excel-export.ts`)**
-- Change colour constants: `DARK_BLUE` → dark charcoal (`FF2D2D2D`), update title font colour to black
-- Add a `loadLogoForExcel()` function that fetches `/images/timeless-logo.png` and converts to an ArrayBuffer
-- Insert the logo image into the worksheet at the top-right area (around columns I-L, row 1) using `ws.addImage()` and `ws.addImage()` placement
-- Adjust header row height to accommodate the logo
-- Update summary header and grand total row colours to use the new charcoal/grey scheme
+**2. Add logo overlay (`src/lib/pdf-price-strip.ts`)**
+- After redacting prices, fetch `/images/timeless-logo.png` and embed it in the top-right corner of page 1 using pdf-lib's `embedPng` and `drawImage`
+- Position it similarly to your After PDF (top-right, ~60mm wide)
 
-**3. PDF export (`src/lib/pdf-export.ts`)**
-- Update `loadLogoBase64()` to fetch `/images/timeless-logo.png` instead of the JPG
-- Change `addImage` format from `'JPEG'` to `'PNG'` for higher quality rendering
+**3. Add footer to every page (`src/lib/pdf-price-strip.ts`)**
+- On each page, draw a horizontal line near the bottom and add:
+  - Left: "Timeless Windows Ltd 2 New Kings Rd London SW6 4SA"
+  - Right: "X of Y" page numbering
+- Use pdf-lib's `drawText` and `drawLine`
+
+**4. Store company details as constants**
+- Add company name/address as constants at the top of the file so they're easy to update later
+- Consider reading from Settings/pricing context if available, but for now hardcode matching your actual business details
+
+### Technical approach
+All changes stay in `src/lib/pdf-price-strip.ts`. The existing flow in `PdfImportDialog.tsx` already calls `stripPricesFromPdf()` and stores the result as `supplierPdfClean` — no changes needed there.
 
 ### Files modified
-- `public/images/timeless-logo.png` — replaced with uploaded high-quality logo
-- `src/lib/excel-export.ts` — add logo, change colours to grey/black
-- `src/lib/pdf-export.ts` — use PNG logo
+- `src/lib/pdf-price-strip.ts` — enhanced redaction + logo + footer
 
