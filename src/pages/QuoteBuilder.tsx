@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, Send, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2, Save, FileDown, Copy, ChevronDown, ChevronUp, Calculator, Send, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import PricingEditor from '@/components/PricingEditor';
 import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
@@ -554,6 +554,27 @@ export default function QuoteBuilder() {
 
         <TabsContent value="pricing">
           <div className="elevated-card rounded-xl p-6">
+            {(() => {
+              const pm = clientPMs.find(p => p.id === project.projectManagerId);
+              const hasPmPricing = pm && pm.pricing;
+              return hasPmPricing ? (
+                <div className="flex items-center justify-between mb-4 p-3 rounded-lg border border-border bg-muted/50">
+                  <span className="text-sm text-muted-foreground">PM: <strong className="text-foreground">{pm.name}</strong></span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const pricing = normalizePricingData(pm.pricing || globalPricing);
+                      updateProject({ pricing });
+                      toast.success(`Applied rates from ${pm.name}`);
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    Apply PM Rates
+                  </Button>
+                </div>
+              ) : null;
+            })()}
             <PricingEditor pricing={quotePricing} onUpdate={updatePricing} />
           </div>
         </TabsContent>
