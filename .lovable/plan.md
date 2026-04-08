@@ -1,14 +1,18 @@
 
 
-## Plan: Align Excel Logo to Right Edge (Column 12)
+## Plan: Reposition Excel Logo Over Columns K–L
 
 ### Problem
-The logo is anchored at column 9, but the data extends to column 12 (Total). The logo should sit in the top-right corner aligned with the last column.
+The logo is currently anchored at `col: 10.8`, pushing it too far right (past the data area). From the screenshot, the logo should be centered above columns K and L (Unit Total and Total — columns 11 and 12), roughly spanning from column 10 to column 12.
 
 ### Change in `src/lib/excel-export.ts`
 
-Update the logo anchor from `col: 9` to approximately `col: 10.5` so the 160px-wide logo right-edge aligns with the end of column 12. The exact anchor depends on column widths — column 12 is 12 units wide (~87px). Setting `tl: { col: 10.8, row: 0.2 }` will push the logo so its right edge aligns near the Total column border.
+Adjust the logo anchor from `col: 10.8` to approximately `col: 9.5` so the 160px-wide logo is visually centered over the last two data columns (K and L). This places the left edge of the logo around column J/K, with the right edge near the end of column L.
+
+```
+tl: { col: 9.5, row: 0.2 }
+```
 
 ### Files modified
-- `src/lib/excel-export.ts` — adjust logo `tl.col` from `9` to ~`10.8`
+- `src/lib/excel-export.ts` — adjust logo `tl.col` from `10.8` to `~9.5`
 
