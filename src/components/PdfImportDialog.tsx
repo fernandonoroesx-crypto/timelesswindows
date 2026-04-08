@@ -24,7 +24,7 @@ interface PdfImportDialogProps {
   onPdfFiles?: (original: string, clean: string, fileName: string) => void;
 }
 
-export default function PdfImportDialog({ projectRef, existingCount, onImport, onPdfFiles }: PdfImportDialogProps) {
+export default function FileImportDialog({ projectRef, existingCount, onImport, onPdfFiles }: PdfImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rawText, setRawText] = useState('');
@@ -35,8 +35,13 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      toast.error('Please upload a PDF file');
+
+    const ext = file.name.toLowerCase().split('.').pop();
+    const isPdf = ext === 'pdf';
+    const isExcel = ext === 'xlsx' || ext === 'xls';
+
+    if (!isPdf && !isExcel) {
+      toast.error('Please upload a PDF or Excel file');
       return;
     }
 
