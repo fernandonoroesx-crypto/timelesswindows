@@ -86,7 +86,15 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
       const type = detectType(String(typeRaw || '') + ' ' + rowText(row));
       const ref = String(refRaw || '').trim();
 
-      allItems.push({
+      const upliftRaw = get('uplift');
+      const installRaw = get('installation');
+      const installTypeRaw = get('installationType');
+      const architraveRaw = get('architrave');
+      const trimsRaw = get('trims');
+      const mdfRaw = get('mdf');
+      const extraRaw = get('extra');
+
+      const item: ExtractedLineItem = {
         itemRef: ref,
         type,
         qty: qty > 0 && qty < 999 ? qty : 1,
@@ -95,7 +103,33 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
         manufacturePrice: price,
         currency,
         supplier: '',
-      });
+      };
+
+      const upliftVal = parseNum(upliftRaw);
+      if (upliftVal > 0) item.uplift = upliftVal;
+
+      const installVal = parseNum(installRaw);
+      if (installVal > 0) item.installationOverride = installVal;
+
+      if (installTypeRaw) {
+        const it = String(installTypeRaw).toLowerCase().trim();
+        if (it.includes('ext')) item.installationType = 'External';
+        else if (it.includes('int')) item.installationType = 'Internal';
+      }
+
+      const archVal = parseOptionType(architraveRaw);
+      if (archVal) item.architraveType = archVal;
+
+      const trimsVal = parseOptionType(trimsRaw);
+      if (trimsVal) item.trimsType = trimsVal;
+
+      const mdfVal = parseOptionType(mdfRaw);
+      if (mdfVal) item.mdfRevealType = mdfVal;
+
+      const extraVal = parseNum(extraRaw);
+      if (extraVal > 0) item.customExtra = extraVal;
+
+      allItems.push(item);
     }
   }
 
@@ -137,6 +171,34 @@ function detectColumns(headerRow: any[]): Record<string, number> {
     // Price
     else if (!map['price'] && /\b(price|cost|net|sell|unit\s*price|each|amount|unit\s*total|material)\b|[£€]/i.test(h) && !/grand/i.test(h)) {
       map['price'] = c;
+    }
+    // Uplift / markup
+    else if (!map['uplift'] && /\b(uplift|markup|mark\s*up|margin)\b/i.test(h)) {
+      map['uplift'] = c;
+    }
+    // Installation cost
+    else if (!map['installation'] && /\b(install|installation|labour|labor|fitting)\b/i.test(h) && !/type/i.test(h)) {
+      map['installation'] = c;
+    }
+    // Installation type
+    else if (!map['installationType'] && /\b(install.*type|int.*ext|location)\b/i.test(h)) {
+      map['installationType'] = c;
+    }
+    // Architrave
+    else if (!map['architrave'] && /\b(architrave|arch)\b/i.test(h)) {
+      map['architrave'] = c;
+    }
+    // Trims
+    else if (!map['trims'] && /\b(trims?)\b/i.test(h)) {
+      map['trims'] = c;
+    }
+    // MDF / reveal
+    else if (!map['mdf'] && /\b(mdf|reveal)\b/i.test(h)) {
+      map['mdf'] = c;
+    }
+    // Extra / custom
+    else if (!map['extra'] && /\b(extra|custom|additional)\b/i.test(h)) {
+      map['extra'] = c;
     }
   }
   return map;
@@ -212,6 +274,16 @@ function parseNum(val: any): number {
     return isNaN(n) ? 0 : n;
   }
   return 0;
+}
+
+function parseOptionType(val: any): string | undefined {
+  if (val === undefined || val === null || val === '') return undefined;
+  const s = String(val).toLowerCase().trim();
+  if (!s || s === 'none' || s === 'n/a' || s === '-') return 'none';
+  if (s.includes('bay') && s.includes('central')) return 'bayCentral';
+  if (s.includes('bay') && s.includes('side')) return 'baySide';
+  if (s.includes('single') || s.includes('yes') || s.includes('y')) return 'single';
+  return undefined;
 }
 
 function detectType(text: string): string {
