@@ -1,28 +1,39 @@
 
 
-## Plan: Rename PDF Editor to PDF Options with Two Modes
+## Plan: Extract Glass Thickness from Supplier PDFs
 
 ### What it does
-Renames "PDF Editor" to "PDF Options" in the sidebar and page, then adds two selectable modes:
-1. **Remove Prices** — the existing functionality (upload PDF, strip prices via edge function, download clean PDF)
-2. **Extract to Excel** — upload a supplier PDF, extract all line item data (ref, type, qty, width, height, price, uplift, installation, etc.) using the existing `extractPdfText` from `pdf-reader.ts`, then export the extracted items as a downloadable `.xlsx` file
+Adds glass thickness detection to the PDF reader. The thickness is calculated by summing the numeric parts of the glass specification string found in field "4. Glass:" — e.g. `4Tgh-6Ar-4TghLowE` → 4+6+4 = **14mm**. This value is stored per item and displayed in the import dialog and Extract to Excel output.
+
+### How it works
+The glass spec follows a pattern like `4Tgh-6Ar-4TghLowE` or `6-16Ar-6LowE` — numbers separated by dashes with text suffixes. We extract all leading numbers from each dash-separated segment and sum them.
 
 ### Changes
 
-**`src/components/AppLayout.tsx`**
-- Change nav label from `'PDF Editor'` to `'PDF Options'`
+**`src/lib/pdf-reader.ts`**
+- Add `glassThicknessMm?: number` and `glassSpec?: string` to `ExtractedLineItem` interface
+- Add `detectGlassSpec(text)` function that finds field "4. Glass:" and extracts the parenthesized spec (e.g. `4Tgh-6Ar-4TghLowE`)
+- Add `calcGlassThickness(spec)` function that sums numeric prefixes from dash-separated segments
+- Call these in `parseSupplierFormat` using the preceding text context (same as type detection)
 
-**`src/pages/PdfEditorPage.tsx`** — rewrite with two-mode UI
-- Add a mode selector (tabs or radio) at top: "Remove Prices" | "Extract to Excel"
-- **Remove Prices mode**: keep existing upload + process + preview + download flow (unchanged logic)
-- **Extract to Excel mode**: 
-  - Same drag-and-drop upload area for PDF files
-  - On "Extract Data", call `extractPdfText(file)` from `pdf-reader.ts` to parse all line items
-  - Display extracted items in a preview table (Item Ref, Type, Qty, Width, Height, Price, Currency, Uplift, Installation)
-  - "Download Excel" button generates an `.xlsx` using the `xlsx` library (already in project) with all extracted columns
-  - Uses the same `ExtractedLineItem` interface so data is consistent with what the quote import produces
+**`src/lib/excel-reader.ts`**
+- Add header detection for "glass" / "glass thickness" columns in `detectColumns`
+- Map to `glassThicknessMm` on extracted items
+
+**`src/lib/types.ts`**
+- Add `glassThicknessMm?: number` and `glassSpec?: string` to `QuoteLineItem`
+
+**`src/components/PdfImportDialog.tsx`**
+- Show glass thickness in the extracted items preview grid
+- Pass through to `QuoteLineItem` on import
+
+**`src/pages/PdfEditorPage.tsx`**
+- Add "Glass (mm)" column to the Extract to Excel preview table and Excel output
 
 ### Files modified
-- `src/components/AppLayout.tsx` — rename nav label
-- `src/pages/PdfEditorPage.tsx` — add tabs for two modes, add Extract to Excel flow
+- `src/lib/pdf-reader.ts` — add glass detection logic + interface field
+- `src/lib/excel-reader.ts` — add glass column detection
+- `src/lib/types.ts` — add optional glass fields to QuoteLineItem
+- `src/components/PdfImportDialog.tsx` — display + pass through glass data
+- `src/pages/PdfEditorPage.tsx` — include in Excel extract output
 
