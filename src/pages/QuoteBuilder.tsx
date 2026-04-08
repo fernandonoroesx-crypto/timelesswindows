@@ -42,6 +42,7 @@ export default function QuoteBuilder() {
   });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [showOriginalPdf, setShowOriginalPdf] = useState(false);
+  const [showCleanPdf, setShowCleanPdf] = useState(false);
   const [showWonConfirm, setShowWonConfirm] = useState(false);
   const hasInitializedPricing = useRef(!!currentProject);
 

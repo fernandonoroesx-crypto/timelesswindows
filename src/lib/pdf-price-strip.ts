@@ -16,15 +16,6 @@ interface TextFragment {
   height: number;
 }
 
-interface LineGroup {
-  fragments: TextFragment[];
-  text: string;
-  minX: number;
-  maxX: number;
-  y: number;
-  height: number;
-}
-
 interface RedactRegion {
   page: number;
   x: number;
@@ -33,70 +24,18 @@ interface RedactRegion {
   height: number;
 }
 
-/* ── Line grouping helpers ──────────────────────────────────── */
-
-function groupIntoLines(items: TextFragment[], tolerance = 4): LineGroup[] {
-  if (items.length === 0) return [];
-
-  const sorted = [...items].sort((a, b) => b.y - a.y || a.x - b.x);
-
-  const lines: LineGroup[] = [];
-  let currentLine: TextFragment[] = [sorted[0]];
-  let currentY = sorted[0].y;
-
-  for (let i = 1; i < sorted.length; i++) {
-    const item = sorted[i];
-    if (Math.abs(item.y - currentY) <= tolerance) {
-      currentLine.push(item);
-    } else {
-      lines.push(buildLineGroup(currentLine));
-      currentLine = [item];
-      currentY = item.y;
-    }
-  }
-  if (currentLine.length > 0) {
-    lines.push(buildLineGroup(currentLine));
-  }
-
-  return lines;
-}
-
-function buildLineGroup(fragments: TextFragment[]): LineGroup {
-  fragments.sort((a, b) => a.x - b.x);
-  const text = fragments.map(f => f.str).join('');
-  const minX = Math.min(...fragments.map(f => f.x));
-  const maxX = Math.max(...fragments.map(f => f.x + f.width));
-  const y = fragments[0].y;
-  const height = Math.max(...fragments.map(f => f.height));
-  return { fragments, text, minX, maxX, y, height };
+interface ColumnRange {
+  minX: number;
+  maxX: number;
 }
 
 /* ── Detection helpers ──────────────────────────────────────── */
 
-function isPriceHeader(text: string): boolean {
+function isPriceColumnHeader(text: string): boolean {
   const t = text.trim().toLowerCase();
   return (
-    t === 'price, eur' ||
-    t === 'total, eur' ||
-    t === 'price,eur' ||
-    t === 'total,eur' ||
-    t === 'price, gbp' ||
-    t === 'total, gbp' ||
-    t === 'price' ||
-    t === 'total' ||
-    t === 'pricing' ||
-    /^(price|total)\s*,\s*(eur|gbp|usd)$/i.test(t)
-  );
-}
-
-function isRedactableLine(text: string): boolean {
-  const t = text.trim().toLowerCase();
-  return (
-    /^(comment|note|remark|kommentar|bemerkung|anmerkung)\s*[:：]/i.test(t) ||
-    /all openings shown as/i.test(t) ||
-    /all prices excl/i.test(t) ||
-    /^pricing$/i.test(t) ||
-    /^pricing\s*$/i.test(t)
+    /^price\s*,?\s*(eur|gbp|usd)?$/i.test(t) ||
+    /^total\s*,?\s*(eur|gbp|usd)?$/i.test(t)
   );
 }
 
@@ -111,106 +50,78 @@ function isSummaryPriceLine(text: string): boolean {
   );
 }
 
-function isOrderNoPrefix(text: string): boolean {
-  return /^order\s*no\.?\s*:?\s*/i.test(text.trim());
+function isRedactableLine(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    /all prices excl/i.test(t) ||
+    /all openings shown as/i.test(t) ||
+    /^pricing$/i.test(t) ||
+    /^pricing\s*$/i.test(t)
+  );
 }
 
-function getDimensionRanges(text: string): Array<{ start: number; end: number }> {
-  const ranges: Array<{ start: number; end: number }> = [];
-  const dimPatterns = [
-    /\d+\s*[xX×]\s*\d+\s*(mm)?/g,
-    /\d+\s*mm/gi,
-    /\d+[.,]\d+\s*m²/g,
-  ];
-  for (const p of dimPatterns) {
-    const re = new RegExp(p.source, p.flags);
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      ranges.push({ start: m.index, end: m.index + m[0].length });
-    }
-  }
-  return ranges;
+function isOrderNoPrefix(str: string): boolean {
+  return /^order\s*no\.?\s*:?\s*/i.test(str.trim());
 }
 
-function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
-  return a.start < b.end && b.start < a.end;
+/** Check if a standalone price value like "1370,-" or "4910,-" */
+function isStandalonePrice(str: string): boolean {
+  const t = str.trim();
+  // Match patterns like "1370,-" or "4 910,-" or "1.370,-"
+  return /^\d[\d\s.,]*,-$/.test(t);
 }
 
-function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: number }> {
-  const { text, fragments } = line;
+/* ── Line grouping ──────────────────────────────────────────── */
 
-  const pricePatterns = [
-    /[£€]\s*[\d\s.,]+[\d]/g,
-    /[\d\s.,]+[\d]\s*[£€]/g,
-    /\d{1,6}\s*[,.][-–—]/g,
-    /\d{1,3}([,.]\d{3})*[,.]\d{2}(?!\s*mm)/g,
-    /(?<!\d)\d{2,6}\s*[,.][-–—]\s*$/gm,
-    /(?<!\d)\d{2,6}\s*[,.][-–—]/g,
-  ];
+interface LineGroup {
+  fragments: TextFragment[];
+  text: string;
+  y: number;
+}
 
-  const dimRanges = getDimensionRanges(text);
+function groupIntoLines(items: TextFragment[], tolerance = 4): LineGroup[] {
+  if (items.length === 0) return [];
+  const sorted = [...items].sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines: LineGroup[] = [];
+  let currentLine: TextFragment[] = [sorted[0]];
+  let currentY = sorted[0].y;
 
-  const spans: Array<{ start: number; end: number }> = [];
-
-  for (const pattern of pricePatterns) {
-    let match: RegExpExecArray | null;
-    const regex = new RegExp(pattern.source, pattern.flags);
-    while ((match = regex.exec(text)) !== null) {
-      const matchStr = match[0].trim();
-      if (matchStr.length < 2) continue;
-      if (/^\d{1,4}\s*mm$/i.test(matchStr)) continue;
-      const span = { start: match.index, end: match.index + match[0].length };
-      if (dimRanges.some(d => overlaps(span, d))) continue;
-      spans.push(span);
-    }
-  }
-
-  if (spans.length === 0) return [];
-
-  spans.sort((a, b) => a.start - b.start);
-  const merged: Array<{ start: number; end: number }> = [spans[0]];
-  for (let i = 1; i < spans.length; i++) {
-    const last = merged[merged.length - 1];
-    if (spans[i].start <= last.end) {
-      last.end = Math.max(last.end, spans[i].end);
+  for (let i = 1; i < sorted.length; i++) {
+    const item = sorted[i];
+    if (Math.abs(item.y - currentY) <= tolerance) {
+      currentLine.push(item);
     } else {
-      merged.push(spans[i]);
+      currentLine.sort((a, b) => a.x - b.x);
+      lines.push({ fragments: currentLine, text: currentLine.map(f => f.str).join(' '), y: currentY });
+      currentLine = [item];
+      currentY = item.y;
     }
   }
-
-  const result: Array<{ startFrag: number; endFrag: number }> = [];
-
-  for (const span of merged) {
-    let charPos = 0;
-    let startFrag = -1;
-    let endFrag = -1;
-
-    for (let fi = 0; fi < fragments.length; fi++) {
-      const fragStart = charPos;
-      const fragEnd = charPos + fragments[fi].str.length;
-
-      if (startFrag === -1 && fragEnd > span.start) {
-        startFrag = fi;
-      }
-      if (fragEnd >= span.end) {
-        endFrag = fi;
-        break;
-      }
-      charPos = fragEnd;
-    }
-
-    if (startFrag === -1) startFrag = 0;
-    if (endFrag === -1) endFrag = fragments.length - 1;
-
-    result.push({ startFrag, endFrag });
+  if (currentLine.length > 0) {
+    currentLine.sort((a, b) => a.x - b.x);
+    lines.push({ fragments: currentLine, text: currentLine.map(f => f.str).join(' '), y: currentY });
   }
-
-  return result;
+  return lines;
 }
 
-/* ── Fragment-level redact helper ───────────────────────────── */
+/* ── Redact helper ──────────────────────────────────────────── */
 
-function redactFragments(
+function addRedactRegion(
+  frag: TextFragment,
+  pageIndex: number,
+  padding: number,
+  regions: RedactRegion[]
+) {
+  regions.push({
+    page: pageIndex,
+    x: frag.x - padding,
+    y: frag.y - padding,
+    width: frag.width + padding * 2,
+    height: frag.height + padding * 2,
+  });
+}
+
+function addRedactRegionForFragments(
   frags: TextFragment[],
   pageIndex: number,
   padding: number,
@@ -245,20 +156,22 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
   const copyForPdfLib = arrayBuffer.slice(0);
 
   const pdfJs = await pdfjsLib.getDocument({ data: new Uint8Array(copyForPdfJs) }).promise;
-  const priceRegions: RedactRegion[] = [];
+  const redactRegions: RedactRegion[] = [];
+  const padding = 4;
+
+  // Track price column X-ranges across ALL pages (headers usually on page 1, apply to all)
+  const priceColumnRanges: ColumnRange[] = [];
 
   for (let i = 1; i <= pdfJs.numPages; i++) {
     const page = await pdfJs.getPage(i);
     const content = await page.getTextContent();
     const pageIndex = i - 1;
-    const padding = 4;
 
     const fragments: TextFragment[] = [];
     for (const item of content.items) {
       if (!('str' in item)) continue;
       const textItem = item as any;
       if (!textItem.str || textItem.str.trim().length === 0) continue;
-
       const tx = textItem.transform;
       fragments.push({
         str: textItem.str,
@@ -269,81 +182,71 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       });
     }
 
-    // Track price column X-ranges from headers
-    const priceColumnRanges: Array<{ minX: number; maxX: number }> = [];
-
-    // Check individual fragments for price column headers
-    for (const frag of fragments) {
-      if (isPriceHeader(frag.str)) {
-        priceColumnRanges.push({ minX: frag.x - padding, maxX: frag.x + frag.width + padding });
-        priceRegions.push({
-          page: pageIndex,
-          x: frag.x - padding,
-          y: frag.y - padding,
-          width: frag.width + padding * 2,
-          height: frag.height + padding * 2,
-        });
-      }
-    }
-
-    // Group into lines
     const lines = groupIntoLines(fragments);
 
     for (const line of lines) {
-      // Check line-level headers
-      if (isPriceHeader(line.text)) {
-        // Record column range from the line
-        priceColumnRanges.push({ minX: line.minX - padding, maxX: line.maxX + padding });
-        redactFragments(line.fragments, pageIndex, padding, priceRegions);
+      const lineText = line.text;
+
+      // 1. Detect price column headers and record their X-ranges
+      for (const frag of line.fragments) {
+        if (isPriceColumnHeader(frag.str)) {
+          priceColumnRanges.push({
+            minX: frag.x - padding * 2,
+            maxX: frag.x + frag.width + padding * 2,
+          });
+          addRedactRegion(frag, pageIndex, padding, redactRegions);
+        }
+      }
+
+      // 2. Redact "Pricing" section header
+      if (isRedactableLine(lineText)) {
+        addRedactRegionForFragments(line.fragments, pageIndex, padding, redactRegions);
         continue;
       }
 
-      // Redact entire redactable lines (comments, disclaimers, etc.)
-      if (isRedactableLine(line.text)) {
-        redactFragments(line.fragments, pageIndex, padding, priceRegions);
+      // 3. Redact summary price lines (Total excl. VAT, TOTAL INVOICE, etc.)
+      if (isSummaryPriceLine(lineText)) {
+        addRedactRegionForFragments(line.fragments, pageIndex, padding, redactRegions);
         continue;
       }
 
-      // Redact summary price lines entirely
-      if (isSummaryPriceLine(line.text)) {
-        redactFragments(line.fragments, pageIndex, padding, priceRegions);
-        continue;
-      }
-
-      // Redact "Order No." prefix only (keep the ref number)
-      if (isOrderNoPrefix(line.text)) {
+      // 4. Redact "Order No." prefix only (keep the reference after it)
+      if (isOrderNoPrefix(lineText)) {
         const orderFrags = line.fragments.filter(f =>
           /order|no\.?|:/i.test(f.str.trim())
         );
         if (orderFrags.length > 0) {
-          redactFragments(orderFrags, pageIndex, padding, priceRegions);
+          addRedactRegionForFragments(orderFrags, pageIndex, padding, redactRegions);
         }
       }
 
-      // Column-based redaction: if a fragment falls within a known price column X-range, redact it
+      // 5. Column-based redaction: redact fragments that fall in known price columns
       if (priceColumnRanges.length > 0) {
         for (const frag of line.fragments) {
+          // Skip if this fragment IS the header we already redacted
+          if (isPriceColumnHeader(frag.str)) continue;
+          
           const fragCenter = frag.x + frag.width / 2;
           for (const col of priceColumnRanges) {
             if (fragCenter >= col.minX && fragCenter <= col.maxX) {
-              priceRegions.push({
-                page: pageIndex,
-                x: frag.x - padding,
-                y: frag.y - padding,
-                width: frag.width + padding * 2,
-                height: frag.height + padding * 2,
-              });
+              addRedactRegion(frag, pageIndex, padding, redactRegions);
               break;
             }
           }
         }
       }
 
-      // Regex-based price span detection (catches prices outside known columns)
-      const spans = findPriceSpans(line);
-      for (const span of spans) {
-        const matchedFrags = line.fragments.slice(span.startFrag, span.endFrag + 1);
-        redactFragments(matchedFrags, pageIndex, padding, priceRegions);
+      // 6. Catch standalone price values outside columns (e.g. "1370,-")
+      for (const frag of line.fragments) {
+        if (isStandalonePrice(frag.str)) {
+          // Make sure it's not inside a dimension like "1340x1550mm"
+          const fragIdx = line.fragments.indexOf(frag);
+          const prevStr = fragIdx > 0 ? line.fragments[fragIdx - 1].str : '';
+          const nextStr = fragIdx < line.fragments.length - 1 ? line.fragments[fragIdx + 1].str : '';
+          const context = prevStr + frag.str + nextStr;
+          if (/\d+\s*[xX×]\s*\d+/.test(context)) continue;
+          addRedactRegion(frag, pageIndex, padding, redactRegions);
+        }
       }
     }
   }
@@ -353,10 +256,10 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
   const pages = pdfDoc.getPages();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  for (const region of priceRegions) {
+  for (const region of redactRegions) {
     if (region.page >= pages.length) continue;
-    const page = pages[region.page];
-    page.drawRectangle({
+    const pg = pages[region.page];
+    pg.drawRectangle({
       x: region.x,
       y: region.y,
       width: region.width,
@@ -371,18 +274,11 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     const logoImage = await pdfDoc.embedPng(logoBytes);
     const firstPage = pages[0];
     const { width: pageW, height: pageH } = firstPage.getSize();
-
     const logoW = 170;
     const logoH = logoW * (logoImage.height / logoImage.width);
     const logoX = pageW - logoW - 30;
     const logoY = pageH - logoH - 20;
-
-    firstPage.drawImage(logoImage, {
-      x: logoX,
-      y: logoY,
-      width: logoW,
-      height: logoH,
-    });
+    firstPage.drawImage(logoImage, { x: logoX, y: logoY, width: logoW, height: logoH });
   } catch (err) {
     console.warn('Could not embed logo in cleaned PDF:', err);
   }
@@ -394,10 +290,10 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
   const lineY = 38;
 
   for (let pi = 0; pi < totalPages; pi++) {
-    const page = pages[pi];
-    const { width: pageW } = page.getSize();
+    const pg = pages[pi];
+    const { width: pageW } = pg.getSize();
 
-    page.drawLine({
+    pg.drawLine({
       start: { x: 30, y: lineY },
       end: { x: pageW - 30, y: lineY },
       thickness: 0.5,
@@ -405,21 +301,15 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     });
 
     const footerText = `${COMPANY_NAME}  |  ${COMPANY_ADDRESS}`;
-    page.drawText(footerText, {
-      x: 30,
-      y: footerY,
-      size: footerFontSize,
-      font,
+    pg.drawText(footerText, {
+      x: 30, y: footerY, size: footerFontSize, font,
       color: rgb(0.3, 0.3, 0.3),
     });
 
     const pageNumText = `${pi + 1} of ${totalPages}`;
     const pageNumWidth = font.widthOfTextAtSize(pageNumText, footerFontSize);
-    page.drawText(pageNumText, {
-      x: pageW - 30 - pageNumWidth,
-      y: footerY,
-      size: footerFontSize,
-      font,
+    pg.drawText(pageNumText, {
+      x: pageW - 30 - pageNumWidth, y: footerY, size: footerFontSize, font,
       color: rgb(0.3, 0.3, 0.3),
     });
   }
