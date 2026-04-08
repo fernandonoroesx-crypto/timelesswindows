@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { useApp, createNewProject, createNewLineItem, getProjectPricing, generateQuoteRef, DEFAULT_PRICING } from '@/lib/context';
@@ -39,6 +40,7 @@ export default function QuoteBuilder() {
     return p;
   });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [showOriginalPdf, setShowOriginalPdf] = useState(false);
   const [showWonConfirm, setShowWonConfirm] = useState(false);
   const hasInitializedPricing = useRef(!!currentProject);
 
@@ -197,12 +199,7 @@ export default function QuoteBuilder() {
                 Excel Quote
               </DropdownMenuItem>
               {project.supplierPdfOriginal && (
-                <DropdownMenuItem onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = project.supplierPdfOriginal!;
-                  link.download = project.supplierPdfName || 'supplier-original.pdf';
-                  link.click();
-                }}>
+                <DropdownMenuItem onClick={() => setShowOriginalPdf(true)}>
                   Supplier PDF (Original)
                 </DropdownMenuItem>
               )}
@@ -607,6 +604,20 @@ export default function QuoteBuilder() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Original Supplier PDF Viewer */}
+      <Dialog open={showOriginalPdf} onOpenChange={setShowOriginalPdf}>
+        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{project.supplierPdfName || 'Supplier PDF'}</DialogTitle>
+          </DialogHeader>
+          <iframe
+            src={project.supplierPdfOriginal || ''}
+            className="flex-1 w-full rounded border"
+            title="Original Supplier PDF"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
