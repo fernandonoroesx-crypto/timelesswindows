@@ -136,13 +136,13 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <FileUp className="w-4 h-4 mr-2" /> Import PDF
+          <FileUp className="w-4 h-4 mr-2" /> Import File
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" /> Import Items from PDF
+            <FileText className="w-5 h-5" /> Import Items from File
           </DialogTitle>
         </DialogHeader>
 
@@ -150,7 +150,7 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
         <div className="border-2 border-dashed rounded-lg p-6 text-center">
           {loading ? (
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Loader2 className="w-5 h-5 animate-spin" /> Reading PDF...
+              <Loader2 className="w-5 h-5 animate-spin" /> Reading file...
             </div>
           ) : fileName ? (
             <div className="flex items-center justify-center gap-3">
@@ -160,7 +160,7 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
             </div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground mb-3">Upload a supplier PDF to extract line items</p>
+              <p className="text-sm text-muted-foreground mb-3">Upload a supplier PDF or Excel file to extract line items</p>
               <Input
                 ref={fileRef}
                 type="file"
