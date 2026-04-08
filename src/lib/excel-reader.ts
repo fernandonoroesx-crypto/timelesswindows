@@ -8,7 +8,6 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
   const pages: string[] = [];
   const allItems: ExtractedLineItem[] = [];
 
-  // Detect currency from entire workbook text
   const fullText = workbook.SheetNames.map(name => {
     const sheet = workbook.Sheets[name];
     return XLSX.utils.sheet_to_csv(sheet);
@@ -24,11 +23,11 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
     const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
     if (rows.length < 2) continue;
 
-    // Find header row (first row with multiple text cells)
+    // Find header row in first 20 rows
     let headerIdx = -1;
     let colMap: Record<string, number> = {};
 
-    for (let r = 0; r < Math.min(10, rows.length); r++) {
+    for (let r = 0; r < Math.min(20, rows.length); r++) {
       const row = rows[r];
       if (!row) continue;
       const map = detectColumns(row);
@@ -39,9 +38,10 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
       }
     }
 
+    console.log(`[Excel Reader] Sheet "${sheetName}": headerIdx=${headerIdx}, colMap=`, colMap);
+
     if (headerIdx === -1) {
-      // Fallback: scan for numeric patterns
-      const fallbackItems = parseByNumericPatterns(rows, currency);
+      const fallbackItems = parseByPatternScan(rows, currency);
       allItems.push(...fallbackItems);
       continue;
     }
@@ -60,24 +60,30 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
       const typeRaw = get('type');
       const refRaw = get('ref');
 
-      // Try dimension from a combined "dimensions" column (e.g. "630x1670")
       let width = parseNum(widthRaw);
       let height = parseNum(heightRaw);
 
+      // Try combined dimensions column
       if ((!width || !height) && colMap['dimensions'] !== undefined) {
-        const dimStr = String(row[colMap['dimensions']] || '');
-        const dimMatch = dimStr.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/i);
-        if (dimMatch) {
-          width = parseInt(dimMatch[1]);
-          height = parseInt(dimMatch[2]);
+        const parsed = parseDimensionString(String(row[colMap['dimensions']] || ''));
+        if (parsed) { width = parsed.w; height = parsed.h; }
+      }
+
+      // Scan all text cells for embedded dimensions if still missing
+      if (!width || !height) {
+        for (let c = 0; c < row.length; c++) {
+          if (typeof row[c] === 'string') {
+            const parsed = parseDimensionString(row[c]);
+            if (parsed) { width = parsed.w; height = parsed.h; break; }
+          }
         }
       }
 
-      if (!width || width < 200 || !height || height < 200) continue;
+      if (!width || width < 100 || !height || height < 100) continue;
 
       const price = parseNum(priceRaw) || 0;
       const qty = parseNum(qtyRaw) || 1;
-      const type = detectType(String(typeRaw || ''));
+      const type = detectType(String(typeRaw || '') + ' ' + rowText(row));
       const ref = String(refRaw || '').trim();
 
       allItems.push({
@@ -93,6 +99,7 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
     }
   }
 
+  console.log(`[Excel Reader] Total items extracted: ${allItems.length}`);
   const rawText = pages.join('\n\n');
   return { rawText, pages, items: allItems };
 }
@@ -100,29 +107,91 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
 function detectColumns(headerRow: any[]): Record<string, number> {
   const map: Record<string, number> = {};
   for (let c = 0; c < headerRow.length; c++) {
-    const h = String(headerRow[c] || '').toLowerCase().trim();
+    const h = String(headerRow[c] || '').toLowerCase().replace(/[()]/g, ' ').trim();
     if (!h) continue;
-    if (/ref|item\s*ref|reference|code/i.test(h)) map['ref'] = c;
-    else if (/^type$|product|window|door/i.test(h)) map['type'] = c;
-    else if (/qty|quantity|pcs|pieces/i.test(h)) map['qty'] = c;
-    else if (/width/i.test(h)) map['width'] = c;
-    else if (/height/i.test(h)) map['height'] = c;
-    else if (/dim/i.test(h)) map['dimensions'] = c;
-    else if (/price|cost|amount|total|£|€/i.test(h)) map['price'] = c;
+
+    // Ref / item ref
+    if (!map['ref'] && /\b(ref|item\s*ref|reference|code|mark|pos|no\.|item\s*no)\b/i.test(h)) {
+      map['ref'] = c;
+    }
+    // Type
+    else if (!map['type'] && /\b(type|product|window|door|description|desc)\b/i.test(h)) {
+      map['type'] = c;
+    }
+    // Qty
+    else if (!map['qty'] && /\b(qty|quantity|pcs|pieces|nr|pce|no\s*of)\b/i.test(h)) {
+      map['qty'] = c;
+    }
+    // Width (explicit)
+    else if (!map['width'] && /\b(width|w)\b/i.test(h) && !/total/i.test(h)) {
+      map['width'] = c;
+    }
+    // Height (explicit)
+    else if (!map['height'] && /\b(height|h)\b/i.test(h) && !/total/i.test(h)) {
+      map['height'] = c;
+    }
+    // Combined dimensions
+    else if (!map['dimensions'] && /\b(dim|dimensions?|size)\b/i.test(h)) {
+      map['dimensions'] = c;
+    }
+    // Price
+    else if (!map['price'] && /\b(price|cost|net|sell|unit\s*price|each|amount|unit\s*total|material)\b|[£€]/i.test(h) && !/grand/i.test(h)) {
+      map['price'] = c;
+    }
   }
   return map;
 }
 
-function parseByNumericPatterns(rows: any[][], currency: 'GBP' | 'EUR'): ExtractedLineItem[] {
+const DIM_REGEX = /(\d{3,4})\s*[x×X]\s*(\d{3,4})/;
+const DIM_WH_REGEX = /[wW]\s*[:=]?\s*(\d{3,4})\s*[,\s]*[hH]\s*[:=]?\s*(\d{3,4})/;
+const DIM_WH2_REGEX = /(\d{3,4})\s*[wW]\s*[x×X\s]\s*(\d{3,4})\s*[hH]/;
+
+function parseDimensionString(s: string): { w: number; h: number } | null {
+  let m = s.match(DIM_REGEX);
+  if (m) return { w: parseInt(m[1]), h: parseInt(m[2]) };
+  m = s.match(DIM_WH_REGEX);
+  if (m) return { w: parseInt(m[1]), h: parseInt(m[2]) };
+  m = s.match(DIM_WH2_REGEX);
+  if (m) return { w: parseInt(m[1]), h: parseInt(m[2]) };
+  return null;
+}
+
+function rowText(row: any[]): string {
+  return row.map(c => String(c || '')).join(' ');
+}
+
+function parseByPatternScan(rows: any[][], currency: 'GBP' | 'EUR'): ExtractedLineItem[] {
   const items: ExtractedLineItem[] = [];
   for (const row of rows) {
     if (!row) continue;
-    const nums = row.filter((c: any) => typeof c === 'number' && c >= 200 && c <= 3000);
+    const text = rowText(row);
+
+    // Try dimension patterns in text cells
+    const dim = parseDimensionString(text);
+    if (dim && dim.w >= 100 && dim.h >= 100) {
+      const priceNums = row.filter((c: any) => typeof c === 'number' && c > 0 && c < 50000);
+      const type = detectType(text);
+      const refCell = row.find((c: any) => typeof c === 'string' && /^[A-Z0-9\-\/]{2,10}$/i.test(c.trim()));
+      items.push({
+        itemRef: refCell ? String(refCell).trim() : '',
+        type,
+        qty: 1,
+        widthMm: dim.w,
+        heightMm: dim.h,
+        manufacturePrice: priceNums.length > 0 ? priceNums[priceNums.length - 1] : 0,
+        currency,
+        supplier: '',
+      });
+      continue;
+    }
+
+    // Fallback: two numbers in dimension range
+    const nums = row.filter((c: any) => typeof c === 'number' && c >= 100 && c <= 4000);
     if (nums.length >= 2) {
-      const priceNums = row.filter((c: any) => typeof c === 'number' && c > 0 && c < 200);
+      const priceNums = row.filter((c: any) => typeof c === 'number' && c > 0 && c < 50000 && !nums.includes(c));
       items.push({
         itemRef: '',
-        type: 'Casement',
+        type: detectType(text),
         qty: 1,
         widthMm: nums[0],
         heightMm: nums[1],
@@ -153,7 +222,8 @@ function detectType(text: string): string {
   if (lower.includes('door')) return 'Door';
   if (lower.includes('box sash')) return 'Box Sash';
   if (lower.includes('spring sash')) return 'Spring Sash';
-  if (lower.includes('fix') && lower.includes('sash')) return 'Fix Sash';
+  if (/fix\w*\s*sash/i.test(lower)) return 'Fix Sash';
+  if (/fixed/i.test(lower)) return 'Fix Sash';
   if (lower.includes('casement') && lower.includes('flag')) return 'Casement Flag';
   if (lower.includes('casement')) return 'Casement';
   return 'Casement';
