@@ -1,49 +1,20 @@
 
 
-## Plan: Add "Boss" AI Assistant to Quote Builder
+## Plan: Generate 3D Dog Face Icon for Boss AI
 
 ### Overview
-Add an AI-powered pricing assistant ("Boss") to the Quote Builder. The icon will be the uploaded dachshund photo, displayed as a circular avatar button in the header. Clicking it opens a chat drawer where the user can request changes to uplifts and installation selling prices.
+Use AI image generation to create a 3D-stylized dog face icon based on the uploaded dachshund photo, then replace the current `src/assets/boss-avatar.jpg` with the new icon.
 
-### Architecture
+### Steps
 
-```text
-User clicks Boss avatar → Sheet opens from right → User types request
-  → Edge function sends to Lovable AI with tool-calling schema
-  → AI returns structured pricing changes (uplifts / installation selling)
-  → Frontend applies changes to quote pricing state
-```
+**1. Generate the 3D dog face icon**
+- Use `google/gemini-3-pro-image-preview` (high-quality image generation) via a one-off script
+- Send the original dachshund photo with an editing prompt: "Transform this into a 3D rendered cartoon-style dog face icon. Only the face, circular crop, smooth 3D render style like a Pixar character. Clean background, suitable for use as a small circular avatar/icon."
+- Save the resulting image to `src/assets/boss-avatar.jpg` (replacing the current photo)
 
-### Changes
+**2. No code changes needed**
+- `BossAiDialog.tsx` and `QuoteBuilder.tsx` already import from `src/assets/boss-avatar.jpg` — the new image will be picked up automatically
 
-**1. Copy dachshund photo to `src/assets/boss-avatar.jpg`**
-- Used as the Boss icon in the header
-
-**2. Create edge function `supabase/functions/boss-ai/index.ts`**
-- Accepts: user message, conversation history, current uplift values, current installation selling values
-- System prompt: pricing assistant that uses tool-calling to return structured changes
-- Tool schema: `update_pricing` with optional `upliftChanges` and `installationChanges` maps + explanation
-- Model: `google/gemini-3-flash-preview`
-- Non-streaming (invoke-based) for short structured responses
-- Handles 429/402 errors
-
-**3. Create `src/components/BossAiDialog.tsx`**
-- Sheet (slide-over from right) with chat interface
-- Circular dachshund avatar as trigger button in header
-- Shows current uplift/installation selling values as context at top
-- Messages stored in component state
-- On AI response with tool calls: applies pricing changes via callback and shows confirmation
-- On text-only response: displays as assistant message
-- Uses `supabase.functions.invoke('boss-ai', ...)` for calls
-
-**4. Update `src/pages/QuoteBuilder.tsx`**
-- Import BossAiDialog
-- Add circular avatar button (dachshund photo) in the header row next to Save/Send
-- Pass current `quotePricing` and an `updatePricing` callback to apply changes to `project.pricing`
-
-### Files created/modified
-- `src/assets/boss-avatar.jpg` — copied from upload
-- `supabase/functions/boss-ai/index.ts` — new edge function
-- `src/components/BossAiDialog.tsx` — new chat component
-- `src/pages/QuoteBuilder.tsx` — add Boss button
+### Files modified
+- `src/assets/boss-avatar.jpg` — replaced with AI-generated 3D dog face
 
