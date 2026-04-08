@@ -1,19 +1,22 @@
 
 
-## Plan: Change Making Good LM Formula to Perimeter
+## Plan: Add Extras & Waste Disposal to Settings Selling/Cost Tabs
 
-### What changes
-Making Good currently uses the "single" formula `(Width + 2×Height) / 1000`. Change it to use the perimeter formula `(2×Width + 2×Height) / 1000` — which is the existing `calculateLm()` function.
+### Problem
+The Settings page never got Extras and Waste Disposal fields added to the **Selling Prices** and **Cost Prices** tabs. They only appear in the General tab (selling values only, no cost). The PricingEditor component used in QuoteBuilder already has them — but Settings renders its own manual layout.
 
-### Changes in `src/lib/pricing.ts`
+### Changes in `src/pages/SettingsPage.tsx`
 
-Two lines need updating:
+1. **Selling tab** (after Trims — Selling card, ~line 158): Add a new card "Extras & Waste Disposal — Selling" with:
+   - Each entry from `pricing.extrasSelling` as an editable row
+   - Waste Disposal selling price
 
-1. **Line 100** (selling breakdown): Change `calculateTypeLm('single', ...)` → `calculateLm(item.widthMm, item.heightMm)`
-2. **Line 163** (cost breakdown): Same change
+2. **Cost tab** (after Trims — Cost card, ~line 221): Add a new card "Extras & Waste Disposal — Cost" with:
+   - Each entry from `pricing.extrasCost` as an editable row
+   - Waste Disposal cost price
 
-Both the selling and cost Making Good calculations will use `(2W + 2H) / 1000` instead of `(W + 2H) / 1000`.
+3. **General tab** (~line 265): Remove the Extras & Waste Disposal fields from the "Extras & Overheads" card, leaving only Overhead/day. Rename card to just "Overheads".
 
 ### Files modified
-- `src/lib/pricing.ts` — 2 lines changed
+- `src/pages/SettingsPage.tsx`
 
