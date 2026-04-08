@@ -182,7 +182,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
 
     if (item.extra1 !== 'none') b.extras += pricing.extrasCost[item.extra1] || 0;
     if (item.extra2 !== 'none') b.extras += pricing.extrasCost[item.extra2] || 0;
-    b.extras += item.customExtra || 0;
+    b.extras += (item.customExtraCost != null && item.customExtraCost > 0) ? item.customExtraCost : (item.customExtra || 0);
 
     b.consumables = Object.values(pricing.consumables).reduce((a, v) => a + v, 0);
   }

@@ -866,6 +866,18 @@ function LineItemCard({
             <Label className="text-xs">Extra (£)</Label>
             <Input type="number" step="0.01" className="h-9 text-xs" value={item.customExtra || 0} onChange={e => onUpdate({ customExtra: parseFloat(e.target.value) || 0 })} />
           </div>
+          {(item.customExtra > 0) && (
+            <div>
+              <Label className="text-xs">Description</Label>
+              <Input className="h-9 text-xs" value={item.customExtraDesc || ''} onChange={e => onUpdate({ customExtraDesc: e.target.value })} placeholder="e.g. Bespoke sill" />
+            </div>
+          )}
+          {(item.customExtra > 0) && (
+            <div>
+              <Label className="text-xs">Cost (£)</Label>
+              <Input type="number" step="0.01" className="h-9 text-xs" value={item.customExtraCost || 0} onChange={e => onUpdate({ customExtraCost: parseFloat(e.target.value) || 0 })} />
+            </div>
+          )}
         </div>
       )}
 

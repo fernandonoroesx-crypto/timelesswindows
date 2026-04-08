@@ -41,6 +41,8 @@ export interface QuoteLineItem {
   extra1: ExtraType | 'none';
   extra2: ExtraType | 'none';
   customExtra: number;
+  customExtraDesc?: string;
+  customExtraCost?: number;
   glassSpec?: string;
   glassThicknessMm?: number;
 }
