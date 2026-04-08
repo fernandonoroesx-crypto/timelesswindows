@@ -1,5 +1,12 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+
+/* ── Company branding constants ─────────────────────────────── */
+const COMPANY_NAME = 'Timeless Windows Ltd';
+const COMPANY_ADDRESS = '2 New Kings Rd London SW6 4SA';
+const LOGO_PATH = '/images/timeless-logo.png';
+
+/* ── Types ──────────────────────────────────────────────────── */
 
 interface TextFragment {
   str: string;
@@ -18,13 +25,11 @@ interface LineGroup {
   height: number;
 }
 
-/**
- * Group text items into visual lines based on vertical proximity.
- */
+/* ── Line grouping helpers ──────────────────────────────────── */
+
 function groupIntoLines(items: TextFragment[], tolerance = 4): LineGroup[] {
   if (items.length === 0) return [];
 
-  // Sort by Y descending (PDF coords), then X ascending
   const sorted = [...items].sort((a, b) => b.y - a.y || a.x - b.x);
 
   const lines: LineGroup[] = [];
@@ -49,7 +54,6 @@ function groupIntoLines(items: TextFragment[], tolerance = 4): LineGroup[] {
 }
 
 function buildLineGroup(fragments: TextFragment[]): LineGroup {
-  // Sort left to right
   fragments.sort((a, b) => a.x - b.x);
   const text = fragments.map(f => f.str).join('');
   const minX = Math.min(...fragments.map(f => f.x));
@@ -59,31 +63,43 @@ function buildLineGroup(fragments: TextFragment[]): LineGroup {
   return { fragments, text, minX, maxX, y, height };
 }
 
-/**
- * Check if a string looks like a dimension (e.g., "1200x800", "1200 x 800", "1200mm").
- */
+/* ── Detection helpers ──────────────────────────────────────── */
+
 function isDimension(str: string): boolean {
   return /\d+\s*[xX×]\s*\d+/.test(str) || /\d+\s*mm/i.test(str);
 }
 
+/** Check if a fragment or line contains price-related column headers */
+function isPriceHeader(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    t === 'price, eur' ||
+    t === 'total, eur' ||
+    t === 'price,eur' ||
+    t === 'total,eur' ||
+    t === 'price, gbp' ||
+    t === 'total, gbp' ||
+    t === 'price' ||
+    t === 'total' ||
+    /^(price|total)\s*,\s*(eur|gbp|usd)$/i.test(t)
+  );
+}
+
 /**
  * Find price spans within a line's concatenated text and map them back to fragment indices.
- * Returns arrays of fragment index ranges that should be redacted.
  */
 function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: number }> {
   const { text, fragments } = line;
 
-  // Skip lines that look like dimensions
   if (isDimension(text)) return [];
 
-  // Price patterns to detect in the concatenated line text
   const pricePatterns = [
-    /[£€]\s*[\d\s.,]+[\d]/g,                    // £1,234 or € 587
-    /[\d\s.,]+[\d]\s*[£€]/g,                     // 1,234€
-    /\d[\d\s.]*\d\s*[,.][-–—]/g,                 // 587,- or 1 223,-
-    /\d{1,3}([,.]\d{3})*[,.]\d{2}(?!\s*mm)/g,    // 1,234.56 (not mm)
-    /(?<!\d)\d{2,6}\s*[,.][-–—]\s*$/gm,          // "587,-" at end
-    /(?<!\d)\d{2,6}\s*[,.][-–—]/g,               // "587,-" anywhere
+    /[£€]\s*[\d\s.,]+[\d]/g,
+    /[\d\s.,]+[\d]\s*[£€]/g,
+    /\d[\d\s.]*\d\s*[,.][-–—]/g,
+    /\d{1,3}([,.]\d{3})*[,.]\d{2}(?!\s*mm)/g,
+    /(?<!\d)\d{2,6}\s*[,.][-–—]\s*$/gm,
+    /(?<!\d)\d{2,6}\s*[,.][-–—]/g,
   ];
 
   const spans: Array<{ start: number; end: number }> = [];
@@ -93,17 +109,14 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
     const regex = new RegExp(pattern.source, pattern.flags);
     while ((match = regex.exec(text)) !== null) {
       const matchStr = match[0].trim();
-      // Skip very short matches or pure dimension-like matches
       if (matchStr.length < 2) continue;
       if (/^\d{1,4}\s*mm$/i.test(matchStr)) continue;
-
       spans.push({ start: match.index, end: match.index + match[0].length });
     }
   }
 
   if (spans.length === 0) return [];
 
-  // Merge overlapping spans
   spans.sort((a, b) => a.start - b.start);
   const merged: Array<{ start: number; end: number }> = [spans[0]];
   for (let i = 1; i < spans.length; i++) {
@@ -115,7 +128,6 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
     }
   }
 
-  // Map text character positions back to fragment indices
   const result: Array<{ startFrag: number; endFrag: number }> = [];
 
   for (const span of merged) {
@@ -146,8 +158,18 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
   return result;
 }
 
+/* ── Logo loader ────────────────────────────────────────────── */
+
+async function loadLogoPng(): Promise<Uint8Array> {
+  const resp = await fetch(LOGO_PATH);
+  const buf = await resp.arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+/* ── Main export ────────────────────────────────────────────── */
+
 /**
- * Strip prices from a supplier PDF by drawing white rectangles over price text.
+ * Strip prices from a supplier PDF, add company logo and footer.
  * Returns the cleaned PDF as a base64 data URI string.
  */
 export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
@@ -162,7 +184,6 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     const page = await pdfJs.getPage(i);
     const content = await page.getTextContent();
 
-    // Extract text fragments
     const fragments: TextFragment[] = [];
     for (const item of content.items) {
       if (!('str' in item)) continue;
@@ -179,14 +200,40 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       });
     }
 
+    // Check individual fragments for price column headers
+    for (const frag of fragments) {
+      if (isPriceHeader(frag.str)) {
+        const padding = 4;
+        priceRegions.push({
+          page: i - 1,
+          x: frag.x - padding,
+          y: frag.y - padding,
+          width: frag.width + padding * 2,
+          height: frag.height + padding * 2,
+        });
+      }
+    }
+
     // Group into lines and find price spans
     const lines = groupIntoLines(fragments);
 
     for (const line of lines) {
+      // Also check if the whole line is a price header
+      if (isPriceHeader(line.text)) {
+        const padding = 4;
+        priceRegions.push({
+          page: i - 1,
+          x: line.minX - padding,
+          y: line.y - padding,
+          width: (line.maxX - line.minX) + padding * 2,
+          height: line.height + padding * 2,
+        });
+        continue;
+      }
+
       const spans = findPriceSpans(line);
 
       for (const span of spans) {
-        // Build bounding box from matched fragments
         const matchedFrags = line.fragments.slice(span.startFrag, span.endFrag + 1);
         if (matchedFrags.length === 0) continue;
 
@@ -197,7 +244,7 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
 
         const padding = 4;
         priceRegions.push({
-          page: i - 1, // 0-indexed for pdf-lib
+          page: i - 1,
           x: minX - padding,
           y: minY - padding,
           width: (maxX - minX) + padding * 2,
@@ -207,10 +254,12 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     }
   }
 
-  // 2. Use pdf-lib to draw white rectangles over price regions
+  // 2. Use pdf-lib to draw white rectangles + add branding
   const pdfDoc = await PDFDocument.load(copyForPdfLib);
   const pages = pdfDoc.getPages();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
+  // Redact price regions
   for (const region of priceRegions) {
     if (region.page >= pages.length) continue;
     const page = pages[region.page];
@@ -220,7 +269,69 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       y: region.y,
       width: region.width,
       height: region.height,
-      color: rgb(1, 1, 1), // white
+      color: rgb(1, 1, 1),
+    });
+  }
+
+  // 3. Add logo to page 1
+  try {
+    const logoBytes = await loadLogoPng();
+    const logoImage = await pdfDoc.embedPng(logoBytes);
+    const firstPage = pages[0];
+    const { width: pageW, height: pageH } = firstPage.getSize();
+
+    const logoW = 170; // ~60mm
+    const logoH = logoW * (logoImage.height / logoImage.width);
+    const logoX = pageW - logoW - 30;
+    const logoY = pageH - logoH - 20;
+
+    firstPage.drawImage(logoImage, {
+      x: logoX,
+      y: logoY,
+      width: logoW,
+      height: logoH,
+    });
+  } catch (err) {
+    console.warn('Could not embed logo in cleaned PDF:', err);
+  }
+
+  // 4. Add footer to every page
+  const totalPages = pages.length;
+  const footerFontSize = 8;
+  const footerY = 25;
+  const lineY = 38;
+
+  for (let pi = 0; pi < totalPages; pi++) {
+    const page = pages[pi];
+    const { width: pageW } = page.getSize();
+
+    // Horizontal line
+    page.drawLine({
+      start: { x: 30, y: lineY },
+      end: { x: pageW - 30, y: lineY },
+      thickness: 0.5,
+      color: rgb(0.6, 0.6, 0.6),
+    });
+
+    // Left: company name + address
+    const footerText = `${COMPANY_NAME}  |  ${COMPANY_ADDRESS}`;
+    page.drawText(footerText, {
+      x: 30,
+      y: footerY,
+      size: footerFontSize,
+      font,
+      color: rgb(0.3, 0.3, 0.3),
+    });
+
+    // Right: page number
+    const pageNumText = `${pi + 1} of ${totalPages}`;
+    const pageNumWidth = font.widthOfTextAtSize(pageNumText, footerFontSize);
+    page.drawText(pageNumText, {
+      x: pageW - 30 - pageNumWidth,
+      y: footerY,
+      size: footerFontSize,
+      font,
+      color: rgb(0.3, 0.3, 0.3),
     });
   }
 
