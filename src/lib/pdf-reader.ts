@@ -229,18 +229,20 @@ function detectWindowTypeFromContext(text: string): string {
  * E.g. "4Tgh-6Ar-4TghLowE" → spec="4Tgh-6Ar-4TghLowE", thickness=14
  */
 function detectGlassSpec(text: string): { spec: string; thickness: number } {
-  // Look for field "4." or "4. Glass" patterns
-  const glassMatches = [...text.matchAll(/4\.\s*(?:Glass\s*[:\-]?\s*)?(.+?)(?:\n|$)/gi)];
-  if (glassMatches.length > 0) {
-    const line = glassMatches[glassMatches.length - 1][1].trim();
-    // Extract glass spec pattern: digits followed by text, separated by dashes
-    // e.g. "4Tgh-6Ar-4TghLowE" or "6-16Ar-6LowE" or within parentheses
-    const specMatch = line.match(/\(?(\d+\w*(?:-\d+\w*)+)\)?/);
-    if (specMatch) {
-      const spec = specMatch[1];
-      const thickness = calcGlassThickness(spec);
-      if (thickness > 0) return { spec, thickness };
-    }
+  // Directly match parenthesized glass spec after "4. Glass" label
+  // Works with both newline-separated and space-joined text from pdfjs
+  const matches = [...text.matchAll(/4\.\s*(?:Glass\s*[:\-]?\s*)?[^()]*\((\d+\w*(?:-\d+\w*)+)\)/gi)];
+  if (matches.length > 0) {
+    const spec = matches[matches.length - 1][1];
+    const thickness = calcGlassThickness(spec);
+    if (thickness > 0) return { spec, thickness };
+  }
+  // Fallback: look for spec pattern without parentheses near "4. Glass"
+  const fallback = [...text.matchAll(/4\.\s*(?:Glass\s*[:\-]?\s*)(\d+\w*(?:-\d+\w*)+)/gi)];
+  if (fallback.length > 0) {
+    const spec = fallback[fallback.length - 1][1];
+    const thickness = calcGlassThickness(spec);
+    if (thickness > 0) return { spec, thickness };
   }
   return { spec: '', thickness: 0 };
 }
