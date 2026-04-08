@@ -1,52 +1,22 @@
 
 
-## Plan: Enhance Excel Reader to Extract Additional Quote Fields
+## Plan: Add "Apply PM Rates" Button to Pricing Tab
 
-### Problem
-The `ExtractedLineItem` interface only captures basic fields (ref, type, qty, width, height, price, currency, supplier). When Excel files contain additional columns like uplift, installation costs, architrave type, etc., this data is ignored. The import then hardcodes defaults (uplift=0, installationType='Internal', etc.).
+### What it does
+Adds a button in the Pricing tab that lets users re-apply the selected Project Manager's custom pricing to the quote. If no PM is selected or the PM has no custom pricing, the button is hidden — the user keeps whatever rates they've manually entered.
 
 ### Changes
 
-**1. Extend `ExtractedLineItem` in `src/lib/pdf-reader.ts`**
-Add optional fields to the interface:
-- `uplift?: number`
-- `installationType?: 'Internal' | 'External'`
-- `installationOverride?: number`
-- `architraveType?: string`
-- `trimsType?: string`
-- `mdfRevealType?: string`
-- `customExtra?: number`
+**`src/pages/QuoteBuilder.tsx`**
 
-**2. Update `src/lib/excel-reader.ts` — detect additional columns**
+1. Add a helper function `applyPmRates()` that finds the selected PM, merges their `pm.pricing` into the quote via `normalizePricingData()`, and shows a success toast.
 
-Add new header patterns in `detectColumns()`:
-- **uplift**: match `uplift`, `markup`, `margin`
-- **installation**: match `installation`, `install`, `labour`, `labor`, `fitting`
-- **installationType**: match `installation type`, `install type`, `int/ext`, `location`
-- **architrave**: match `architrave`, `arch`
-- **trims**: match `trims`, `trim`
-- **mdf**: match `mdf`, `reveal`
-- **extra/custom**: match `extra`, `custom`, `additional`
+2. In the Pricing `TabsContent` (line ~555-558), add a header row above the `PricingEditor` with:
+   - A label showing which PM's rates would be applied (e.g. "PM: John Smith")
+   - A "Apply PM Rates" button (with a `RefreshCw` or `UserCog` icon) — only visible when `project.projectManagerId` is set AND that PM has custom `pricing` defined
+   - Clicking it overwrites the quote's selling-side pricing fields with the PM's rates
+   - A toast confirms: "Applied rates from [PM name]"
 
-In the data row parsing, extract these values and include them in the `ExtractedLineItem`:
-- Parse uplift as a number (percentage or absolute)
-- Parse installation cost as a number
-- Detect installation type from text ('Internal'/'External')
-- Detect architrave/trims/mdf types from text
-
-**3. Update `src/components/PdfImportDialog.tsx` — use extracted fields on import**
-
-In `handleImport()`, use the extracted optional fields instead of hardcoded defaults:
-```
-uplift: ext.uplift ?? 0,
-installationType: ext.installationType ?? 'Internal',
-installationOverride: ext.installationOverride,
-architraveType: ext.architraveType ?? 'none',
-...
-```
-
-### Files modified
-- `src/lib/pdf-reader.ts` — extend `ExtractedLineItem` interface
-- `src/lib/excel-reader.ts` — detect and extract additional columns
-- `src/components/PdfImportDialog.tsx` — pass extracted fields through to `QuoteLineItem`
+### No other files modified
+The PM pricing data already exists on the client objects; this is purely a UI interaction in QuoteBuilder.
 
