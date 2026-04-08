@@ -129,7 +129,9 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
       const matchStr = match[0].trim();
       if (matchStr.length < 2) continue;
       if (/^\d{1,4}\s*mm$/i.test(matchStr)) continue;
-      spans.push({ start: match.index, end: match.index + match[0].length });
+      const span = { start: match.index, end: match.index + match[0].length };
+      if (dimRanges.some(d => overlaps(span, d))) continue;
+      spans.push(span);
     }
   }
 
