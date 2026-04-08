@@ -184,10 +184,10 @@ function detectItemRef(text: string): string {
 }
 
 function detectWindowTypeFromContext(text: string): string {
-  // Find the LAST "Type:" mention and extract its description
-  const typeMatches = [...text.matchAll(/Type:\s*(.+?)(?:\n|$)/gi)];
+  // Only check "1. Type" or "1." followed by the type description
+  const typeMatches = [...text.matchAll(/(?:1\.\s*Type\s*[:\-]?\s*|1\.\s+)(.+?)(?:\n|$)/gi)];
   if (typeMatches.length > 0) {
-    const typeDesc = typeMatches[typeMatches.length - 1][1].toLowerCase();
+    const typeDesc = typeMatches[typeMatches.length - 1][1].toLowerCase().trim();
     if (typeDesc.includes('door') && typeDesc.includes('french')) return 'French Door';
     if (typeDesc.includes('door') && typeDesc.includes('patio')) return 'Patio Door';
     if (typeDesc.includes('door')) return 'Door';
@@ -198,6 +198,14 @@ function detectWindowTypeFromContext(text: string): string {
     if (typeDesc.includes('casement')) return 'Casement';
     if (typeDesc.includes('sash')) return 'Box Sash';
   }
+
+  // Check "8." field — if it says "fixed", treat as Fix Sash
+  const field8Matches = [...text.matchAll(/8\.\s*(.+?)(?:\n|$)/gi)];
+  if (field8Matches.length > 0) {
+    const field8 = field8Matches[field8Matches.length - 1][1].toLowerCase().trim();
+    if (field8.includes('fixed')) return 'Fix Sash';
+  }
+
   return 'Casement';
 }
 
