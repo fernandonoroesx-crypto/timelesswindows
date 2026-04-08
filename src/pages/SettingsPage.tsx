@@ -157,6 +157,18 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              <div className="elevated-card rounded-xl p-6 lg:col-span-2">
+                <h2 className="font-heading text-lg font-semibold mb-4">Extras & Waste Disposal — Selling</h2>
+                <div className="space-y-2">
+                  {Object.entries(pricing.extrasSelling).map(([name, price]) => (
+                    <EditRow key={name} label={name} value={price as number} onChange={v => update(`extrasSelling.${name}`, v)} />
+                  ))}
+                  <div className="pt-3 border-t space-y-2">
+                    <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposalSelling} onChange={v => update('wasteDisposalSelling', v)} />
+                  </div>
+                </div>
+              </div>
+
             </div>
           </TabsContent>
 
@@ -263,15 +275,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="elevated-card rounded-xl p-6">
-                <h2 className="font-heading text-lg font-semibold mb-4">Extras & Overheads</h2>
+                <h2 className="font-heading text-lg font-semibold mb-4">Overheads</h2>
                 <div className="space-y-2">
-                  {Object.entries(pricing.extrasSelling).map(([name, price]) => (
-                    <EditRow key={name} label={name} value={price as number} onChange={v => update(`extrasSelling.${name}`, v)} />
-                  ))}
-                  <div className="pt-3 border-t space-y-2">
-                    <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposalSelling} onChange={v => update('wasteDisposalSelling', v)} />
-                     <EditRow label="Overhead / day" value={pricing.overheadPerDay} onChange={v => update('overheadPerDay', v)} />
-                  </div>
+                  <EditRow label="Overhead / day" value={pricing.overheadPerDay} onChange={v => update('overheadPerDay', v)} />
                 </div>
               </div>
             </div>
