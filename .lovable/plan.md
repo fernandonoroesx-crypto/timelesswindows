@@ -1,22 +1,33 @@
 
 
-## Plan: Fix Glass Spec Detection for Space-Joined PDF Text
+## Plan: Add Description and Cost Fields for Custom Extra
 
-### Problem
-The `detectGlassSpec` function uses `(?:\n|$)` as a line boundary, but pdfjs joins all text on a page with spaces (no newlines). The lazy `.+?` match captures almost nothing, missing the glass spec like `(4-16Ar-4LowE)` which should yield 24mm.
+### What it does
+When a user enters a custom extra selling amount (> 0), two additional fields appear inline: **Description** and **Cost (£)**. The description replaces the generic "Custom (£X)" label in the Installation Report, and the cost field tracks the actual cost separately from the selling price.
 
-### Fix
+### Changes
 
-**`src/lib/pdf-reader.ts`** — update `detectGlassSpec`
+**`src/lib/types.ts`**
+- Add `customExtraDesc?: string` and `customExtraCost?: number` to `QuoteLineItem`
 
-Instead of trying to extract the full "4. Glass:" line and then searching for the spec within it, search the preceding text directly for the parenthesized glass spec pattern near "4. Glass":
+**`src/lib/context.tsx`**
+- Add defaults `customExtraDesc: ''`, `customExtraCost: 0` to new line item template
 
-1. Change the approach: look for `4.\s*Glass` followed by any text, then find a parenthesized spec pattern `(\d+-\d+\w*-\d+\w*)` nearby
-2. Use a single regex that matches `4\.\s*Glass[^()]*\((\d+\w*(?:-\d+\w*)+)\)` to directly capture the spec from within parentheses after the Glass field label
-3. This handles both space-joined and newline-separated text
+**`src/pages/QuoteBuilder.tsx`** (line ~865-868)
+- When `customExtra > 0`, render two additional fields inline next to the Extra (£) input:
+  - "Description" text input → `customExtraDesc`
+  - "Cost (£)" number input → `customExtraCost`
 
-The `calcGlassThickness` function is correct and unchanged — `4-16Ar-4LowE` → 4+16+4 = 24mm.
+**`src/lib/pricing.ts`** (line ~185)
+- Cost breakdown: change `b.extras += item.customExtra` to `b.extras += item.customExtraCost ?? item.customExtra` so cost uses the dedicated cost field when provided
+
+**`src/lib/pdf-export.ts`** (line ~296)
+- Installation Report: replace `Custom (${formatCurrency(item.customExtra)})` with `item.customExtraDesc || 'Custom Extra'`
 
 ### Files modified
-- `src/lib/pdf-reader.ts` — rewrite `detectGlassSpec` regex to directly match parenthesized spec after "Glass" label
+- `src/lib/types.ts`
+- `src/lib/context.tsx`
+- `src/pages/QuoteBuilder.tsx`
+- `src/lib/pricing.ts`
+- `src/lib/pdf-export.ts`
 
