@@ -173,7 +173,7 @@ function detectColumns(headerRow: any[]): Record<string, number> {
       map['price'] = c;
     }
     // Uplift / markup
-    else if (!map['uplift'] && /\b(uplift|markup|mark\s*up|margin)\b/i.test(h)) {
+    else if (!map['uplift'] && /\b(up\s*lift|uplift|markup|mark\s*up|margin)\b/i.test(h)) {
       map['uplift'] = c;
     }
     // Installation cost
