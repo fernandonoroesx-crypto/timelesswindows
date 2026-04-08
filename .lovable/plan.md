@@ -1,67 +1,32 @@
 
 
-## Plan: Server-Side PDF Price Stripping with PyMuPDF
+## Plan: Update Edge Function with Full Skill Redaction Logic
 
-### Problem
-The current client-side approach (pdfjs-dist + pdf-lib) draws white filled rectangles to "redact" prices. These are visible as artifacts in any PDF editor. The user wants true redaction with zero visual artifacts.
+### Overview
+Update the `clean-pdf` edge function to match the uploaded skill's redaction logic exactly, adding missing redaction targets and improving euro amount detection. Keep branding (logo + footer) client-side with pdf-lib as it already works.
 
-### Architecture
+### Changes to `supabase/functions/clean-pdf/index.ts`
 
-```text
-Browser                          Edge Function (clean-pdf)
-  |                                    |
-  |-- POST pdf (base64) ------------->|
-  |                                    |-- PyMuPDF via mupdf WASM
-  |                                    |-- add_redact_annot (no fill)
-  |                                    |-- apply_redactions (preserve line art)
-  |<-- cleaned pdf (base64) ----------|
-```
+**1. Improve euro amount detection**
+- Current: searches for `",-"` and extends left by 60px — imprecise, may catch non-price text
+- New: use `page.toStructuredText("text").asText()` word extraction with regex `/^\d{3,5},-$/` to match exact euro amounts, using tight bounds (`y1 - 0.3`)
 
-### Technical Approach
+**2. Add page-1-only redactions**
+- Redact `"All openings shown as english openings"` (case variations)
+- Redact `"Timeless Windows Ltd"` header only when `y0 < 100` (avoid touching footer)
 
-Supabase Edge Functions run Deno, not Python. However, the `mupdf` npm package provides official MuPDF WASM bindings for JavaScript with redaction support. This gives us the same core capability as PyMuPDF (fitz) — proper PDF redaction annotations that remove text from the content stream without painting white rectangles.
+**3. Handle "Order No." repositioning**
+- Before redacting page 1, extract the "Order No." text and its position
+- Redact the original "Order No." line (between y 85–110)
+- After applying redactions, re-insert "Order No." text at the position where "Timeless Windows Ltd" header was (using MuPDF's text insertion if available, otherwise skip this refinement)
 
-The redaction logic will mirror the user's Python code exactly:
-1. Search for "Price," headers and extend rect to cover "EUR" 
-2. Search for "Total," headers only at x > 400 (avoid "Total sq.m.:")
-3. Match euro amounts with `/^\d{3,5},-$/` pattern, tight y-bounds (y1 - 0.3)
-4. Remove summary phrases ("Total excl. VAT:", "TOTAL INVOICE:", disclaimer)
-5. Apply redactions preserving images and line art
+**4. Add `page.cleanContents()` after each page**
+- Removes residual graphics operators from the content stream after redaction
 
-### Changes
+### Changes to `src/lib/pdf-price-strip.ts`
 
-**1. Create `supabase/functions/clean-pdf/index.ts`**
-- Receive PDF as base64 in POST body
-- Use `mupdf` WASM to open the document
-- Apply redaction annotations matching the user's exact patterns
-- Apply redactions with image/line-art preservation
-- Return cleaned PDF as base64
-- CORS headers for browser access
+**No changes needed** — branding (logo + footer) is already applied client-side after receiving the cleaned PDF.
 
-**2. Rewrite `src/lib/pdf-price-strip.ts`**
-- Replace client-side pdfjs-dist + pdf-lib processing with a call to the `clean-pdf` edge function
-- Send PDF arrayBuffer as base64, receive cleaned PDF base64 back
-- Keep the `fileToBase64` utility
-- Remove pdfjs-dist and pdf-lib imports (no longer needed for this module)
-- Add branding (logo + footer) client-side via pdf-lib after receiving the cleaned PDF from the server, OR do it in the edge function
-
-**3. Update `src/components/PdfImportDialog.tsx`** (minor)
-- No structural changes needed — `stripPricesFromPdf` API stays the same (takes ArrayBuffer, returns base64 string)
-- Add loading indicator during server-side processing (may take a few seconds)
-
-**4. UI unchanged**
-- "Supplier PDF (No Prices)" menu item and viewer dialog already exist in QuoteBuilder
-- The flow remains: upload PDF → auto-generate clean version → view/download from Reports menu
-
-### Key Technical Details
-
-- **No fill argument**: MuPDF redaction annotations without explicit fill remove text from the content stream entirely — no white rectangle artifact
-- **Tight y-bounds**: Price amount redaction uses `y1 - 0.3` to avoid bleeding over table separator lines
-- **Line art preservation**: `applyRedactions()` with appropriate flags preserves all vector paths (table borders, diagrams)
-- **Branding**: Logo placement (top-right page 1) and footer (company name + address + page numbers) added after redaction
-
-### Files created/modified
-- `supabase/functions/clean-pdf/index.ts` — new edge function
-- `src/lib/pdf-price-strip.ts` — rewritten to call edge function
-- `src/components/PdfImportDialog.tsx` — minor loading state update
+### Files modified
+- `supabase/functions/clean-pdf/index.ts` — updated redaction logic
 
