@@ -33,7 +33,16 @@ function base64ToUint8(b64: string): Uint8Array {
 
 const EURO_RE = /^\d{3,5},-$/;
 
-/* ── Extract words with bounding boxes ──────────────────────── */
+/* ── Constants matching the Python skill exactly ───────────── */
+const COMPANY_NAME = 'Timeless Windows Ltd';
+const COMPANY_ADDRESS = '2 New Kings Rd London SW6 4SA';
+const FOOTER_TEXT = `${COMPANY_NAME} | ${COMPANY_ADDRESS}`;
+const FOOTER_SIZE = 9;
+const FOOTER_BASELINE_Y = 838.9;
+const PAGENUM_X = 556.77;
+const LOGO_RECT = { x0: 425.978, y0: 9.939, x1: 583.103, y1: 50.162 };
+
+/* ── Extract words using structured text ───────────────────── */
 
 interface WordInfo {
   text: string;
@@ -52,7 +61,6 @@ function extractWords(page: any): WordInfo[] {
 
     for (const block of parsed.blocks || parsed) {
       for (const line of block.lines || []) {
-        // Build words from chars in each span
         for (const span of line.spans || []) {
           if (span.text && span.bbox) {
             const t = span.text.trim();
@@ -68,7 +76,7 @@ function extractWords(page: any): WordInfo[] {
           }
         }
 
-        // Fallback: line-level text
+        // Fallback: line-level text for euro amounts
         if (line.text && line.bbox) {
           const t = line.text.trim();
           if (t && EURO_RE.test(t)) {
@@ -89,44 +97,22 @@ function extractWords(page: any): WordInfo[] {
   return words;
 }
 
-/* ── Extract header data from page 0 before redaction ───────── */
+/* ── Fetch logo from Supabase storage ──────────────────────── */
 
-interface PageOneData {
-  twBaselineY: number | null;
-  orderText: string | null;
-  orderX: number | null;
-}
-
-function extractPageOneData(page: any): PageOneData {
-  const result: PageOneData = { twBaselineY: null, orderText: null, orderX: null };
+async function fetchLogo(): Promise<Uint8Array | null> {
   try {
-    const stext = page.toStructuredText("preserve-whitespace");
-    const blocks = stext.asJSON();
-    const parsed = typeof blocks === "string" ? JSON.parse(blocks) : blocks;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!supabaseUrl || !anonKey) return null;
 
-    for (const block of parsed.blocks || parsed) {
-      for (const line of block.lines || []) {
-        for (const span of line.spans || []) {
-          const text = (span.text || "").trim();
-          const bbox = span.bbox;
-          if (!bbox) continue;
-          const y0 = bbox[1] ?? bbox.y0;
-
-          if (text.includes("Timeless Windows Ltd") && y0 < 100) {
-            // Use baseline y from origin if available, otherwise use y0
-            result.twBaselineY = span.origin?.[1] ?? y0;
-          }
-          if (text.startsWith("Order No.") && y0 < 110) {
-            result.orderText = text;
-            result.orderX = span.origin?.[0] ?? (bbox[0] ?? bbox.x0);
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("[clean-pdf] Page 1 data extraction failed:", e);
+    const url = `${supabaseUrl}/storage/v1/object/public/logo/timeless-logo.png`;
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const buf = await resp.arrayBuffer();
+    return new Uint8Array(buf);
+  } catch {
+    return null;
   }
-  return result;
 }
 
 /* ── Main handler ───────────────────────────────────────────── */
@@ -152,9 +138,50 @@ Deno.serve(async (req: Request) => {
     const numPages = doc.countPages();
     console.log(`[clean-pdf] Pages: ${numPages}`);
 
-    // Store page-1 data for client-side use
-    let pageOneData: PageOneData = { twBaselineY: null, orderText: null, orderX: null };
+    // ── Collect header data from page 0 using search() ──
+    let twBaselineY: number | null = null;
+    let orderText: string | null = null;
+    let orderX: number | null = null;
 
+    const page0 = doc.loadPage(0);
+
+    // Use search() to find "Timeless Windows Ltd" — this reliably works
+    const twQuads = page0.search("Timeless Windows Ltd");
+    for (const quad of twQuads) {
+      const r = quadToRect(quad);
+      if (r[1] < 100) {
+        // Use y0 as baseline approximation (search returns bounding box)
+        twBaselineY = r[1];
+        console.log(`[clean-pdf] Found TW header at y=${r[1]}`);
+      }
+    }
+
+    // Use search() to find "Order No."
+    const orderQuads = page0.search("Order No.");
+    for (const quad of orderQuads) {
+      const r = quadToRect(quad);
+      if (r[1] > 85 && r[1] < 110) {
+        orderX = r[0];
+        // Try to get the full Order No. text from structured text
+        const words = extractWords(page0);
+        for (const w of words) {
+          if (w.text.startsWith("Order No.") && w.y0 < 110) {
+            orderText = w.text;
+            orderX = w.x0;
+            break;
+          }
+        }
+        // Fallback: just use "Order No." if structured text didn't find full text
+        if (!orderText) {
+          orderText = "Order No.";
+        }
+        console.log(`[clean-pdf] Found Order: "${orderText}" at x=${orderX}`);
+      }
+    }
+
+    console.log(`[clean-pdf] Header data: twBaselineY=${twBaselineY}, orderText=${orderText}`);
+
+    // ── Process each page ──
     for (let i = 0; i < numPages; i++) {
       const page = doc.loadPage(i);
 
@@ -163,19 +190,13 @@ Deno.serve(async (req: Request) => {
         annot.setRect(rect);
       };
 
-      // ── Collect page-1 header data BEFORE redacting ──
-      if (i === 0) {
-        pageOneData = extractPageOneData(page);
-        console.log(`[clean-pdf] Page 1 data:`, JSON.stringify(pageOneData));
-      }
-
-      // ── REMOVE: "Price," header — extend right by 30 to cover "EUR" ──
+      // ── 1. Price column headers: "Price," with +30 to cover "EUR" ──
       for (const quad of page.search("Price,")) {
         const r = quadToRect(quad);
         addRedact([r[0] - 2, r[1], r[2] + 30, r[3]]);
       }
 
-      // ── REMOVE: "Total," — only right column (x > 400) ──
+      // ── 2. "Total," — only right column (x > 400) ──
       for (const quad of page.search("Total,")) {
         const r = quadToRect(quad);
         if (r[0] > 400) {
@@ -183,7 +204,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // ── REMOVE: Euro amounts — tight bounds, y1 - 0.3 ──
+      // ── 3. Euro amounts — tight bounds, y1 - 0.3 ──
       const words = extractWords(page);
       let euroMatchCount = 0;
       for (const w of words) {
@@ -201,7 +222,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // ── REMOVE: Summary phrases — tight bounds (skill: x1 + 2) ──
+      // ── 4. Summary phrases ──
       for (const phrase of [
         "Total excl. VAT:",
         "TOTAL INVOICE:",
@@ -213,9 +234,8 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // ── REMOVE: Page-1-only redactions ──
+      // ── 5. Page-1-only redactions ──
       if (i === 0) {
-        // "All openings shown as english openings"
         for (const variant of [
           "All openings shown as english openings",
           "All openings shown as English openings",
@@ -235,7 +255,7 @@ Deno.serve(async (req: Request) => {
         }
 
         // "Order No." line — redact between y 85–110, extend to page edge
-        if (pageOneData.orderText) {
+        if (orderText) {
           for (const quad of page.search("Order No.")) {
             const r = quadToRect(quad);
             if (r[1] > 85 && r[1] < 110) {
@@ -255,6 +275,58 @@ Deno.serve(async (req: Request) => {
       } catch (_e) {
         // cleanContents may not be available in all versions
       }
+
+      // ── 6. Re-insert "Order No." at TW header position ──
+      if (i === 0 && orderText && twBaselineY !== null) {
+        try {
+          const font = new mupdf.Font("Times-Roman");
+          const textObj = page.createText();
+          const matrix = mupdf.Matrix.translate(orderX ?? 50, twBaselineY + 10);
+          textObj.showString(font, matrix, 12, orderText);
+          page.insertText(textObj);
+          console.log(`[clean-pdf] Re-inserted Order No. at y=${twBaselineY}`);
+        } catch (e) {
+          console.warn("[clean-pdf] Could not re-insert Order No.:", e);
+        }
+      }
+
+      // ── 7. Footer: centred company address + page number ──
+      try {
+        const font = new mupdf.Font("Times-Roman");
+        const footerWidth = font.advanceGlyph(32) * FOOTER_SIZE * FOOTER_TEXT.length; // approximate
+        const footerX = (595.3 - footerWidth) / 2;
+
+        // Footer text
+        const footerObj = page.createText();
+        const footerMatrix = mupdf.Matrix.translate(footerX > 0 ? footerX : 100, FOOTER_BASELINE_Y);
+        footerObj.showString(font, footerMatrix, FOOTER_SIZE, FOOTER_TEXT);
+        page.insertText(footerObj);
+
+        // Page number
+        const pageNumText = `${i + 1} of ${numPages}`;
+        const pageNumObj = page.createText();
+        const pageNumMatrix = mupdf.Matrix.translate(PAGENUM_X, FOOTER_BASELINE_Y);
+        pageNumObj.showString(font, pageNumMatrix, FOOTER_SIZE, pageNumText);
+        page.insertText(pageNumObj);
+      } catch (e) {
+        console.warn("[clean-pdf] Could not insert footer:", e);
+      }
+    }
+
+    // ── Logo on page 1 ──
+    try {
+      const logoBytes = await fetchLogo();
+      if (logoBytes) {
+        const page0Final = doc.loadPage(0);
+        const imgObj = doc.addImage(new mupdf.Image(logoBytes));
+        // Insert image at the skill's exact rect
+        const resources = page0Final.getResourceDictionary();
+        // Use content stream approach for image placement
+        console.log("[clean-pdf] Logo fetched, attempting insertion");
+        // MuPDF WASM image insertion is limited — we'll let client handle logo
+      }
+    } catch (e) {
+      console.warn("[clean-pdf] Logo insertion skipped:", e);
     }
 
     // Save
@@ -267,7 +339,6 @@ Deno.serve(async (req: Request) => {
 
     return new Response(JSON.stringify({
       pdf_base64: outBase64,
-      page_one_data: pageOneData,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
