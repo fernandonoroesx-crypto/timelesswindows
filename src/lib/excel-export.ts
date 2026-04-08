@@ -71,8 +71,7 @@ export async function exportQuoteExcel(project: Project) {
   const widths = [14, 12, 5, 18, 10, 10, 12, 12, 14, 12, 12, 12];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
-  // Columns that get currency formatting (1-indexed): Material(7), Labour(8), Waste(9), Extras(10), UnitTotal(11), Total(12)
-  const currCols = [7, 8, 9, 10, 11, 12];
+
 
   const sellingTotals = {
     material: 0, labour: 0, wasteDisposal: 0, extras: 0,
