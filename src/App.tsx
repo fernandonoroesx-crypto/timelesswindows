@@ -14,6 +14,7 @@ import SuppliersPage from "./pages/SuppliersPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import LoginPage from "./pages/LoginPage";
+import PdfEditorPage from "./pages/PdfEditorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ function AppRoutes() {
             <Route path="/suppliers" element={<SuppliersPage />} />
             <Route path="/quotes" element={<QuotesList />} />
             <Route path="/quotes/new" element={<QuoteBuilder />} />
+            <Route path="/pdf-editor" element={<PdfEditorPage />} />
           </>
         )}
         {role === 'admin' && (
