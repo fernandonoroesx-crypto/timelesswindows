@@ -33,7 +33,7 @@ function base64ToUint8(b64: string): Uint8Array {
 
 const EURO_RE = /^\d{3,5},-$/;
 
-/* ── Extract words with bounding boxes from structured text ── */
+/* ── Extract words with bounding boxes ──────────────────────── */
 
 interface WordInfo {
   text: string;
@@ -52,11 +52,9 @@ function extractWords(page: any): WordInfo[] {
 
     for (const block of parsed.blocks || parsed) {
       for (const line of block.lines || []) {
+        // Build words from chars in each span
         for (const span of line.spans || []) {
-          // Each span has a font, size, and array of chars with quads
-          // Or it might be structured differently — handle both
           if (span.text && span.bbox) {
-            // Simple case: span has text + bbox
             const t = span.text.trim();
             if (t) {
               words.push({
@@ -70,9 +68,8 @@ function extractWords(page: any): WordInfo[] {
           }
         }
 
-        // Also try extracting from line directly if spans didn't work
+        // Fallback: line-level text
         if (line.text && line.bbox) {
-          // Split line text by whitespace and try to use it
           const t = line.text.trim();
           if (t && EURO_RE.test(t)) {
             words.push({
@@ -87,9 +84,49 @@ function extractWords(page: any): WordInfo[] {
       }
     }
   } catch (e) {
-    console.warn("[clean-pdf] Structured text extraction failed, falling back to search:", e);
+    console.warn("[clean-pdf] Structured text extraction failed:", e);
   }
   return words;
+}
+
+/* ── Extract header data from page 0 before redaction ───────── */
+
+interface PageOneData {
+  twBaselineY: number | null;
+  orderText: string | null;
+  orderX: number | null;
+}
+
+function extractPageOneData(page: any): PageOneData {
+  const result: PageOneData = { twBaselineY: null, orderText: null, orderX: null };
+  try {
+    const stext = page.toStructuredText("preserve-whitespace");
+    const blocks = stext.asJSON();
+    const parsed = typeof blocks === "string" ? JSON.parse(blocks) : blocks;
+
+    for (const block of parsed.blocks || parsed) {
+      for (const line of block.lines || []) {
+        for (const span of line.spans || []) {
+          const text = (span.text || "").trim();
+          const bbox = span.bbox;
+          if (!bbox) continue;
+          const y0 = bbox[1] ?? bbox.y0;
+
+          if (text.includes("Timeless Windows Ltd") && y0 < 100) {
+            // Use baseline y from origin if available, otherwise use y0
+            result.twBaselineY = span.origin?.[1] ?? y0;
+          }
+          if (text.startsWith("Order No.") && y0 < 110) {
+            result.orderText = text;
+            result.orderX = span.origin?.[0] ?? (bbox[0] ?? bbox.x0);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[clean-pdf] Page 1 data extraction failed:", e);
+  }
+  return result;
 }
 
 /* ── Main handler ───────────────────────────────────────────── */
@@ -115,6 +152,9 @@ Deno.serve(async (req: Request) => {
     const numPages = doc.countPages();
     console.log(`[clean-pdf] Pages: ${numPages}`);
 
+    // Store page-1 data for client-side use
+    let pageOneData: PageOneData = { twBaselineY: null, orderText: null, orderX: null };
+
     for (let i = 0; i < numPages; i++) {
       const page = doc.loadPage(i);
 
@@ -123,13 +163,19 @@ Deno.serve(async (req: Request) => {
         annot.setRect(rect);
       };
 
-      // 1. "Price," header — extend right by 30 to cover "EUR"
+      // ── Collect page-1 header data BEFORE redacting ──
+      if (i === 0) {
+        pageOneData = extractPageOneData(page);
+        console.log(`[clean-pdf] Page 1 data:`, JSON.stringify(pageOneData));
+      }
+
+      // ── REMOVE: "Price," header — extend right by 30 to cover "EUR" ──
       for (const quad of page.search("Price,")) {
         const r = quadToRect(quad);
         addRedact([r[0] - 2, r[1], r[2] + 30, r[3]]);
       }
 
-      // 2. "Total," — only right column (x > 400) to avoid "Total sq.m.:"
+      // ── REMOVE: "Total," — only right column (x > 400) ──
       for (const quad of page.search("Total,")) {
         const r = quadToRect(quad);
         if (r[0] > 400) {
@@ -137,18 +183,17 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // 3. Euro amounts — use structured text for precise word matching
+      // ── REMOVE: Euro amounts — tight bounds, y1 - 0.3 ──
       const words = extractWords(page);
       let euroMatchCount = 0;
       for (const w of words) {
         if (EURO_RE.test(w.text)) {
-          // Tight bottom bound (y1 - 0.3) to avoid bleeding over table separator lines
           addRedact([w.x0 - 2, w.y0, w.x1 + 2, w.y1 - 0.3]);
           euroMatchCount++;
         }
       }
 
-      // Fallback: if structured text didn't find any euro amounts, use search for ",-"
+      // Fallback: search for ",-" if structured text found nothing
       if (euroMatchCount === 0) {
         for (const quad of page.search(",-")) {
           const r = quadToRect(quad);
@@ -156,22 +201,21 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // 4. Summary phrases (last page typically)
-      const summaryPhrases = [
+      // ── REMOVE: Summary phrases — tight bounds (skill: x1 + 2) ──
+      for (const phrase of [
         "Total excl. VAT:",
         "TOTAL INVOICE:",
         "All prices excl. VAT and transport cost.",
-      ];
-      for (const phrase of summaryPhrases) {
+      ]) {
         for (const quad of page.search(phrase)) {
           const r = quadToRect(quad);
-          addRedact([r[0] - 2, r[1], r[2] + 80, r[3]]);
+          addRedact([r[0] - 2, r[1], r[2] + 2, r[3]]);
         }
       }
 
-      // 5. Page-1-only redactions
+      // ── REMOVE: Page-1-only redactions ──
       if (i === 0) {
-        // "All openings shown as english openings" (case variations)
+        // "All openings shown as english openings"
         for (const variant of [
           "All openings shown as english openings",
           "All openings shown as English openings",
@@ -182,7 +226,7 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        // "Timeless Windows Ltd" header — only y < 100 to avoid footer
+        // "Timeless Windows Ltd" header — only y < 100
         for (const quad of page.search("Timeless Windows Ltd")) {
           const r = quadToRect(quad);
           if (r[1] < 100) {
@@ -190,29 +234,30 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        // "Order No." line — redact between y 85–110
-        for (const quad of page.search("Order No.")) {
-          const r = quadToRect(quad);
-          if (r[1] > 85 && r[1] < 110) {
-            // Extend right to cover the full order number value
-            const pageRect = page.getBounds();
-            addRedact([r[0] - 2, r[1], pageRect[2] - 50, r[3]]);
+        // "Order No." line — redact between y 85–110, extend to page edge
+        if (pageOneData.orderText) {
+          for (const quad of page.search("Order No.")) {
+            const r = quadToRect(quad);
+            if (r[1] > 85 && r[1] < 110) {
+              const pageRect = page.getBounds();
+              addRedact([r[0] - 2, r[1], pageRect[2] - 50, r[3]]);
+            }
           }
         }
       }
 
-      // Apply all redactions — no black boxes, preserve images and line art
+      // ── Apply redactions — no fill, preserve line art ──
       page.applyRedactions(false, 0);
 
-      // Clean residual graphics operators from content stream
+      // ── Clean residual graphics operators ──
       try {
         page.cleanContents();
       } catch (_e) {
-        // cleanContents may not be available in all mupdf versions
+        // cleanContents may not be available in all versions
       }
     }
 
-    // Save the cleaned PDF
+    // Save
     const outBuf = doc.saveToBuffer("compress");
     const outBytes: Uint8Array = outBuf.asUint8Array();
     console.log(`[clean-pdf] Output PDF: ${outBytes.length} bytes`);
@@ -220,7 +265,10 @@ Deno.serve(async (req: Request) => {
     const outBase64 = uint8ToBase64(outBytes);
     doc.destroy();
 
-    return new Response(JSON.stringify({ pdf_base64: outBase64 }), {
+    return new Response(JSON.stringify({
+      pdf_base64: outBase64,
+      page_one_data: pageOneData,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
