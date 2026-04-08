@@ -49,22 +49,29 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
     setFileName(file.name);
 
     try {
-      const result = await extractPdfText(file);
+      let result;
+
+      if (isPdf) {
+        result = await extractPdfText(file);
+
+        // Generate original + cleaned PDFs
+        if (onPdfFiles) {
+          const original = await fileToBase64(file);
+          let clean = '';
+          try {
+            const ab = await file.arrayBuffer();
+            clean = await stripPricesFromPdf(ab);
+          } catch (pdfErr) {
+            console.error('PDF price strip error:', pdfErr);
+          }
+          onPdfFiles(original, clean, file.name);
+        }
+      } else {
+        result = await extractExcelItems(file);
+      }
+
       setRawText(result.rawText);
       setExtractedItems(result.items);
-
-      // Generate original + cleaned PDFs
-      if (onPdfFiles) {
-        const original = await fileToBase64(file);
-        let clean = '';
-        try {
-          const ab = await file.arrayBuffer();
-          clean = await stripPricesFromPdf(ab);
-        } catch (pdfErr) {
-          console.error('PDF price strip error:', pdfErr);
-        }
-        onPdfFiles(original, clean, file.name);
-      }
 
       if (result.items.length === 0) {
         toast.info('No line items auto-detected. Check the raw text tab to manually identify items.');
@@ -72,8 +79,8 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
         toast.success(`Found ${result.items.length} potential item(s)`);
       }
     } catch (err) {
-      console.error('PDF extraction error:', err);
-      toast.error('Failed to read PDF. The file may be encrypted or corrupted.');
+      console.error('File extraction error:', err);
+      toast.error('Failed to read file. It may be encrypted or corrupted.');
     } finally {
       setLoading(false);
     }
