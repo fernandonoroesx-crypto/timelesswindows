@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, Plus, Settings, Menu, X, Users, Truck, FolderOpen, LogOut, FileEdit } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useApp } from '@/lib/context';
@@ -11,6 +11,7 @@ const allNavItems = [
   { to: '/quotes', icon: FileText, label: 'Quotes', roles: ['admin', 'manager'] },
   { to: '/projects', icon: FolderOpen, label: 'Projects', roles: ['admin', 'manager', 'field'] },
   { to: '/quotes/new', icon: Plus, label: 'New Quote', roles: ['admin', 'manager'] },
+  { to: '/pdf-editor', icon: FileEdit, label: 'PDF Editor', roles: ['admin', 'manager'] },
   { to: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
 ];
 
