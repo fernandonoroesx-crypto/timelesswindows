@@ -37,8 +37,8 @@ export async function exportQuoteExcel(project: Project) {
   if (logoBuffer) {
     const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' });
     ws.addImage(logoId, {
-      tl: { col: 8, row: 0 },
-      ext: { width: 280, height: 76 },
+      tl: { col: 9, row: 0.2 },
+      ext: { width: 160, height: 44 },
     });
   }
 
@@ -68,12 +68,13 @@ export async function exportQuoteExcel(project: Project) {
     cell.value = h;
     cell.font = { bold: true, size: 10, color: { argb: WHITE } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_CHARCOAL } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    const hAlign = currCols.includes(i + 1) ? 'right' : ([1, 2, 4].includes(i + 1) ? 'left' : 'center');
+    cell.alignment = { horizontal: hAlign, vertical: 'middle', wrapText: true };
     cell.border = thinBorder;
   });
   headerRow.height = 24;
 
-  const widths = [14, 12, 6, 16, 10, 10, 12, 12, 14, 12, 12, 12];
+  const widths = [14, 12, 5, 18, 10, 10, 12, 12, 14, 12, 12, 12];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
   // Columns that get currency formatting (1-indexed): Material(7), Labour(8), Waste(9), Extras(10), UnitTotal(11), Total(12)
@@ -105,7 +106,8 @@ export async function exportQuoteExcel(project: Project) {
       const cell = row.getCell(i + 1);
       cell.value = v;
       cell.border = thinBorder;
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      const hAlign = currCols.includes(i + 1) ? 'right' : ([1, 2, 4].includes(i + 1) ? 'left' : 'center');
+      cell.alignment = { horizontal: hAlign, vertical: 'middle' };
       if (currCols.includes(i + 1)) cell.numFmt = currencyFmt;
     });
 
@@ -146,7 +148,8 @@ export async function exportQuoteExcel(project: Project) {
       left: { style: 'thin', color: { argb: BORDER_COLOR } },
       right: { style: 'thin', color: { argb: BORDER_COLOR } },
     };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    const hAlign = currCols.includes(i + 1) ? 'right' : ([1, 2, 4].includes(i + 1) ? 'left' : 'center');
+    cell.alignment = { horizontal: hAlign, vertical: 'middle' };
     if (currCols.includes(i + 1)) cell.numFmt = currencyFmt;
   });
   rowNum += 2;
@@ -177,7 +180,7 @@ export async function exportQuoteExcel(project: Project) {
     row.getCell(1).font = { size: 10 };
     row.getCell(4).value = amount;
     row.getCell(4).numFmt = currencyFmt;
-    row.getCell(4).alignment = { horizontal: 'center' };
+    row.getCell(4).alignment = { horizontal: 'right' };
     for (let c = 1; c <= 4; c++) {
       row.getCell(c).border = thinBorder;
       if (idx % 2 === 1) {
@@ -196,7 +199,7 @@ export async function exportQuoteExcel(project: Project) {
   grandTotalRow.getCell(4).value = sellingTotals.total;
   grandTotalRow.getCell(4).numFmt = currencyFmt;
   grandTotalRow.getCell(4).font = { bold: true, size: 12 };
-  grandTotalRow.getCell(4).alignment = { horizontal: 'center' };
+  grandTotalRow.getCell(4).alignment = { horizontal: 'right' };
   for (let c = 1; c <= 4; c++) {
     grandTotalRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_CHARCOAL } };
     grandTotalRow.getCell(c).font = { bold: true, size: 12, color: { argb: WHITE } };
