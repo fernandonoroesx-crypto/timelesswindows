@@ -21,6 +21,7 @@ import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
 import { exportQuoteExcel } from '@/lib/excel-export';
 
 import PdfImportDialog from '@/components/PdfImportDialog';
+import BossAiDialog from '@/components/BossAiDialog';
 
 const WINDOW_TYPES: WindowType[] = [
   'Casement', 'Casement Flag', 'Box Sash', 'Fix Sash', 'Spring Sash',
@@ -156,7 +157,8 @@ export default function QuoteBuilder() {
             {project.projectRef || 'New quote'} — {project.client || 'No client'}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <BossAiDialog pricing={quotePricing} onUpdatePricing={updatePricing} />
           <Button onClick={saveProject} className="bg-primary text-primary-foreground">
             <Save className="w-4 h-4 mr-2" /> Save
           </Button>
