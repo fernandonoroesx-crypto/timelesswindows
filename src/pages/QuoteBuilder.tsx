@@ -42,6 +42,7 @@ export default function QuoteBuilder() {
   });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [showOriginalPdf, setShowOriginalPdf] = useState(false);
+  const [showCleanPdf, setShowCleanPdf] = useState(false);
   const [showWonConfirm, setShowWonConfirm] = useState(false);
   const hasInitializedPricing = useRef(!!currentProject);
 
@@ -206,12 +207,7 @@ export default function QuoteBuilder() {
                 </DropdownMenuItem>
               )}
               {project.supplierPdfClean && (
-                <DropdownMenuItem onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = project.supplierPdfClean!;
-                  link.download = `${(project.supplierPdfName || 'supplier').replace('.pdf', '')}-no-prices.pdf`;
-                  link.click();
-                }}>
+                <DropdownMenuItem onClick={() => setShowCleanPdf(true)}>
                   Supplier PDF (No Prices)
                 </DropdownMenuItem>
               )}
@@ -617,6 +613,33 @@ export default function QuoteBuilder() {
             src={project.supplierPdfOriginal || ''}
             className="flex-1 w-full rounded border"
             title="Original Supplier PDF"
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Clean Supplier PDF Viewer (No Prices) */}
+      <Dialog open={showCleanPdf} onOpenChange={setShowCleanPdf}>
+        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle>{(project.supplierPdfName || 'Supplier PDF').replace('.pdf', '')} — Specifications</DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto mr-8"
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = project.supplierPdfClean!;
+                link.download = `${(project.supplierPdfName || 'supplier').replace('.pdf', '')}-Specifications.pdf`;
+                link.click();
+              }}
+            >
+              <FileDown className="w-4 h-4 mr-1" /> Download
+            </Button>
+          </DialogHeader>
+          <iframe
+            src={project.supplierPdfClean || ''}
+            className="flex-1 w-full rounded border"
+            title="Supplier PDF - No Prices"
           />
         </DialogContent>
       </Dialog>
