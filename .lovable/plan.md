@@ -1,22 +1,16 @@
 
 
-## Plan: Add Extras & Waste Disposal to Settings Selling/Cost Tabs
+## Plan: Show Original Supplier PDF in a Viewer Instead of Downloading
 
-### Problem
-The Settings page never got Extras and Waste Disposal fields added to the **Selling Prices** and **Cost Prices** tabs. They only appear in the General tab (selling values only, no cost). The PricingEditor component used in QuoteBuilder already has them — but Settings renders its own manual layout.
+### What changes
+Replace the "Supplier PDF (Original)" dropdown item's download behavior with opening an in-app PDF viewer dialog. The base64 data URI is already stored — we just need to display it in an `<iframe>` inside a dialog instead of triggering a download.
 
-### Changes in `src/pages/SettingsPage.tsx`
+### Changes in `src/pages/QuoteBuilder.tsx`
 
-1. **Selling tab** (after Trims — Selling card, ~line 158): Add a new card "Extras & Waste Disposal — Selling" with:
-   - Each entry from `pricing.extrasSelling` as an editable row
-   - Waste Disposal selling price
-
-2. **Cost tab** (after Trims — Cost card, ~line 221): Add a new card "Extras & Waste Disposal — Cost" with:
-   - Each entry from `pricing.extrasCost` as an editable row
-   - Waste Disposal cost price
-
-3. **General tab** (~line 265): Remove the Extras & Waste Disposal fields from the "Extras & Overheads" card, leaving only Overhead/day. Rename card to just "Overheads".
+1. Add state: `const [showOriginalPdf, setShowOriginalPdf] = useState(false)`
+2. Change the "Supplier PDF (Original)" dropdown item to set `showOriginalPdf(true)` instead of creating a download link
+3. Add a `<Dialog>` at the bottom of the component with a full-size `<iframe>` that renders the base64 PDF data URI, with a title showing the file name
 
 ### Files modified
-- `src/pages/SettingsPage.tsx`
+- `src/pages/QuoteBuilder.tsx` — replace download with viewer dialog (~15 lines added)
 
