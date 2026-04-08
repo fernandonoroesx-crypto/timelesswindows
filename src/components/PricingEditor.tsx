@@ -178,21 +178,32 @@ export default function PricingEditor({ pricing, onUpdate, compact, sellingOnly 
       )}
 
 
-      {/* Extras & Other */}
+      {/* Extras & Waste Disposal — Selling */}
       <div className={cardClass}>
-        <h3 className="font-heading text-sm font-semibold mb-3">{sellingOnly ? 'Extras' : 'Other Costs'}</h3>
+        <h3 className="font-heading text-sm font-semibold mb-3">Extras{sellingOnly ? '' : ' — Selling'}</h3>
         <div className="space-y-2">
-          {Object.entries(pricing.extras).map(([name, price]) => (
-            <EditRow key={name} label={name} value={price} path={`extras.${name}`} onUpdate={onUpdate} />
+          {Object.entries(pricing.extrasSelling).map(([name, price]) => (
+            <EditRow key={name} label={name} value={price} path={`extrasSelling.${name}`} onUpdate={onUpdate} />
           ))}
           <div className="pt-2 border-t space-y-2">
-            <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposal} path="wasteDisposal" onUpdate={onUpdate} />
-            {!sellingOnly && (
-              <EditRow label="Overhead / day" value={pricing.overheadPerDay} path="overheadPerDay" onUpdate={onUpdate} />
-            )}
+            <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposalSelling} path="wasteDisposalSelling" onUpdate={onUpdate} />
           </div>
         </div>
       </div>
+      {!sellingOnly && (
+        <div className={cardClass}>
+          <h3 className="font-heading text-sm font-semibold mb-3">Extras — Cost</h3>
+          <div className="space-y-2">
+            {Object.entries(pricing.extrasCost).map(([name, price]) => (
+              <EditRow key={name} label={name} value={price} path={`extrasCost.${name}`} onUpdate={onUpdate} />
+            ))}
+            <div className="pt-2 border-t space-y-2">
+              <EditRow label="Waste Disposal (per item)" value={pricing.wasteDisposalCost} path="wasteDisposalCost" onUpdate={onUpdate} />
+              <EditRow label="Overhead / day" value={pricing.overheadPerDay} path="overheadPerDay" onUpdate={onUpdate} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
