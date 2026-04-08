@@ -1,20 +1,39 @@
 
 
-## Plan: Generate 3D Dog Face Icon for Boss AI
+## Plan: Add Excel File Import Alongside PDF Import
 
 ### Overview
-Use AI image generation to create a 3D-stylized dog face icon based on the uploaded dachshund photo, then replace the current `src/assets/boss-avatar.jpg` with the new icon.
+Extend the existing import dialog to accept both PDF and Excel (.xlsx/.xls) files. The Excel reader will parse spreadsheets with supplier line-item data (dimensions, prices, types) and map them to `ExtractedLineItem[]`, just like the PDF reader does.
 
-### Steps
+### Changes
 
-**1. Generate the 3D dog face icon**
-- Use `google/gemini-3-pro-image-preview` (high-quality image generation) via a one-off script
-- Send the original dachshund photo with an editing prompt: "Transform this into a 3D rendered cartoon-style dog face icon. Only the face, circular crop, smooth 3D render style like a Pixar character. Clean background, suitable for use as a small circular avatar/icon."
-- Save the resulting image to `src/assets/boss-avatar.jpg` (replacing the current photo)
+**1. Create `src/lib/excel-reader.ts`**
+- Use the `xlsx` npm package (SheetJS) to parse uploaded Excel files in the browser
+- Export an `extractExcelItems(file: File): Promise<PdfExtractionResult>` function returning the same `PdfExtractionResult` shape (rawText, pages, items)
+- Auto-detect columns by header matching: look for headers containing "width", "height", "price", "qty", "type", "ref" (case-insensitive)
+- Fallback: scan for numeric columns in the 200–3000mm range for dimensions, currency values for prices
+- Reuse `ExtractedLineItem` type from `pdf-reader.ts`
+- Detect currency (GBP/EUR) from cell formatting or header text
 
-**2. No code changes needed**
-- `BossAiDialog.tsx` and `QuoteBuilder.tsx` already import from `src/assets/boss-avatar.jpg` — the new image will be picked up automatically
+**2. Update `src/components/PdfImportDialog.tsx`**
+- Rename component to `FileImportDialog` (update exports and imports)
+- Change file accept from `.pdf` to `.pdf,.xlsx,.xls`
+- On file selection, detect type by extension:
+  - `.pdf` → existing `extractPdfText()` flow + PDF price stripping
+  - `.xlsx/.xls` → new `extractExcelItems()` flow (no PDF stripping needed)
+- Update button label from "Import PDF" to "Import File" and icon stays `FileUp`
+- Update dialog title accordingly
+- Raw text tab shows spreadsheet data as tab-separated text for Excel files
 
-### Files modified
-- `src/assets/boss-avatar.jpg` — replaced with AI-generated 3D dog face
+**3. Update `src/pages/QuoteBuilder.tsx`**
+- Update import reference from `PdfImportDialog` to `FileImportDialog`
+
+**4. Install `xlsx` package**
+- `npm install xlsx` — client-side spreadsheet parsing library
+
+### Files created/modified
+- `package.json` — add `xlsx` dependency
+- `src/lib/excel-reader.ts` — new Excel parsing logic
+- `src/components/PdfImportDialog.tsx` → renamed to `FileImportDialog`, extended for Excel
+- `src/pages/QuoteBuilder.tsx` — update import name
 
