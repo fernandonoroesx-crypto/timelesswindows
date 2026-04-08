@@ -39,7 +39,8 @@ export interface PriceBreakdown {
   mdfReveal: number;
   wasteDisposal: number;
   deliveryStock: number;
-  fensaSurvey: number;
+  fensa: number;
+  survey: number;
   extras: number;
   consumables: number;
   overhead: number;
@@ -52,7 +53,7 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
   const b: PriceBreakdown = {
     material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
     architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0,
-    fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0, unitTotal: 0, total: 0,
+    fensa: 0, survey: 0, extras: 0, consumables: 0, overhead: 0, unitTotal: 0, total: 0,
   };
 
   // Material: ROUND(Manufacture_price_£ × Uplift, 0)
@@ -130,7 +131,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
   const b: PriceBreakdown = {
     material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0,
     architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0,
-    fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0, unitTotal: 0, total: 0,
+    fensa: 0, survey: 0, extras: 0, consumables: 0, overhead: 0, unitTotal: 0, total: 0,
   };
 
   const materialGbp = item.manufactureCurrency === 'EUR'
@@ -176,7 +177,8 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
 
     const areaSm = calculateSm(item.widthMm, item.heightMm);
     b.deliveryStock = areaSm * pricing.deliveryStockCost;
-    b.fensaSurvey = pricing.fensaSurveyCost;
+    b.fensa = pricing.fensaCost;
+    b.survey = pricing.surveyCost;
 
     if (item.extra1 !== 'none') b.extras += pricing.extrasCost[item.extra1] || 0;
     if (item.extra2 !== 'none') b.extras += pricing.extrasCost[item.extra2] || 0;
@@ -187,7 +189,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
 
   b.unitTotal = b.material + b.installation + b.architrave + b.trims + b.mdfReveal
     + b.internalMakingGood + b.externalMakingGood + b.wasteDisposal
-    + b.deliveryStock + b.fensaSurvey + b.extras + b.consumables;
+    + b.deliveryStock + b.fensa + b.survey + b.extras + b.consumables;
   b.total = b.unitTotal * item.qty;
 
   return b;
@@ -202,14 +204,14 @@ export function calculateItemCost(item: QuoteLineItem, settings: ProjectSettings
 }
 
 export function calculateQuoteSummary(items: QuoteLineItem[], settings: ProjectSettings, quotePricing?: PricingData): QuoteSummary {
-  const sp = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensaSurvey: 0, extras: 0, consumables: 0, overhead: 0, total: 0 };
+  const sp = { material: 0, installation: 0, internalMakingGood: 0, externalMakingGood: 0, architrave: 0, trims: 0, mdfReveal: 0, wasteDisposal: 0, deliveryStock: 0, fensa: 0, survey: 0, extras: 0, consumables: 0, overhead: 0, total: 0 };
   const cp = { ...sp };
   let totalSm = 0;
 
   for (const item of items) {
     const sb = getItemSellingBreakdown(item, settings, quotePricing);
     const cb = getItemCostBreakdown(item, settings, quotePricing);
-    const keys: (keyof PriceBreakdown)[] = ['material', 'installation', 'internalMakingGood', 'externalMakingGood', 'architrave', 'trims', 'mdfReveal', 'wasteDisposal', 'deliveryStock', 'fensaSurvey', 'extras', 'consumables', 'overhead'];
+    const keys: (keyof PriceBreakdown)[] = ['material', 'installation', 'internalMakingGood', 'externalMakingGood', 'architrave', 'trims', 'mdfReveal', 'wasteDisposal', 'deliveryStock', 'fensa', 'survey', 'extras', 'consumables', 'overhead'];
     for (const k of keys) {
       sp[k] += sb[k] * item.qty;
       cp[k] += cb[k] * item.qty;
