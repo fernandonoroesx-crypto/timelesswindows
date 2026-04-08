@@ -907,7 +907,6 @@ function LineItemCard({
                     {sellingBreakdown.trims > 0 && <FormulaRow label={`Trims (${item.trimsType})`} value={sellingBreakdown.trims} />}
                     {sellingBreakdown.mdfReveal > 0 && <FormulaRow label={`MDF Reveal (${item.mdfRevealType})`} value={sellingBreakdown.mdfReveal} />}
                     {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
-                    {sellingBreakdown.extras > 0 && <FormulaRow label="Extras" value={sellingBreakdown.extras} />}
                     {sellingBreakdown.wasteDisposal > 0 && <FormulaRow label="Waste Disposal" value={sellingBreakdown.wasteDisposal} />}
                   </>
                 )}
