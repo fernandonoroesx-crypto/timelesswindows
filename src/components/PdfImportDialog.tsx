@@ -164,7 +164,7 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
               <Input
                 ref={fileRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.xlsx,.xls"
                 onChange={handleFile}
                 className="max-w-xs mx-auto"
               />
