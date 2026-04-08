@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileUp, Trash2, Check, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractPdfText, type ExtractedLineItem } from '@/lib/pdf-reader';
+import { extractExcelItems } from '@/lib/excel-reader';
 import type { QuoteLineItem, WindowType } from '@/lib/types';
 
 const WINDOW_TYPES: WindowType[] = [

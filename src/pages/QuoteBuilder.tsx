@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
 import { exportQuoteExcel } from '@/lib/excel-export';
 
-import PdfImportDialog from '@/components/PdfImportDialog';
+import FileImportDialog from '@/components/PdfImportDialog';
 import BossAiDialog from '@/components/BossAiDialog';
 
 const WINDOW_TYPES: WindowType[] = [
