@@ -3,21 +3,7 @@ import autoTable from 'jspdf-autotable';
 import type { Project, QuoteLineItem } from './types';
 import { getItemSellingBreakdown, getItemCostBreakdown, calculateQuoteSummary, formatCurrency, calculateSm } from './pricing';
 import { getProjectPricing } from './context';
-
-async function loadLogoBase64(): Promise<string | null> {
-  try {
-    const response = await fetch('/images/timeless-logo.png');
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-}
+import { loadLogoAsBase64 } from './logo';
 
 export async function exportQuotePdf(project: Project, clientAddress?: string) {
   const doc = new jsPDF();
@@ -61,7 +47,7 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
 
   // Company logo (top-right)
   const companyY = 14;
-  const logoData = await loadLogoBase64();
+  const logoData = await loadLogoAsBase64();
   if (logoData) {
     // Logo aspect ratio ~3.7:1, render at ~60mm wide
     const logoW = 60;
@@ -261,7 +247,7 @@ export async function exportInstallationPdf(project: Project) {
   let y = 20;
 
   // === HEADER ===
-  const logoData = await loadLogoBase64();
+  const logoData = await loadLogoAsBase64();
   if (logoData) {
     const logoW = 60;
     const logoH = logoW / 3.7;

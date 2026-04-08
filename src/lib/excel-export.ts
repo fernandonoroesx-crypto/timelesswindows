@@ -2,6 +2,7 @@ import ExcelJS from 'exceljs';
 import type { Project } from './types';
 import { getItemSellingBreakdown } from './pricing';
 import { getProjectPricing } from './context';
+import { loadLogoAsArrayBuffer } from './logo';
 
 const DARK_CHARCOAL = 'FF2D2D2D';
 const LIGHT_GREY = 'FFF2F2F2';
@@ -17,15 +18,8 @@ const thinBorder: Partial<ExcelJS.Borders> = {
 
 const currencyFmt = '£#,##0.00';
 
-async function loadLogoForExcel(): Promise<ArrayBuffer | null> {
-  try {
-    const response = await fetch('/images/timeless-logo.png');
-    const blob = await response.blob();
-    return blob.arrayBuffer();
-  } catch {
-    return null;
-  }
-}
+// Columns that get currency formatting (1-indexed)
+const currCols = [7, 8, 9, 10, 11, 12];
 
 export async function exportQuoteExcel(project: Project) {
   const pricing = project.pricing || getProjectPricing(project);
@@ -33,7 +27,7 @@ export async function exportQuoteExcel(project: Project) {
   const ws = wb.addWorksheet('Quote Report');
 
   // --- Logo (top-right) ---
-  const logoBuffer = await loadLogoForExcel();
+  const logoBuffer = await loadLogoAsArrayBuffer();
   if (logoBuffer) {
     const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' });
     ws.addImage(logoId, {
@@ -77,8 +71,7 @@ export async function exportQuoteExcel(project: Project) {
   const widths = [14, 12, 5, 18, 10, 10, 12, 12, 14, 12, 12, 12];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
-  // Columns that get currency formatting (1-indexed): Material(7), Labour(8), Waste(9), Extras(10), UnitTotal(11), Total(12)
-  const currCols = [7, 8, 9, 10, 11, 12];
+
 
   const sellingTotals = {
     material: 0, labour: 0, wasteDisposal: 0, extras: 0,

@@ -1,10 +1,11 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { loadLogoAsUint8Array } from './logo';
 
 /* ── Company branding constants ─────────────────────────────── */
 const COMPANY_NAME = 'Timeless Windows Ltd';
 const COMPANY_ADDRESS = '2 New Kings Rd London SW6 4SA';
-const LOGO_PATH = '/images/timeless-logo.png';
+// Logo is now loaded from the storage bucket via logo.ts
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -181,9 +182,9 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
 /* ── Logo loader ────────────────────────────────────────────── */
 
 async function loadLogoPng(): Promise<Uint8Array> {
-  const resp = await fetch(LOGO_PATH);
-  const buf = await resp.arrayBuffer();
-  return new Uint8Array(buf);
+  const data = await loadLogoAsUint8Array();
+  if (!data) throw new Error('Failed to load logo from storage');
+  return data;
 }
 
 /* ── Main export ────────────────────────────────────────────── */
