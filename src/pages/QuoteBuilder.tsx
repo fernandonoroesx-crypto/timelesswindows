@@ -565,7 +565,7 @@ export default function QuoteBuilder() {
                     variant="outline"
                     onClick={() => {
                       const pricing = normalizePricingData(pm.pricing || globalPricing);
-                      updatePricing(pricing);
+                      updateProject({ pricing });
                       toast.success(`Applied rates from ${pm.name}`);
                     }}
                   >
