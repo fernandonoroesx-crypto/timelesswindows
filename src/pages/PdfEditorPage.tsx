@@ -89,6 +89,8 @@ export default function PdfEditorPage() {
       'Height (mm)': it.heightMm,
       'Price': it.manufacturePrice,
       'Currency': it.currency,
+      'Glass Spec': it.glassSpec ?? '',
+      'Glass (mm)': it.glassThicknessMm ?? '',
       'Uplift': it.uplift ?? '',
       'Installation': it.installationOverride ?? '',
       'Installation Type': it.installationType ?? '',
@@ -172,7 +174,7 @@ export default function PdfEditorPage() {
                 <table className="w-full text-xs">
                   <thead className="bg-muted">
                     <tr>
-                      {['Item Ref','Type','Qty','Width','Height','Price','Currency','Uplift','Installation'].map(h => (
+                      {['Item Ref','Type','Qty','Width','Height','Price','Currency','Glass','Uplift','Installation'].map(h => (
                         <th key={h} className="px-3 py-2 text-left font-medium text-muted-foreground">{h}</th>
                       ))}
                     </tr>
@@ -187,6 +189,7 @@ export default function PdfEditorPage() {
                         <td className="px-3 py-2">{it.heightMm}</td>
                         <td className="px-3 py-2">{it.manufacturePrice}</td>
                         <td className="px-3 py-2">{it.currency}</td>
+                        <td className="px-3 py-2">{it.glassThicknessMm ? `${it.glassThicknessMm}mm` : '—'}</td>
                         <td className="px-3 py-2">{it.uplift ?? '—'}</td>
                         <td className="px-3 py-2">{it.installationOverride ?? '—'}</td>
                       </tr>

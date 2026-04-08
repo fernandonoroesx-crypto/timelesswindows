@@ -129,6 +129,24 @@ export async function extractExcelItems(file: File): Promise<PdfExtractionResult
       const extraVal = parseNum(extraRaw);
       if (extraVal > 0) item.customExtra = extraVal;
 
+      const glassRaw = get('glass');
+      if (glassRaw) {
+        const glassStr = String(glassRaw).trim();
+        const glassNum = parseNum(glassRaw);
+        if (glassNum > 0) {
+          item.glassThicknessMm = glassNum;
+        } else if (glassStr.match(/\d+\w*-\d+/)) {
+          item.glassSpec = glassStr;
+          const segments = glassStr.split('-');
+          let total = 0;
+          for (const seg of segments) {
+            const m = seg.match(/^(\d+)/);
+            if (m) total += parseInt(m[1]);
+          }
+          if (total > 0) item.glassThicknessMm = total;
+        }
+      }
+
       allItems.push(item);
     }
   }
@@ -199,6 +217,10 @@ function detectColumns(headerRow: any[]): Record<string, number> {
     // Extra / custom
     else if (!map['extra'] && /\b(extra|custom|additional)\b/i.test(h)) {
       map['extra'] = c;
+    }
+    // Glass / glass thickness
+    else if (!map['glass'] && /\b(glass|glazing|glass\s*thick|igु)\b/i.test(h)) {
+      map['glass'] = c;
     }
   }
   return map;
