@@ -31,7 +31,7 @@ export async function exportQuoteExcel(project: Project) {
   if (logoBuffer) {
     const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' });
     ws.addImage(logoId, {
-      tl: { col: 10.8, row: 0.2 },
+      tl: { col: 9.5, row: 0.2 },
       ext: { width: 160, height: 44 },
     });
   }
