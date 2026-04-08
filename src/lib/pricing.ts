@@ -110,11 +110,11 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
     }
 
     // Waste Disposal
-    if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
+    if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposalSelling;
 
     // Extras from slots
-    if (item.extra1 !== 'none') b.extras += pricing.extras[item.extra1] || 0;
-    if (item.extra2 !== 'none') b.extras += pricing.extras[item.extra2] || 0;
+    if (item.extra1 !== 'none') b.extras += pricing.extrasSelling[item.extra1] || 0;
+    if (item.extra2 !== 'none') b.extras += pricing.extrasSelling[item.extra2] || 0;
     b.extras += item.customExtra || 0;
   }
 
@@ -172,14 +172,14 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
         : pricing.makingGoodCost.extMkgExternal);
     }
 
-    if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposal;
+    if (settings.includeWasteDisposal) b.wasteDisposal = pricing.wasteDisposalCost;
 
     const areaSm = calculateSm(item.widthMm, item.heightMm);
     b.deliveryStock = areaSm * pricing.deliveryStockCost;
     b.fensaSurvey = pricing.fensaSurveyCost;
 
-    if (item.extra1 !== 'none') b.extras += pricing.extras[item.extra1] || 0;
-    if (item.extra2 !== 'none') b.extras += pricing.extras[item.extra2] || 0;
+    if (item.extra1 !== 'none') b.extras += pricing.extrasCost[item.extra1] || 0;
+    if (item.extra2 !== 'none') b.extras += pricing.extrasCost[item.extra2] || 0;
     b.extras += item.customExtra || 0;
 
     b.consumables = Object.values(pricing.consumables).reduce((a, v) => a + v, 0);

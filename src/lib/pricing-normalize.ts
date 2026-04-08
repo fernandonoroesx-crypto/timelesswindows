@@ -41,11 +41,21 @@ export function normalizePricingData(raw?: Partial<PricingData> | null): Pricing
     } else if (key === 'architraveFlat') {
       base.architraveFlat = !!val;
     } else if (typeof val === 'object' && !Array.isArray(val)) {
-      // Deep merge nested objects (e.g. makingGoodSelling, installationSelling, etc.)
       (base as any)[key] = { ...(base as any)[key], ...(val as any) };
     } else {
       (base as any)[key] = val;
     }
+  }
+
+  // --- Backward compatibility: migrate legacy `extras` and `wasteDisposal` ---
+  const rawAny = raw as any;
+  if (rawAny.extras && !rawAny.extrasSelling) {
+    base.extrasSelling = { ...base.extrasSelling, ...rawAny.extras };
+    base.extrasCost = { ...base.extrasCost, ...rawAny.extras };
+  }
+  if (rawAny.wasteDisposal != null && rawAny.wasteDisposalSelling == null) {
+    base.wasteDisposalSelling = rawAny.wasteDisposal;
+    base.wasteDisposalCost = rawAny.wasteDisposal;
   }
 
   return base;

@@ -200,9 +200,11 @@ export interface PricingData {
   trimsCost: TrimsPricing;
   mdfSelling: MdfPricing;
   mdfCost: MdfPricing;
-  extras: Record<string, number>;
+  extrasSelling: Record<string, number>;
+  extrasCost: Record<string, number>;
   consumables: Record<string, number>;
-  wasteDisposal: number;
+  wasteDisposalSelling: number;
+  wasteDisposalCost: number;
   deliveryStockCost: number;
   fensaSurveyCost: number;
   overheadPerDay: number;
