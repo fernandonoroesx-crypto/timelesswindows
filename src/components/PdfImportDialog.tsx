@@ -115,6 +115,8 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
       extra1: 'none',
       extra2: 'none',
       customExtra: ext.customExtra ?? 0,
+      glassSpec: ext.glassSpec,
+      glassThicknessMm: ext.glassThicknessMm,
     }));
 
     onImport(items);
@@ -194,7 +196,7 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
                       <div>
                         <Label className="text-xs">Ref</Label>
                         <Input className="h-8 text-xs" value={item.itemRef}
@@ -238,6 +240,12 @@ export default function FileImportDialog({ projectRef, existingCount, onImport, 
                             <SelectItem value="EUR">EUR</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Glass (mm)</Label>
+                        <Input type="number" className="h-8 text-xs" value={item.glassThicknessMm ?? ''}
+                          onChange={e => updateItem(i, { glassThicknessMm: parseInt(e.target.value) || undefined })}
+                          placeholder={item.glassSpec || '—'} />
                       </div>
                     </div>
                   </div>

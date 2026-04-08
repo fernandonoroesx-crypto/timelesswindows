@@ -22,6 +22,8 @@ export interface ExtractedLineItem {
   trimsType?: string;
   mdfRevealType?: string;
   customExtra?: number;
+  glassSpec?: string;
+  glassThicknessMm?: number;
 }
 
 export interface PdfExtractionResult {
@@ -110,6 +112,8 @@ function parseSupplierFormat(text: string, currency: 'GBP' | 'EUR'): ExtractedLi
     const qtyMatch = surrounding.match(/(\d+)\s+(\d+)[,.][-–]/);
     const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
 
+    const glassInfo = detectGlassSpec(preceding);
+
     items.push({
       itemRef,
       type,
@@ -119,6 +123,7 @@ function parseSupplierFormat(text: string, currency: 'GBP' | 'EUR'): ExtractedLi
       manufacturePrice: price,
       currency,
       supplier: '',
+      ...(glassInfo.spec ? { glassSpec: glassInfo.spec, glassThicknessMm: glassInfo.thickness } : {}),
     });
   }
 
@@ -158,6 +163,8 @@ function parseSupplierFormat(text: string, currency: 'GBP' | 'EUR'): ExtractedLi
       const type = detectWindowTypeFromContext(preceding);
       const itemRef = detectItemRef(preceding);
 
+      const glassInfo = detectGlassSpec(preceding);
+
       items.push({
         itemRef,
         type,
@@ -167,6 +174,7 @@ function parseSupplierFormat(text: string, currency: 'GBP' | 'EUR'): ExtractedLi
         manufacturePrice: nearestPrice.price,
         currency,
         supplier: '',
+        ...(glassInfo.spec ? { glassSpec: glassInfo.spec, glassThicknessMm: glassInfo.thickness } : {}),
       });
 
       // Remove used price so it's not reused
@@ -214,6 +222,41 @@ function detectWindowTypeFromContext(text: string): string {
   }
 
   return 'Casement';
+}
+
+/**
+ * Detect glass specification from context text (field "4. Glass:" or similar).
+ * E.g. "4Tgh-6Ar-4TghLowE" → spec="4Tgh-6Ar-4TghLowE", thickness=14
+ */
+function detectGlassSpec(text: string): { spec: string; thickness: number } {
+  // Look for field "4." or "4. Glass" patterns
+  const glassMatches = [...text.matchAll(/4\.\s*(?:Glass\s*[:\-]?\s*)?(.+?)(?:\n|$)/gi)];
+  if (glassMatches.length > 0) {
+    const line = glassMatches[glassMatches.length - 1][1].trim();
+    // Extract glass spec pattern: digits followed by text, separated by dashes
+    // e.g. "4Tgh-6Ar-4TghLowE" or "6-16Ar-6LowE" or within parentheses
+    const specMatch = line.match(/\(?(\d+\w*(?:-\d+\w*)+)\)?/);
+    if (specMatch) {
+      const spec = specMatch[1];
+      const thickness = calcGlassThickness(spec);
+      if (thickness > 0) return { spec, thickness };
+    }
+  }
+  return { spec: '', thickness: 0 };
+}
+
+/**
+ * Calculate total glass thickness by summing leading numbers from dash-separated segments.
+ * E.g. "4Tgh-6Ar-4TghLowE" → 4+6+4 = 14
+ */
+function calcGlassThickness(spec: string): number {
+  const segments = spec.split('-');
+  let total = 0;
+  for (const seg of segments) {
+    const numMatch = seg.match(/^(\d+)/);
+    if (numMatch) total += parseInt(numMatch[1]);
+  }
+  return total;
 }
 
 function parseGenericFormat(text: string, currency: 'GBP' | 'EUR'): ExtractedLineItem[] {
