@@ -97,7 +97,7 @@ export function getItemSellingBreakdown(item: QuoteLineItem, settings: ProjectSe
     }
 
     // Making Good: LM (single formula) × rate
-    const mkgLm = calculateTypeLm('single', item.widthMm, item.heightMm);
+    const mkgLm = calculateLm(item.widthMm, item.heightMm);
     if (settings.includeInternalMakingGood) {
       b.internalMakingGood = mkgLm * (item.installationType === 'Internal'
         ? pricing.makingGoodSelling.intMkgInternal
@@ -160,7 +160,7 @@ export function getItemCostBreakdown(item: QuoteLineItem, settings: ProjectSetti
     }
 
     // Making Good cost: LM (single formula) × rate
-    const mkgLm = calculateTypeLm('single', item.widthMm, item.heightMm);
+    const mkgLm = calculateLm(item.widthMm, item.heightMm);
     if (settings.includeInternalMakingGood) {
       b.internalMakingGood = mkgLm * (item.installationType === 'Internal'
         ? pricing.makingGoodCost.intMkgInternal
