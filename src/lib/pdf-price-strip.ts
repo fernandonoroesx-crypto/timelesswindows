@@ -5,7 +5,6 @@ import { loadLogoAsUint8Array } from './logo';
 /* ── Company branding constants ─────────────────────────────── */
 const COMPANY_NAME = 'Timeless Windows Ltd';
 const COMPANY_ADDRESS = '2 New Kings Rd London SW6 4SA';
-// Logo is now loaded from the storage bucket via logo.ts
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -23,6 +22,14 @@ interface LineGroup {
   minX: number;
   maxX: number;
   y: number;
+  height: number;
+}
+
+interface RedactRegion {
+  page: number;
+  x: number;
+  y: number;
+  width: number;
   height: number;
 }
 
@@ -77,13 +84,35 @@ function isPriceHeader(text: string): boolean {
     t === 'total, gbp' ||
     t === 'price' ||
     t === 'total' ||
+    t === 'pricing' ||
     /^(price|total)\s*,\s*(eur|gbp|usd)$/i.test(t)
   );
 }
 
-function isCommentLine(text: string): boolean {
-  const t = text.trim();
-  return /^(comment|note|remark|kommentar|bemerkung|anmerkung)\s*[:：]/i.test(t);
+function isRedactableLine(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    /^(comment|note|remark|kommentar|bemerkung|anmerkung)\s*[:：]/i.test(t) ||
+    /all openings shown as/i.test(t) ||
+    /all prices excl/i.test(t) ||
+    /^pricing$/i.test(t) ||
+    /^pricing\s*$/i.test(t)
+  );
+}
+
+function isSummaryPriceLine(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    /total\s+excl\.?\s*vat/i.test(t) ||
+    /total\s+invoice/i.test(t) ||
+    /total\s+incl\.?\s*vat/i.test(t) ||
+    /subtotal/i.test(t) ||
+    /grand\s*total/i.test(t)
+  );
+}
+
+function isOrderNoPrefix(text: string): boolean {
+  return /^order\s*no\.?\s*:?\s*/i.test(text.trim());
 }
 
 function getDimensionRanges(text: string): Array<{ start: number; end: number }> {
@@ -113,7 +142,7 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
   const pricePatterns = [
     /[£€]\s*[\d\s.,]+[\d]/g,
     /[\d\s.,]+[\d]\s*[£€]/g,
-    /\d[\d\s.]*\d\s*[,.][-–—]/g,
+    /\d{1,6}\s*[,.][-–—]/g,
     /\d{1,3}([,.]\d{3})*[,.]\d{2}(?!\s*mm)/g,
     /(?<!\d)\d{2,6}\s*[,.][-–—]\s*$/gm,
     /(?<!\d)\d{2,6}\s*[,.][-–—]/g,
@@ -179,6 +208,28 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
   return result;
 }
 
+/* ── Fragment-level redact helper ───────────────────────────── */
+
+function redactFragments(
+  frags: TextFragment[],
+  pageIndex: number,
+  padding: number,
+  regions: RedactRegion[]
+) {
+  if (frags.length === 0) return;
+  const minX = Math.min(...frags.map(f => f.x));
+  const maxX = Math.max(...frags.map(f => f.x + f.width));
+  const minY = Math.min(...frags.map(f => f.y));
+  const maxHeight = Math.max(...frags.map(f => f.height));
+  regions.push({
+    page: pageIndex,
+    x: minX - padding,
+    y: minY - padding,
+    width: (maxX - minX) + padding * 2,
+    height: maxHeight + padding * 2,
+  });
+}
+
 /* ── Logo loader ────────────────────────────────────────────── */
 
 async function loadLogoPng(): Promise<Uint8Array> {
@@ -189,21 +240,18 @@ async function loadLogoPng(): Promise<Uint8Array> {
 
 /* ── Main export ────────────────────────────────────────────── */
 
-/**
- * Strip prices from a supplier PDF, add company logo and footer.
- * Returns the cleaned PDF as a base64 data URI string.
- */
 export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
   const copyForPdfJs = arrayBuffer.slice(0);
   const copyForPdfLib = arrayBuffer.slice(0);
 
-  // 1. Use pdfjs-dist to find price text coordinates
   const pdfJs = await pdfjsLib.getDocument({ data: new Uint8Array(copyForPdfJs) }).promise;
-  const priceRegions: Array<{ page: number; x: number; y: number; width: number; height: number }> = [];
+  const priceRegions: RedactRegion[] = [];
 
   for (let i = 1; i <= pdfJs.numPages; i++) {
     const page = await pdfJs.getPage(i);
     const content = await page.getTextContent();
+    const pageIndex = i - 1;
+    const padding = 4;
 
     const fragments: TextFragment[] = [];
     for (const item of content.items) {
@@ -221,12 +269,15 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       });
     }
 
+    // Track price column X-ranges from headers
+    const priceColumnRanges: Array<{ minX: number; maxX: number }> = [];
+
     // Check individual fragments for price column headers
     for (const frag of fragments) {
       if (isPriceHeader(frag.str)) {
-        const padding = 4;
+        priceColumnRanges.push({ minX: frag.x - padding, maxX: frag.x + frag.width + padding });
         priceRegions.push({
-          page: i - 1,
+          page: pageIndex,
           x: frag.x - padding,
           y: frag.y - padding,
           width: frag.width + padding * 2,
@@ -235,69 +286,76 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       }
     }
 
-    // Group into lines and find price spans
+    // Group into lines
     const lines = groupIntoLines(fragments);
 
     for (const line of lines) {
-      // Redact entire comment lines
-      if (isCommentLine(line.text)) {
-        const padding = 4;
-        priceRegions.push({
-          page: i - 1,
-          x: line.minX - padding,
-          y: line.y - padding,
-          width: (line.maxX - line.minX) + padding * 2,
-          height: line.height + padding * 2,
-        });
-        continue;
-      }
-
-      // Also check if the whole line is a price header
+      // Check line-level headers
       if (isPriceHeader(line.text)) {
-        const padding = 4;
-        priceRegions.push({
-          page: i - 1,
-          x: line.minX - padding,
-          y: line.y - padding,
-          width: (line.maxX - line.minX) + padding * 2,
-          height: line.height + padding * 2,
-        });
+        // Record column range from the line
+        priceColumnRanges.push({ minX: line.minX - padding, maxX: line.maxX + padding });
+        redactFragments(line.fragments, pageIndex, padding, priceRegions);
         continue;
       }
 
-      const spans = findPriceSpans(line);
+      // Redact entire redactable lines (comments, disclaimers, etc.)
+      if (isRedactableLine(line.text)) {
+        redactFragments(line.fragments, pageIndex, padding, priceRegions);
+        continue;
+      }
 
+      // Redact summary price lines entirely
+      if (isSummaryPriceLine(line.text)) {
+        redactFragments(line.fragments, pageIndex, padding, priceRegions);
+        continue;
+      }
+
+      // Redact "Order No." prefix only (keep the ref number)
+      if (isOrderNoPrefix(line.text)) {
+        const orderFrags = line.fragments.filter(f =>
+          /order|no\.?|:/i.test(f.str.trim())
+        );
+        if (orderFrags.length > 0) {
+          redactFragments(orderFrags, pageIndex, padding, priceRegions);
+        }
+      }
+
+      // Column-based redaction: if a fragment falls within a known price column X-range, redact it
+      if (priceColumnRanges.length > 0) {
+        for (const frag of line.fragments) {
+          const fragCenter = frag.x + frag.width / 2;
+          for (const col of priceColumnRanges) {
+            if (fragCenter >= col.minX && fragCenter <= col.maxX) {
+              priceRegions.push({
+                page: pageIndex,
+                x: frag.x - padding,
+                y: frag.y - padding,
+                width: frag.width + padding * 2,
+                height: frag.height + padding * 2,
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      // Regex-based price span detection (catches prices outside known columns)
+      const spans = findPriceSpans(line);
       for (const span of spans) {
         const matchedFrags = line.fragments.slice(span.startFrag, span.endFrag + 1);
-        if (matchedFrags.length === 0) continue;
-
-        const minX = Math.min(...matchedFrags.map(f => f.x));
-        const maxX = Math.max(...matchedFrags.map(f => f.x + f.width));
-        const minY = Math.min(...matchedFrags.map(f => f.y));
-        const maxHeight = Math.max(...matchedFrags.map(f => f.height));
-
-        const padding = 4;
-        priceRegions.push({
-          page: i - 1,
-          x: minX - padding,
-          y: minY - padding,
-          width: (maxX - minX) + padding * 2,
-          height: maxHeight + padding * 2,
-        });
+        redactFragments(matchedFrags, pageIndex, padding, priceRegions);
       }
     }
   }
 
-  // 2. Use pdf-lib to draw white rectangles + add branding
+  // Use pdf-lib to draw white rectangles + add branding
   const pdfDoc = await PDFDocument.load(copyForPdfLib);
   const pages = pdfDoc.getPages();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  // Redact price regions
   for (const region of priceRegions) {
     if (region.page >= pages.length) continue;
     const page = pages[region.page];
-
     page.drawRectangle({
       x: region.x,
       y: region.y,
@@ -307,14 +365,14 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     });
   }
 
-  // 3. Add logo to page 1
+  // Add logo to page 1
   try {
     const logoBytes = await loadLogoPng();
     const logoImage = await pdfDoc.embedPng(logoBytes);
     const firstPage = pages[0];
     const { width: pageW, height: pageH } = firstPage.getSize();
 
-    const logoW = 170; // ~60mm
+    const logoW = 170;
     const logoH = logoW * (logoImage.height / logoImage.width);
     const logoX = pageW - logoW - 30;
     const logoY = pageH - logoH - 20;
@@ -329,7 +387,7 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     console.warn('Could not embed logo in cleaned PDF:', err);
   }
 
-  // 4. Add footer to every page
+  // Add footer to every page
   const totalPages = pages.length;
   const footerFontSize = 8;
   const footerY = 25;
@@ -339,7 +397,6 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     const page = pages[pi];
     const { width: pageW } = page.getSize();
 
-    // Horizontal line
     page.drawLine({
       start: { x: 30, y: lineY },
       end: { x: pageW - 30, y: lineY },
@@ -347,7 +404,6 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       color: rgb(0.6, 0.6, 0.6),
     });
 
-    // Left: company name + address
     const footerText = `${COMPANY_NAME}  |  ${COMPANY_ADDRESS}`;
     page.drawText(footerText, {
       x: 30,
@@ -357,7 +413,6 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       color: rgb(0.3, 0.3, 0.3),
     });
 
-    // Right: page number
     const pageNumText = `${pi + 1} of ${totalPages}`;
     const pageNumWidth = font.widthOfTextAtSize(pageNumText, footerFontSize);
     page.drawText(pageNumText, {
@@ -374,9 +429,6 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
   return `data:application/pdf;base64,${base64}`;
 }
 
-/**
- * Convert a File to a base64 data URI string.
- */
 export async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
