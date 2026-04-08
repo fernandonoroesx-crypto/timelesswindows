@@ -67,8 +67,8 @@ export async function exportQuoteExcel(project: Project) {
   let rowNum = 5;
   for (const item of project.lineItems) {
     const sb = getItemSellingBreakdown(item, project.settings, pricing);
-    const extra1Val = item.extra1 !== 'none' ? (pricing.extras[item.extra1] || 0) : 0;
-    const extra2Val = item.extra2 !== 'none' ? (pricing.extras[item.extra2] || 0) : 0;
+    const extra1Val = item.extra1 !== 'none' ? (pricing.extrasSelling[item.extra1] || 0) : 0;
+    const extra2Val = item.extra2 !== 'none' ? (pricing.extrasSelling[item.extra2] || 0) : 0;
 
     const labour = sb.installation + sb.internalMakingGood + sb.externalMakingGood
       + sb.architrave + sb.trims + sb.mdfReveal;
