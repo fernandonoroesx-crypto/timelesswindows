@@ -3,7 +3,7 @@ import type { Project } from './types';
 import { getItemSellingBreakdown } from './pricing';
 import { getProjectPricing } from './context';
 
-const DARK_BLUE = 'FF2B3A67';
+const DARK_CHARCOAL = 'FF2D2D2D';
 const LIGHT_GREY = 'FFF2F2F2';
 const WHITE = 'FFFFFFFF';
 const BORDER_COLOR = 'FFD0D0D0';
@@ -17,20 +17,40 @@ const thinBorder: Partial<ExcelJS.Borders> = {
 
 const currencyFmt = '£#,##0.00';
 
+async function loadLogoForExcel(): Promise<ArrayBuffer | null> {
+  try {
+    const response = await fetch('/images/timeless-logo.png');
+    const blob = await response.blob();
+    return blob.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
 export async function exportQuoteExcel(project: Project) {
   const pricing = project.pricing || getProjectPricing(project);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('Quote Report');
 
+  // --- Logo (top-right) ---
+  const logoBuffer = await loadLogoForExcel();
+  if (logoBuffer) {
+    const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' });
+    ws.addImage(logoId, {
+      tl: { col: 8, row: 0 },
+      ext: { width: 280, height: 76 },
+    });
+  }
+
   // --- Project header ---
-  ws.mergeCells('A1:L1');
+  ws.mergeCells('A1:H1');
   const titleCell = ws.getCell('A1');
   titleCell.value = `${project.projectRef || 'Quote'} — ${project.client || 'Client'}`;
-  titleCell.font = { bold: true, size: 14, color: { argb: DARK_BLUE } };
+  titleCell.font = { bold: true, size: 14, color: { argb: DARK_CHARCOAL } };
   titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
-  ws.getRow(1).height = 28;
+  ws.getRow(1).height = 32;
 
-  ws.mergeCells('A2:L2');
+  ws.mergeCells('A2:H2');
   ws.getCell('A2').value = `Date: ${project.date || '—'}`;
   ws.getCell('A2').font = { size: 10, color: { argb: 'FF666666' } };
   ws.getRow(2).height = 18;
@@ -47,7 +67,7 @@ export async function exportQuoteExcel(project: Project) {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
     cell.font = { bold: true, size: 10, color: { argb: WHITE } };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_BLUE } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_CHARCOAL } };
     cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     cell.border = thinBorder;
   });
@@ -121,7 +141,7 @@ export async function exportQuoteExcel(project: Project) {
     cell.font = { bold: true, size: 10 };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_GREY } };
     cell.border = {
-      top: { style: 'medium', color: { argb: DARK_BLUE } },
+      top: { style: 'medium', color: { argb: DARK_CHARCOAL } },
       bottom: { style: 'thin', color: { argb: BORDER_COLOR } },
       left: { style: 'thin', color: { argb: BORDER_COLOR } },
       right: { style: 'thin', color: { argb: BORDER_COLOR } },
@@ -138,7 +158,7 @@ export async function exportQuoteExcel(project: Project) {
     const cell = summaryHeaderRow.getCell(i + 1);
     cell.value = h;
     cell.font = { bold: true, size: 10, color: { argb: WHITE } };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_BLUE } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_CHARCOAL } };
     cell.alignment = { horizontal: i === 0 ? 'left' : 'center' };
     cell.border = thinBorder;
   });
@@ -178,7 +198,7 @@ export async function exportQuoteExcel(project: Project) {
   grandTotalRow.getCell(4).font = { bold: true, size: 12 };
   grandTotalRow.getCell(4).alignment = { horizontal: 'center' };
   for (let c = 1; c <= 4; c++) {
-    grandTotalRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_BLUE } };
+    grandTotalRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_CHARCOAL } };
     grandTotalRow.getCell(c).font = { bold: true, size: 12, color: { argb: WHITE } };
     grandTotalRow.getCell(c).border = thinBorder;
   }

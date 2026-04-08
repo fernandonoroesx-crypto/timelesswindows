@@ -6,7 +6,7 @@ import { getProjectPricing } from './context';
 
 async function loadLogoBase64(): Promise<string | null> {
   try {
-    const response = await fetch('/images/timeless-logo.jpg');
+    const response = await fetch('/images/timeless-logo.png');
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -66,7 +66,7 @@ export async function exportQuotePdf(project: Project, clientAddress?: string) {
     // Logo aspect ratio ~3.7:1, render at ~60mm wide
     const logoW = 60;
     const logoH = logoW / 3.7;
-    doc.addImage(logoData, 'JPEG', pageWidth - margin - logoW, companyY, logoW, logoH);
+    doc.addImage(logoData, 'PNG', pageWidth - margin - logoW, companyY, logoW, logoH);
   } else {
     // Fallback to text if logo fails to load
     doc.setFontSize(28);
@@ -265,7 +265,7 @@ export async function exportInstallationPdf(project: Project) {
   if (logoData) {
     const logoW = 60;
     const logoH = logoW / 3.7;
-    doc.addImage(logoData, 'JPEG', pageWidth - margin - logoW, 14, logoW, logoH);
+    doc.addImage(logoData, 'PNG', pageWidth - margin - logoW, 14, logoW, logoH);
   }
 
   doc.setFontSize(14);
