@@ -1,16 +1,31 @@
 
 
-## Plan: Show Original Supplier PDF in a Viewer Instead of Downloading
+## Plan: Add Logo to Excel & PDF Exports, Change Excel Colour Scheme
 
 ### What changes
-Replace the "Supplier PDF (Original)" dropdown item's download behavior with opening an in-app PDF viewer dialog. The base64 data URI is already stored — we just need to display it in an `<iframe>` inside a dialog instead of triggering a download.
+1. Copy the uploaded high-quality PNG logo into the project
+2. Add the logo to the top-right of the Excel quote report
+3. Update the PDF export to use the new PNG logo instead of the existing JPG
+4. Change the Excel colour scheme from dark blue to grey/black
 
-### Changes in `src/pages/QuoteBuilder.tsx`
+### Changes
 
-1. Add state: `const [showOriginalPdf, setShowOriginalPdf] = useState(false)`
-2. Change the "Supplier PDF (Original)" dropdown item to set `showOriginalPdf(true)` instead of creating a download link
-3. Add a `<Dialog>` at the bottom of the component with a full-size `<iframe>` that renders the base64 PDF data URI, with a title showing the file name
+**1. Copy logo (`public/images/timeless-logo.png`)**
+- Replace the existing file with the uploaded high-quality version using `lov-copy user-uploads://logo.png public/images/timeless-logo.png`
+
+**2. Excel export (`src/lib/excel-export.ts`)**
+- Change colour constants: `DARK_BLUE` → dark charcoal (`FF2D2D2D`), update title font colour to black
+- Add a `loadLogoForExcel()` function that fetches `/images/timeless-logo.png` and converts to an ArrayBuffer
+- Insert the logo image into the worksheet at the top-right area (around columns I-L, row 1) using `ws.addImage()` and `ws.addImage()` placement
+- Adjust header row height to accommodate the logo
+- Update summary header and grand total row colours to use the new charcoal/grey scheme
+
+**3. PDF export (`src/lib/pdf-export.ts`)**
+- Update `loadLogoBase64()` to fetch `/images/timeless-logo.png` instead of the JPG
+- Change `addImage` format from `'JPEG'` to `'PNG'` for higher quality rendering
 
 ### Files modified
-- `src/pages/QuoteBuilder.tsx` — replace download with viewer dialog (~15 lines added)
+- `public/images/timeless-logo.png` — replaced with uploaded high-quality logo
+- `src/lib/excel-export.ts` — add logo, change colours to grey/black
+- `src/lib/pdf-export.ts` — use PNG logo
 
