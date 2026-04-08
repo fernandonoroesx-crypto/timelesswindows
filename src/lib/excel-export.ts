@@ -27,7 +27,7 @@ export async function exportQuoteExcel(project: Project) {
   const ws = wb.addWorksheet('Quote Report');
 
   // --- Logo (top-right) ---
-  const logoBuffer = await loadLogoForExcel();
+  const logoBuffer = await loadLogoAsArrayBuffer();
   if (logoBuffer) {
     const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' });
     ws.addImage(logoId, {
