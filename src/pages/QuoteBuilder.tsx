@@ -604,6 +604,20 @@ export default function QuoteBuilder() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Original Supplier PDF Viewer */}
+      <Dialog open={showOriginalPdf} onOpenChange={setShowOriginalPdf}>
+        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{project.supplierPdfName || 'Supplier PDF'}</DialogTitle>
+          </DialogHeader>
+          <iframe
+            src={project.supplierPdfOriginal || ''}
+            className="flex-1 w-full rounded border"
+            title="Original Supplier PDF"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
