@@ -293,7 +293,7 @@ export async function exportInstallationPdf(project: Project) {
       const extraParts: string[] = [];
       if (item.extra1 !== 'none') extraParts.push(item.extra1);
       if (item.extra2 !== 'none') extraParts.push(item.extra2);
-      if (item.customExtra > 0) extraParts.push(`Custom (${formatCurrency(item.customExtra)})`);
+      if (item.customExtra > 0) extraParts.push(item.customExtraDesc || 'Custom Extra');
       const extrasDesc = extraParts.length > 0 ? extraParts.join(', ') : '—';
 
       return [

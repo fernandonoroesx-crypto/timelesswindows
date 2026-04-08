@@ -131,6 +131,8 @@ export function createNewLineItem(): QuoteLineItem {
     extra1: 'none',
     extra2: 'none',
     customExtra: 0,
+    customExtraDesc: '',
+    customExtraCost: 0,
   };
 }
 
