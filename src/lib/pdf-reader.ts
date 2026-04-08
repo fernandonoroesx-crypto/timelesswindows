@@ -15,6 +15,13 @@ export interface ExtractedLineItem {
   manufacturePrice: number;
   currency: 'GBP' | 'EUR';
   supplier: string;
+  uplift?: number;
+  installationType?: 'Internal' | 'External';
+  installationOverride?: number;
+  architraveType?: string;
+  trimsType?: string;
+  mdfRevealType?: string;
+  customExtra?: number;
 }
 
 export interface PdfExtractionResult {
