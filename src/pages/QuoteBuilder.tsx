@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { exportQuotePdf, exportInstallationPdf } from '@/lib/pdf-export';
 import { exportQuoteExcel } from '@/lib/excel-export';
 
-import PdfImportDialog from '@/components/PdfImportDialog';
+import FileImportDialog from '@/components/PdfImportDialog';
 import BossAiDialog from '@/components/BossAiDialog';
 
 const WINDOW_TYPES: WindowType[] = [
@@ -441,7 +441,7 @@ export default function QuoteBuilder() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-lg font-semibold">Line Items</h2>
               <div className="flex gap-2">
-                <PdfImportDialog
+                <FileImportDialog
                   projectRef={project.projectRef}
                   existingCount={project.lineItems.length}
                   onImport={(items) => updateProject({ lineItems: [...project.lineItems, ...items] })}

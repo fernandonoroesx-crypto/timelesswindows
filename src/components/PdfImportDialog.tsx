@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileUp, Trash2, Check, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractPdfText, type ExtractedLineItem } from '@/lib/pdf-reader';
+import { extractExcelItems } from '@/lib/excel-reader';
 import type { QuoteLineItem, WindowType } from '@/lib/types';
 
 const WINDOW_TYPES: WindowType[] = [
@@ -23,7 +24,7 @@ interface PdfImportDialogProps {
   onPdfFiles?: (original: string, clean: string, fileName: string) => void;
 }
 
-export default function PdfImportDialog({ projectRef, existingCount, onImport, onPdfFiles }: PdfImportDialogProps) {
+export default function FileImportDialog({ projectRef, existingCount, onImport, onPdfFiles }: PdfImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rawText, setRawText] = useState('');
@@ -34,8 +35,13 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      toast.error('Please upload a PDF file');
+
+    const ext = file.name.toLowerCase().split('.').pop();
+    const isPdf = ext === 'pdf';
+    const isExcel = ext === 'xlsx' || ext === 'xls';
+
+    if (!isPdf && !isExcel) {
+      toast.error('Please upload a PDF or Excel file');
       return;
     }
 
@@ -43,22 +49,29 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
     setFileName(file.name);
 
     try {
-      const result = await extractPdfText(file);
+      let result;
+
+      if (isPdf) {
+        result = await extractPdfText(file);
+
+        // Generate original + cleaned PDFs
+        if (onPdfFiles) {
+          const original = await fileToBase64(file);
+          let clean = '';
+          try {
+            const ab = await file.arrayBuffer();
+            clean = await stripPricesFromPdf(ab);
+          } catch (pdfErr) {
+            console.error('PDF price strip error:', pdfErr);
+          }
+          onPdfFiles(original, clean, file.name);
+        }
+      } else {
+        result = await extractExcelItems(file);
+      }
+
       setRawText(result.rawText);
       setExtractedItems(result.items);
-
-      // Generate original + cleaned PDFs
-      if (onPdfFiles) {
-        const original = await fileToBase64(file);
-        let clean = '';
-        try {
-          const ab = await file.arrayBuffer();
-          clean = await stripPricesFromPdf(ab);
-        } catch (pdfErr) {
-          console.error('PDF price strip error:', pdfErr);
-        }
-        onPdfFiles(original, clean, file.name);
-      }
 
       if (result.items.length === 0) {
         toast.info('No line items auto-detected. Check the raw text tab to manually identify items.');
@@ -66,8 +79,8 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
         toast.success(`Found ${result.items.length} potential item(s)`);
       }
     } catch (err) {
-      console.error('PDF extraction error:', err);
-      toast.error('Failed to read PDF. The file may be encrypted or corrupted.');
+      console.error('File extraction error:', err);
+      toast.error('Failed to read file. It may be encrypted or corrupted.');
     } finally {
       setLoading(false);
     }
@@ -123,13 +136,13 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <FileUp className="w-4 h-4 mr-2" /> Import PDF
+          <FileUp className="w-4 h-4 mr-2" /> Import File
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" /> Import Items from PDF
+            <FileText className="w-5 h-5" /> Import Items from File
           </DialogTitle>
         </DialogHeader>
 
@@ -137,7 +150,7 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
         <div className="border-2 border-dashed rounded-lg p-6 text-center">
           {loading ? (
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Loader2 className="w-5 h-5 animate-spin" /> Reading PDF...
+              <Loader2 className="w-5 h-5 animate-spin" /> Reading file...
             </div>
           ) : fileName ? (
             <div className="flex items-center justify-center gap-3">
@@ -147,11 +160,11 @@ export default function PdfImportDialog({ projectRef, existingCount, onImport, o
             </div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground mb-3">Upload a supplier PDF to extract line items</p>
+              <p className="text-sm text-muted-foreground mb-3">Upload a supplier PDF or Excel file to extract line items</p>
               <Input
                 ref={fileRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.xlsx,.xls"
                 onChange={handleFile}
                 className="max-w-xs mx-auto"
               />
