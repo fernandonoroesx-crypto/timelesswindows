@@ -65,11 +65,6 @@ function buildLineGroup(fragments: TextFragment[]): LineGroup {
 
 /* ── Detection helpers ──────────────────────────────────────── */
 
-function isDimension(str: string): boolean {
-  return /\d+\s*[xX×]\s*\d+/.test(str) || /\d+\s*mm/i.test(str);
-}
-
-/** Check if a fragment or line contains price-related column headers */
 function isPriceHeader(text: string): boolean {
   const t = text.trim().toLowerCase();
   return (
@@ -85,13 +80,34 @@ function isPriceHeader(text: string): boolean {
   );
 }
 
-/**
- * Find price spans within a line's concatenated text and map them back to fragment indices.
- */
+function isCommentLine(text: string): boolean {
+  const t = text.trim();
+  return /^(comment|note|remark|kommentar|bemerkung|anmerkung)\s*[:：]/i.test(t);
+}
+
+function getDimensionRanges(text: string): Array<{ start: number; end: number }> {
+  const ranges: Array<{ start: number; end: number }> = [];
+  const dimPatterns = [
+    /\d+\s*[xX×]\s*\d+\s*(mm)?/g,
+    /\d+\s*mm/gi,
+    /\d+[.,]\d+\s*m²/g,
+  ];
+  for (const p of dimPatterns) {
+    const re = new RegExp(p.source, p.flags);
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      ranges.push({ start: m.index, end: m.index + m[0].length });
+    }
+  }
+  return ranges;
+}
+
+function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
+  return a.start < b.end && b.start < a.end;
+}
+
 function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: number }> {
   const { text, fragments } = line;
-
-  if (isDimension(text)) return [];
 
   const pricePatterns = [
     /[£€]\s*[\d\s.,]+[\d]/g,
@@ -101,6 +117,8 @@ function findPriceSpans(line: LineGroup): Array<{ startFrag: number; endFrag: nu
     /(?<!\d)\d{2,6}\s*[,.][-–—]\s*$/gm,
     /(?<!\d)\d{2,6}\s*[,.][-–—]/g,
   ];
+
+  const dimRanges = getDimensionRanges(text);
 
   const spans: Array<{ start: number; end: number }> = [];
 
