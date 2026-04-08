@@ -1,27 +1,28 @@
 
 
-## Plan: Add Item Reference Field to Line Item Editor
+## Plan: Rename PDF Editor to PDF Options with Two Modes
 
 ### What it does
-Adds an editable "Item Ref" input field to the `LineItemCard` component so users can view and edit the reference when expanding a line item. The field will be pre-populated with the auto-generated reference but fully editable.
+Renames "PDF Editor" to "PDF Options" in the sidebar and page, then adds two selectable modes:
+1. **Remove Prices** — the existing functionality (upload PDF, strip prices via edge function, download clean PDF)
+2. **Extract to Excel** — upload a supplier PDF, extract all line item data (ref, type, qty, width, height, price, uplift, installation, etc.) using the existing `extractPdfText` from `pdf-reader.ts`, then export the extracted items as a downloadable `.xlsx` file
 
 ### Changes
 
-**`src/pages/QuoteBuilder.tsx`**
+**`src/components/AppLayout.tsx`**
+- Change nav label from `'PDF Editor'` to `'PDF Options'`
 
-In the `LineItemCard` component (around line 711), add a new field at the beginning of the grid — before the "Type" select:
-
-```
-<div>
-  <Label className="text-xs">Item Ref</Label>
-  <Input className="h-9 text-xs" value={item.itemRef}
-    onChange={e => onUpdate({ itemRef: e.target.value })}
-    placeholder="e.g. W01" />
-</div>
-```
-
-This places it as the first field in the edit form, making it prominent and easy to fill in when missing. The existing auto-generation on `addLineItem()` remains unchanged — this just lets users override or fill in the reference manually.
+**`src/pages/PdfEditorPage.tsx`** — rewrite with two-mode UI
+- Add a mode selector (tabs or radio) at top: "Remove Prices" | "Extract to Excel"
+- **Remove Prices mode**: keep existing upload + process + preview + download flow (unchanged logic)
+- **Extract to Excel mode**: 
+  - Same drag-and-drop upload area for PDF files
+  - On "Extract Data", call `extractPdfText(file)` from `pdf-reader.ts` to parse all line items
+  - Display extracted items in a preview table (Item Ref, Type, Qty, Width, Height, Price, Currency, Uplift, Installation)
+  - "Download Excel" button generates an `.xlsx` using the `xlsx` library (already in project) with all extracted columns
+  - Uses the same `ExtractedLineItem` interface so data is consistent with what the quote import produces
 
 ### Files modified
-- `src/pages/QuoteBuilder.tsx` — add Item Ref input to LineItemCard grid
+- `src/components/AppLayout.tsx` — rename nav label
+- `src/pages/PdfEditorPage.tsx` — add tabs for two modes, add Extract to Excel flow
 
