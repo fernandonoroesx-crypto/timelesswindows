@@ -710,6 +710,10 @@ function LineItemCard({
       {expanded && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-3 pt-3 border-t">
           <div>
+            <Label className="text-xs">Item Ref</Label>
+            <Input className="h-9 text-xs" value={item.itemRef} onChange={e => onUpdate({ itemRef: e.target.value })} placeholder="e.g. W01" />
+          </div>
+          <div>
             <Label className="text-xs">Type</Label>
             <Select value={item.type} onValueChange={(v: WindowType) => onUpdate({ type: v })}>
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
