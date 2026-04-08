@@ -238,6 +238,19 @@ export async function stripPricesFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
     const lines = groupIntoLines(fragments);
 
     for (const line of lines) {
+      // Redact entire comment lines
+      if (isCommentLine(line.text)) {
+        const padding = 4;
+        priceRegions.push({
+          page: i - 1,
+          x: line.minX - padding,
+          y: line.y - padding,
+          width: (line.maxX - line.minX) + padding * 2,
+          height: line.height + padding * 2,
+        });
+        continue;
+      }
+
       // Also check if the whole line is a price header
       if (isPriceHeader(line.text)) {
         const padding = 4;
