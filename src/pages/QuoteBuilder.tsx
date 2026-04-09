@@ -296,6 +296,11 @@ export default function QuoteBuilder() {
                 <Input type="number" min="0" max="100" step="0.5" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.mcdPercent || 0}
                   onChange={e => updateSettings('mcdPercent', parseFloat(e.target.value) || 0)} />
               </div>
+              <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-muted/30">
+                <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">EUR → GBP</Label>
+                <Input type="number" min="0" step="0.01" className="h-7 w-16 text-sm text-center border-0 bg-transparent p-0" value={project.settings.eurToGbpRate ?? 0.90}
+                  onChange={e => updateSettings('eurToGbpRate', parseFloat(e.target.value) || 0)} />
+              </div>
               {!project.settings.supplyOnly && (
                 <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-muted/30">
                   <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Est. Days</Label>
@@ -757,7 +762,7 @@ function LineItemCard({
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Price</Label>
+            <Label className="text-xs">Price ({item.manufactureCurrency})</Label>
             <Input type="number" step="0.01" className="h-9 text-xs" value={item.manufacturePrice} onChange={e => onUpdate({ manufacturePrice: parseFloat(e.target.value) || 0 })} />
           </div>
           <div>
