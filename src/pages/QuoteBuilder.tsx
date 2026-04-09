@@ -558,31 +558,80 @@ export default function QuoteBuilder() {
           </div>
         </TabsContent>
 
-        <TabsContent value="pricing">
-          <div className="elevated-card rounded-xl p-6">
-            {(() => {
-              const pm = clientPMs.find(p => p.id === project.projectManagerId);
-              const hasPmPricing = pm && pm.pricing;
-              return hasPmPricing ? (
-                <div className="flex items-center justify-between mb-4 p-3 rounded-lg border border-border bg-muted/50">
-                  <span className="text-sm text-muted-foreground">PM: <strong className="text-foreground">{pm.name}</strong></span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const pricing = normalizePricingData(pm.pricing || globalPricing);
-                      updateProject({ pricing });
-                      toast.success(`Applied rates from ${pm.name}`);
-                    }}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-1" />
-                    Apply PM Rates
-                  </Button>
-                </div>
-              ) : null;
-            })()}
-            <PricingEditor pricing={quotePricing} onUpdate={updatePricing} />
-          </div>
+        <TabsContent value="pricing" onFocusCapture={() => {
+          if (!draftPricing) setDraftPricing(JSON.parse(JSON.stringify(quotePricing)));
+        }}>
+          {(() => {
+            const activeDraft = draftPricing || quotePricing;
+            const hasChanges = draftPricing ? JSON.stringify(draftPricing) !== JSON.stringify(quotePricing) : false;
+            const updateDraft = (path: string, value: number | boolean) => {
+              setDraftPricing(prev => {
+                const p = JSON.parse(JSON.stringify(prev || quotePricing));
+                const keys = path.split('.');
+                let obj: any = p;
+                for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+                obj[keys[keys.length - 1]] = value;
+                return p;
+              });
+            };
+            return (
+              <div className="elevated-card rounded-xl p-6">
+                {(() => {
+                  const pm = clientPMs.find(p => p.id === project.projectManagerId);
+                  const hasPmPricing = pm && pm.pricing;
+                  return hasPmPricing ? (
+                    <div className="flex items-center justify-between mb-4 p-3 rounded-lg border border-border bg-muted/50">
+                      <span className="text-sm text-muted-foreground">PM: <strong className="text-foreground">{pm.name}</strong></span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const pricing = normalizePricingData(pm.pricing || globalPricing);
+                          setDraftPricing(pricing);
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        Apply PM Rates
+                      </Button>
+                    </div>
+                  ) : null;
+                })()}
+
+                {hasChanges && (
+                  <div className="flex items-center justify-between mb-4 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                    <span className="text-sm text-muted-foreground">You have unapplied pricing changes</span>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setDraftPricing(JSON.parse(JSON.stringify(quotePricing)))}>
+                        Discard
+                      </Button>
+                      <Button size="sm" onClick={() => {
+                        updateProject({ pricing: draftPricing! });
+                        toast.success('Pricing changes applied');
+                      }}>
+                        Apply Changes
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <PricingEditor pricing={activeDraft} onUpdate={updateDraft} />
+
+                {hasChanges && (
+                  <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
+                    <Button variant="outline" onClick={() => setDraftPricing(JSON.parse(JSON.stringify(quotePricing)))}>
+                      Discard
+                    </Button>
+                    <Button onClick={() => {
+                      updateProject({ pricing: draftPricing! });
+                      toast.success('Pricing changes applied');
+                    }}>
+                      Apply Changes
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </TabsContent>
 
       </Tabs>
