@@ -795,10 +795,10 @@ function LineItemCard({
               value={item.supplier || '__none__'}
               onValueChange={v => {
                 if (v === '__none__') {
-                  onUpdate({ supplier: '', manufactureCurrency: 'GBP' });
+                  onUpdate({ supplier: '', manufactureCurrency: 'EUR' });
                 } else {
                   const found = suppliers.find(s => s.name === v);
-                  onUpdate({ supplier: v, manufactureCurrency: found?.currency || 'GBP' });
+                  onUpdate({ supplier: v, manufactureCurrency: found?.currency || 'EUR' });
                 }
               }}
             >
