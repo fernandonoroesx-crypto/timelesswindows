@@ -1,24 +1,23 @@
 
 
-## Plan: Show Currency on Price Field and Add EUR→GBP Rate Input
+## Plan: Add Manual Currency Toggle to Line Items
 
-### What it does
-1. Shows the current currency next to the Price label in each line item (e.g. "Price (EUR)" or "Price (GBP)") so the user always knows which currency they are entering
-2. Adds an "EUR → GBP Rate" input field in the Quote Builder header settings area (next to MCD % and Est. Days) so the rate can be adjusted per quote
+### Current behavior
+The currency (EUR/GBP) is set **automatically** based on the selected supplier. If no supplier is chosen, it defaults to GBP. The conversion already works in the pricing engine — EUR prices are multiplied by the `eurToGbpRate` from the header settings.
+
+### What this adds
+A small **currency toggle** (EUR / GBP) next to the Price field on each line item, so you can manually set the currency regardless of supplier selection. When a supplier is selected, it still auto-sets the currency, but you can override it.
 
 ### Changes
 
 **`src/pages/QuoteBuilder.tsx`**
+1. Add a compact EUR/GBP toggle (Select dropdown or toggle group) next to the Price input, sharing the same row
+2. The toggle updates `item.manufactureCurrency` directly
+3. When a supplier is selected, currency still auto-fills but can be manually changed afterward
+4. The Price label continues showing the active currency: "Price (EUR)" or "Price (GBP)"
 
-1. **Price label** (~line 760): Change `"Price"` to dynamically show `Price (${item.manufactureCurrency})` so the currency is always visible
-
-2. **EUR→GBP Rate input** (~line 294, in the header settings bar next to MCD % and Est. Days): Add a new bordered input field:
-   - Label: "EUR → GBP"
-   - Number input bound to `project.settings.eurToGbpRate`
-   - Default value: 0.90
-   - Step: 0.01
-   - Same compact styling as the existing MCD % and Est. Days inputs
+No pricing engine changes needed — the conversion logic already exists and works correctly with the per-quote `eurToGbpRate`.
 
 ### Files modified
-- `src/pages/QuoteBuilder.tsx` — two small additions
+- `src/pages/QuoteBuilder.tsx` — add currency selector next to Price field
 
