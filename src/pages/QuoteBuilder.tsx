@@ -763,7 +763,16 @@ function LineItemCard({
           </div>
           <div>
             <Label className="text-xs">Price ({item.manufactureCurrency})</Label>
-            <Input type="number" step="0.01" className="h-9 text-xs" value={item.manufacturePrice} onChange={e => onUpdate({ manufacturePrice: parseFloat(e.target.value) || 0 })} />
+            <div className="flex gap-1">
+              <Input type="number" step="0.01" className="h-9 text-xs flex-1" value={item.manufacturePrice} onChange={e => onUpdate({ manufacturePrice: parseFloat(e.target.value) || 0 })} />
+              <Select value={item.manufactureCurrency} onValueChange={(v: 'GBP' | 'EUR') => onUpdate({ manufactureCurrency: v })}>
+                <SelectTrigger className="h-9 text-xs w-[70px] shrink-0"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
             <Label className="text-xs">Uplift</Label>
