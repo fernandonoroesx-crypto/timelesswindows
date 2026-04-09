@@ -45,6 +45,7 @@ export default function QuoteBuilder() {
   const [showCleanPdf, setShowCleanPdf] = useState(false);
   const [showWonConfirm, setShowWonConfirm] = useState(false);
   const hasInitializedPricing = useRef(!!currentProject);
+  const [draftPricing, setDraftPricing] = useState<PricingData | null>(null);
 
   useEffect(() => {
     if (currentProject) setProject(currentProject);
