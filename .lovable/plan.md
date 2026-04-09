@@ -1,23 +1,28 @@
 
 
-## Plan: Add Manual Currency Toggle to Line Items
+## Plan: Add "Apply" Button to Pricing Tab
 
-### Current behavior
-The currency (EUR/GBP) is set **automatically** based on the selected supplier. If no supplier is chosen, it defaults to GBP. The conversion already works in the pricing engine — EUR prices are multiplied by the `eurToGbpRate` from the header settings.
+### What it does
+When editing the Pricing table in a quote, changes are staged in a draft and only applied to all line items when the user clicks "Apply Changes". This prevents accidental recalculations while still allowing bulk rate adjustments. Individual item-level overrides (price, currency, uplift) continue to work immediately as they do now.
 
-### What this adds
-A small **currency toggle** (EUR / GBP) next to the Price field on each line item, so you can manually set the currency regardless of supplier selection. When a supplier is selected, it still auto-sets the currency, but you can override it.
+### How it works
+- Quote starts with default/PM rates (current behavior, unchanged)
+- Opening the Pricing tab creates a local draft copy of the pricing data
+- Edits in the pricing table only modify the draft — no live recalculation
+- "Apply Changes" button commits the draft to the project pricing and triggers recalculation
+- "Discard" button resets the draft back to current saved pricing
+- A subtle indicator shows when there are unapplied changes
 
 ### Changes
 
 **`src/pages/QuoteBuilder.tsx`**
-1. Add a compact EUR/GBP toggle (Select dropdown or toggle group) next to the Price input, sharing the same row
-2. The toggle updates `item.manufactureCurrency` directly
-3. When a supplier is selected, currency still auto-fills but can be manually changed afterward
-4. The Price label continues showing the active currency: "Price (EUR)" or "Price (GBP)"
-
-No pricing engine changes needed — the conversion logic already exists and works correctly with the per-quote `eurToGbpRate`.
+1. Add `draftPricing` state, initialized from `quotePricing` when the Pricing tab is opened
+2. Pass `draftPricing` + a draft updater to `PricingEditor` instead of the live pricing
+3. Add "Apply Changes" and "Discard" buttons below the PricingEditor
+4. "Apply" copies draft into project pricing via `updateProject`; "Discard" resets draft
+5. Disable "Apply" when draft matches current pricing (JSON comparison)
+6. Show a small "Unsaved changes" banner when draft differs
 
 ### Files modified
-- `src/pages/QuoteBuilder.tsx` — add currency selector next to Price field
+- `src/pages/QuoteBuilder.tsx`
 
