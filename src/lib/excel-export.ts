@@ -18,6 +18,100 @@ const thinBorder: Partial<ExcelJS.Borders> = {
 
 const currencyFmt = '£#,##0.00';
 
+export async function exportSimpleQuoteExcel(project: Project) {
+  const pricing = project.pricing || getProjectPricing(project);
+  const client = project.client || '';
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Quote Report');
+
+  const logoBuffer = await loadLogoAsArrayBuffer();
+  if (logoBuffer) {
+    const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' });
+    ws.addImage(logoId, { tl: { col: 6, row: 0 }, ext: { width: 160, height: 44 } });
+  }
+
+  ws.mergeCells('A1:F1');
+  const titleCell = ws.getCell('A1');
+  titleCell.value = `${project.projectRef || 'Quote'}${client ? ' — ' + client : ''}`;
+  titleCell.font = { bold: true, size: 14, color: { argb: DARK_CHARCOAL } };
+  titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
+  ws.getRow(1).height = 42.75;
+
+  ws.mergeCells('A2:F2');
+  ws.getCell('A2').value = `Date: ${project.date || '—'}`;
+  ws.getCell('A2').font = { size: 10, color: { argb: 'FF666666' } };
+  ws.getRow(2).height = 24;
+
+  const headers = ['Proj Ref', 'Item Ref', 'Qty', 'Type', 'Width (mm)', 'Height (mm)', 'Unit Total', 'Total'];
+  const currCols = [7, 8];
+  const leftCols = [1, 2, 4];
+
+  const headerRow = ws.getRow(4);
+  headers.forEach((h, i) => {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = h;
+    cell.font = { bold: true, size: 10, color: { argb: WHITE } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK_CHARCOAL } };
+    const hAlign = currCols.includes(i + 1) ? 'right' : (leftCols.includes(i + 1) ? 'left' : 'center');
+    cell.alignment = { horizontal: hAlign, vertical: 'middle', wrapText: true };
+  });
+  headerRow.height = 32;
+
+  ws.getColumn(1).width = 32.33;
+  ws.getColumn(2).width = 9;
+  ws.getColumn(4).width = 14.83;
+
+  let grandTotal = 0;
+  let totalQty = 0;
+  let rowNum = 5;
+  for (const item of project.lineItems) {
+    const sb = getItemSellingBreakdown(item, project.settings, pricing);
+    const values: (string | number)[] = [
+      project.projectRef, item.itemRef, item.qty, item.type, item.widthMm, item.heightMm,
+      sb.unitTotal, sb.total,
+    ];
+    const row = ws.getRow(rowNum);
+    values.forEach((v, i) => {
+      const cell = row.getCell(i + 1);
+      cell.value = v;
+      cell.font = { size: 11 };
+      const hAlign = currCols.includes(i + 1) ? 'right' : (leftCols.includes(i + 1) ? 'left' : 'center');
+      cell.alignment = { horizontal: hAlign, vertical: 'middle' };
+      if (currCols.includes(i + 1)) cell.numFmt = currencyFmt;
+    });
+    if ((rowNum - 5) % 2 === 1) {
+      for (let c = 1; c <= 8; c++) {
+        row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_GREY } };
+      }
+    }
+    grandTotal += sb.total;
+    totalQty += item.qty;
+    rowNum++;
+  }
+
+  const totalsRow = ws.getRow(rowNum);
+  const totalsValues: (string | number)[] = ['', 'TOTALS', totalQty, '', '', '', '', grandTotal];
+  totalsValues.forEach((v, i) => {
+    const cell = totalsRow.getCell(i + 1);
+    cell.value = v;
+    cell.font = { bold: true, size: 10 };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_GREY } };
+    const hAlign = currCols.includes(i + 1) ? 'right' : (leftCols.includes(i + 1) ? 'left' : 'center');
+    cell.alignment = { horizontal: hAlign, vertical: 'middle' };
+    if (currCols.includes(i + 1)) cell.numFmt = currencyFmt;
+  });
+  totalsRow.height = 16;
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${project.projectRef || 'Quote'}-Simple-Report.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // Columns that get currency formatting (1-indexed)
 const currCols = [7, 8, 9, 10, 11, 12];
 
