@@ -202,6 +202,12 @@ export default function QuoteBuilder() {
               }}>
                 Excel Quote
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={async () => {
+                await exportSimpleQuoteExcel(project);
+                toast.success('Simple Excel exported');
+              }}>
+                Simple Excel
+              </DropdownMenuItem>
               {project.supplierPdfOriginal && (
                 <DropdownMenuItem onClick={() => setShowOriginalPdf(true)}>
                   Supplier PDF (Original)
