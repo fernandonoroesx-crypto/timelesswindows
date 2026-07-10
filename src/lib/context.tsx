@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext, useCallback } from 'rea
 import type { Project, ProjectSettings, QuoteLineItem, Client, PricingData, Supplier, ManagedProject } from '@/lib/types';
 import { fetchClients, upsertClient, deleteClient as dbDeleteClient, fetchSuppliers, upsertSupplier, deleteSupplier as dbDeleteSupplier, fetchProjects, upsertProject, deleteProject as dbDeleteProject, fetchGlobalPricing, saveGlobalPricing, fetchManagedProjects, upsertManagedProject, deleteManagedProject as dbDeleteManagedProject } from '@/lib/database';
 import { normalizePricingData } from '@/lib/pricing-normalize';
+import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 
 export const DEFAULT_PRICING: PricingData = {
@@ -144,10 +145,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [managedProjects, setManagedProjects] = useState<ManagedProject[]>([]);
   const [globalPricing, setGlobalPricing] = useState<PricingData>(DEFAULT_PRICING);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Load all data from Supabase on mount
+  // Load all data from Supabase once the user is authenticated (RLS requires it)
   useEffect(() => {
-    const loadData = async () => {
+    if (!user) {
+      setClients([]);
+      setSuppliers([]);
+      setProjects([]);
+      setManagedProjects([]);
+      setGlobalPricing(DEFAULT_PRICING);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
       try {
         const [dbClients, dbSuppliers, dbProjects, dbPricing, dbManagedProjects] = await Promise.all([
           fetchClients(),
@@ -156,6 +169,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           fetchGlobalPricing(),
           fetchManagedProjects(),
         ]);
+        if (cancelled) return;
         setClients(dbClients);
         setSuppliers(dbSuppliers);
         setProjects(dbProjects);
@@ -165,11 +179,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to load data from cloud:', err);
         toast.error('Failed to load data from cloud');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
-    loadData();
-  }, []);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   // DB operations that also update local state
   const saveProjectToDb = useCallback(async (project: Project) => {
