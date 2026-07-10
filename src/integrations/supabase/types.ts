@@ -50,6 +50,30 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          role: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          role?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+        }
+        Relationships: []
+      }
       global_settings: {
         Row: {
           id: string
@@ -70,6 +94,66 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      labour_assignments: {
+        Row: {
+          client_name: string
+          created_at: string
+          employee_id: string
+          id: string
+          item_desc: string
+          kind: string
+          labour_amount: number
+          line_item_id: string | null
+          quote_id: string | null
+          quote_ref: string
+          unit_index: number | null
+          work_date: string
+        }
+        Insert: {
+          client_name?: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          item_desc?: string
+          kind?: string
+          labour_amount?: number
+          line_item_id?: string | null
+          quote_id?: string | null
+          quote_ref?: string
+          unit_index?: number | null
+          work_date: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          item_desc?: string
+          kind?: string
+          labour_amount?: number
+          line_item_id?: string | null
+          quote_id?: string | null
+          quote_ref?: string
+          unit_index?: number | null
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_assignments_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       managed_projects: {
         Row: {
