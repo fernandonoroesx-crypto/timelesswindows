@@ -163,6 +163,29 @@ export interface ManagedProject {
   updatedAt: string;
 }
 
+export interface Employee {
+  id: string;
+  name: string;
+  role: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface LabourAssignment {
+  id: string;
+  workDate: string; // YYYY-MM-DD
+  kind: 'item' | 'extra';
+  quoteId: string | null;
+  quoteRef: string;
+  clientName: string;
+  lineItemId: string | null; // null for kind 'extra'
+  unitIndex: number | null;  // null for kind 'extra'
+  itemDesc: string;
+  employeeId: string;
+  labourAmount: number; // this employee's share
+  createdAt: string;
+}
+
 export interface ArchitravePricing {
   single: number;
   baySide: number;

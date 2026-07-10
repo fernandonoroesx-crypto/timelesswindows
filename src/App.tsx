@@ -15,6 +15,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import LoginPage from "./pages/LoginPage";
 import PdfEditorPage from "./pages/PdfEditorPage";
+import LabourPage from "./pages/LabourPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ function AppRoutes() {
         {role !== 'field' && (
           <>
             <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/labour" element={<LabourPage />} />
             <Route path="/suppliers" element={<SuppliersPage />} />
             <Route path="/quotes" element={<QuotesList />} />
             <Route path="/quotes/new" element={<QuoteBuilder />} />
@@ -66,6 +68,7 @@ function AppRoutes() {
             <Route path="/suppliers" element={<Navigate to="/" replace />} />
             <Route path="/quotes" element={<Navigate to="/" replace />} />
             <Route path="/quotes/new" element={<Navigate to="/" replace />} />
+            <Route path="/labour" element={<Navigate to="/" replace />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />
           </>
         )}
