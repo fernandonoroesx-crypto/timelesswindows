@@ -54,6 +54,7 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          day_rate: number
           id: string
           name: string
           role: string
@@ -61,6 +62,7 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          day_rate?: number
           id?: string
           name: string
           role?: string
@@ -68,6 +70,7 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          day_rate?: number
           id?: string
           name?: string
           role?: string
