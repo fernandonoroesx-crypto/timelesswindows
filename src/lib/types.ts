@@ -167,6 +167,7 @@ export interface Employee {
   id: string;
   name: string;
   role: string;
+  dayRate: number;
   active: boolean;
   createdAt: string;
 }
@@ -174,7 +175,7 @@ export interface Employee {
 export interface LabourAssignment {
   id: string;
   workDate: string; // YYYY-MM-DD
-  kind: 'item' | 'extra';
+  kind: 'item' | 'extra' | 'day';
   quoteId: string | null;
   quoteRef: string;
   clientName: string;
@@ -183,6 +184,17 @@ export interface LabourAssignment {
   itemDesc: string;
   employeeId: string;
   labourAmount: number; // this employee's share
+  createdAt: string;
+}
+
+export interface LabourBooking {
+  id: string;
+  bookDate: string; // YYYY-MM-DD
+  quoteId: string | null;
+  quoteRef: string;
+  clientName: string;
+  employeeIds: string[];
+  note: string;
   createdAt: string;
 }
 
