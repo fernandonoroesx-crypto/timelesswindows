@@ -155,6 +155,47 @@ export type Database = {
           },
         ]
       }
+      labour_bookings: {
+        Row: {
+          book_date: string
+          client_name: string
+          created_at: string
+          employee_ids: string[]
+          id: string
+          note: string
+          quote_id: string | null
+          quote_ref: string
+        }
+        Insert: {
+          book_date: string
+          client_name?: string
+          created_at?: string
+          employee_ids?: string[]
+          id?: string
+          note?: string
+          quote_id?: string | null
+          quote_ref?: string
+        }
+        Update: {
+          book_date?: string
+          client_name?: string
+          created_at?: string
+          employee_ids?: string[]
+          id?: string
+          note?: string
+          quote_id?: string | null
+          quote_ref?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_bookings_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       managed_projects: {
         Row: {
           address: string
