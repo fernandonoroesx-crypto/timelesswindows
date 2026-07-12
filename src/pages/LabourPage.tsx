@@ -1072,7 +1072,7 @@ function LogWorkDialog({
 
   const fitterIds = [...fitters];
   const nFitters = fitterIds.length;
-  const payingIds = fitterIds.filter(id => !onDayRate.has(id));
+  const payingIds = fitterIds;
   const nPaying = payingIds.length;
 
   const chosenUnits = availableUnits.filter(u => selectedUnits.has(u.key));
@@ -1084,19 +1084,17 @@ function LogWorkDialog({
     employees.map(e => [
       e.id,
       onDayRate.has(e.id) ? 'already on day rate'
-      : paidItemsToday.has(e.id) ? 'paid items today'
       : e.dayRate ? gbp(e.dayRate * dayFraction)
       : 'no rate',
     ])
   );
   const dayDisabledIds = new Set(
     employees
-      .filter(e => !e.dayRate || onDayRate.has(e.id) || paidItemsToday.has(e.id))
+      .filter(e => !e.dayRate || onDayRate.has(e.id))
       .map(e => e.id)
   );
-  const itemChipAmounts = Object.fromEntries(
-    employees.filter(e => onDayRate.has(e.id)).map(e => [e.id, 'day rate — £0'])
-  );
+  const itemChipAmounts: Record<string, string> = {};
+
   const dayAmounts = selectedEmps.map(e => Math.round(e.dayRate * dayFraction * 100) / 100);
   const dayTotal = dayAmounts.reduce((s, v) => s + v, 0);
   const fittersMissingRate = mode === 'day' ? selectedEmps.filter(e => !e.dayRate) : [];
@@ -1125,8 +1123,7 @@ function LogWorkDialog({
       for (const u of chosenUnits) {
         const payingShares = splitEqually && nPaying > 0 ? splitAmount(u.labour, nPaying) : [];
         let payIdx = 0;
-        const shares = fitterIds.map(id => {
-          if (onDayRate.has(id)) return 0; // day rate covers it
+        const shares = fitterIds.map(() => {
           if (!splitEqually) return u.labour;
           return nPaying > 0 ? payingShares[payIdx++] : 0;
         });
