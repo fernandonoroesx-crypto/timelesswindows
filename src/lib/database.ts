@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Client, Supplier, Project, PricingData, ManagedProject, Employee, LabourAssignment } from '@/lib/types';
+import type { Client, Supplier, Project, PricingData, ManagedProject, Employee, LabourAssignment, LabourBooking } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
 import { normalizePricingData } from '@/lib/pricing-normalize';
 
@@ -226,6 +226,7 @@ export async function fetchEmployees(): Promise<Employee[]> {
     id: row.id,
     name: row.name,
     role: row.role || '',
+    dayRate: Number(row.day_rate) || 0,
     active: row.active ?? true,
     createdAt: row.created_at,
   }));
@@ -236,6 +237,7 @@ export async function upsertEmployee(emp: Employee): Promise<void> {
     id: emp.id,
     name: emp.name,
     role: emp.role,
+    day_rate: emp.dayRate,
     active: emp.active,
   } as any);
   if (error) throw error;
@@ -257,7 +259,7 @@ export async function fetchLabourAssignments(): Promise<LabourAssignment[]> {
   return ((data as any[]) || []).map((row: any) => ({
     id: row.id,
     workDate: row.work_date,
-    kind: (row.kind as 'item' | 'extra') || 'item',
+    kind: (row.kind as 'item' | 'extra' | 'day') || 'item',
     quoteId: row.quote_id,
     quoteRef: row.quote_ref || '',
     clientName: row.client_name || '',
@@ -291,5 +293,43 @@ export async function insertLabourAssignments(assignments: LabourAssignment[]): 
 
 export async function deleteLabourAssignment(id: string): Promise<void> {
   const { error } = await supabase.from('labour_assignments' as any).delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ── Labour Bookings ──────────────────────────────────────
+
+export async function fetchLabourBookings(): Promise<LabourBooking[]> {
+  const { data, error } = await supabase
+    .from('labour_bookings' as any)
+    .select('*')
+    .order('book_date', { ascending: true });
+  if (error) throw error;
+  return ((data as any[]) || []).map((row: any) => ({
+    id: row.id,
+    bookDate: row.book_date,
+    quoteId: row.quote_id,
+    quoteRef: row.quote_ref || '',
+    clientName: row.client_name || '',
+    employeeIds: row.employee_ids || [],
+    note: row.note || '',
+    createdAt: row.created_at,
+  }));
+}
+
+export async function insertLabourBooking(b: LabourBooking): Promise<void> {
+  const { error } = await supabase.from('labour_bookings' as any).insert({
+    id: b.id,
+    book_date: b.bookDate,
+    quote_id: b.quoteId,
+    quote_ref: b.quoteRef,
+    client_name: b.clientName,
+    employee_ids: b.employeeIds,
+    note: b.note,
+  } as any);
+  if (error) throw error;
+}
+
+export async function deleteLabourBooking(id: string): Promise<void> {
+  const { error } = await supabase.from('labour_bookings' as any).delete().eq('id', id);
   if (error) throw error;
 }
