@@ -199,6 +199,41 @@ export type Database = {
           },
         ]
       }
+      labour_holidays: {
+        Row: {
+          created_at: string
+          employee_id: string
+          end_date: string
+          id: string
+          note: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          end_date: string
+          id?: string
+          note?: string
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          end_date?: string
+          id?: string
+          note?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_holidays_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       managed_projects: {
         Row: {
           address: string

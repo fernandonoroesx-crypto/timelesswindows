@@ -198,6 +198,15 @@ export interface LabourBooking {
   createdAt: string;
 }
 
+export interface LabourHoliday {
+  id: string;
+  employeeId: string;
+  startDate: string; // YYYY-MM-DD inclusive
+  endDate: string;   // YYYY-MM-DD inclusive
+  note: string;
+  createdAt: string;
+}
+
 export interface ArchitravePricing {
   single: number;
   baySide: number;
