@@ -1,0 +1,1 @@
+ALTER TABLE public.labour_assignments DROP CONSTRAINT labour_assignments_kind_check; ALTER TABLE public.labour_assignments ADD CONSTRAINT labour_assignments_kind_check CHECK (kind = ANY (ARRAY['item'::text, 'extra'::text, 'day'::text]));
