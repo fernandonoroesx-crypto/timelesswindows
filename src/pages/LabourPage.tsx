@@ -390,8 +390,8 @@ export default function LabourPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
+          <div className="grid gap-6 lg:grid-cols-4">
+            <Card className="lg:col-span-3">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-1">
@@ -409,7 +409,7 @@ export default function LabourPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-7 text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                <div className="grid grid-cols-7 text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
                   {DOW.map(d => <div key={d} className="text-center py-1">{d}</div>)}
                 </div>
                 <div className="grid grid-cols-7 gap-1">
@@ -442,28 +442,28 @@ export default function LabourPage() {
                       <button
                         key={key}
                         onClick={() => setSelectedDay(key)}
-                        className={`min-h-16 rounded-md border p-1 text-left flex flex-col gap-0.5 transition-colors ${
+                        className={`min-h-24 sm:min-h-28 rounded-md border p-1.5 text-left flex flex-col gap-1 transition-colors ${
                           selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
                         }`}
                       >
-                        <span className={`text-xs font-semibold ${key === todayKey ? 'text-primary' : 'text-muted-foreground'}`}>
+                        <span className={`text-sm font-semibold ${key === todayKey ? 'text-primary' : 'text-muted-foreground'}`}>
                           {d.getDate()}
                         </span>
                         <span className="mt-auto flex flex-col gap-0.5 items-start">
                           {cellHolidayNames.length > 0 && (
-                            <span className="text-[10px] leading-tight bg-rose-50 text-rose-700 border border-rose-200 rounded px-1 py-0.5 max-w-full truncate">
+                            <span className="text-[11px] leading-snug bg-rose-50 text-rose-700 border border-rose-200 rounded px-1 py-0.5 max-w-full truncate">
                               🌴 {displayMode === 'fitters'
                                 ? cellHolidayNames.slice(0, 2).join(', ') + (cellHolidayNames.length > 2 ? ` +${cellHolidayNames.length - 2}` : '')
                                 : `${cellHolidayNames.length} away`}
                             </span>
                           )}
                           {booked.length > 0 && (
-                            <span className="text-[10px] leading-tight border border-dashed border-amber-500 text-amber-700 bg-amber-50 rounded px-1 py-0.5 max-w-full truncate">
+                            <span className="text-[11px] leading-snug border border-dashed border-amber-500 text-amber-700 bg-amber-50 rounded px-1 py-0.5 max-w-full truncate">
                               {bookedLabel}
                             </span>
                           )}
                           {list.length > 0 && (
-                            <span className="text-[10px] leading-tight bg-primary text-primary-foreground rounded px-1 py-0.5 max-w-full truncate">
+                            <span className="text-[11px] leading-snug bg-primary text-primary-foreground rounded px-1 py-0.5 max-w-full truncate">
                               {loggedLabel}
                             </span>
                           )}
@@ -1258,40 +1258,38 @@ function LogWorkDialog({
   onClose: () => void;
   onSave: (assignments: LabourAssignment[]) => void;
 }) {
-  // Day-rate rule: a fitter on day work gets nothing from windows that
-  // day (rate covers it), and can't go on day rate after earning from items.
+  const [mode, setMode] = useState<'install' | 'extra'>('install');
+  // How the crew is paid for this install: by the item allocation, or a day rate
+  const [payMode, setPayMode] = useState<'items' | 'day'>('items');
+  const [dayFraction, setDayFraction] = useState<1 | 0.5>(1);
+
+  const [search, setSearch] = useState('');
+  const [quoteId, setQuoteId] = useState('');
+  const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
+  const [fitters, setFitters] = useState<Set<string>>(new Set());
+  const [splitEqually, setSplitEqually] = useState(true);
+
+  const [extraDesc, setExtraDesc] = useState('');
+  const [extraAmount, setExtraAmount] = useState('');
+  const [linkQuote, setLinkQuote] = useState(false);
+
+  // Same-day rules: a fitter already on day rate today can't be paid twice,
+  // and a fitter already paid per item can't switch to a day rate.
   const onDayRate = useMemo(
     () => new Set(sameDay.filter(a => a.kind === 'day').map(a => a.employeeId)),
     [sameDay]);
   const paidItemsToday = useMemo(
     () => new Set(sameDay.filter(a => a.kind === 'item' && a.labourAmount > 0).map(a => a.employeeId)),
     [sameDay]);
-  const [mode, setMode] = useState<'items' | 'extra' | 'day'>('items');
-  const [dayFraction, setDayFraction] = useState<1 | 0.5>(1);
 
-  // shared
-  const [fitters, setFitters] = useState<Set<string>>(new Set());
-  const [splitEqually, setSplitEqually] = useState(true);
-
-  // quote picker (searchable)
-  const [search, setSearch] = useState('');
-  const [quoteId, setQuoteId] = useState('');
   const quote = quotes.find(q => q.id === quoteId);
-
-  // items mode
-  const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
-
-  // extra mode
-  const [extraDesc, setExtraDesc] = useState('');
-  const [extraAmount, setExtraAmount] = useState('');
-  const [linkQuote, setLinkQuote] = useState(false);
+  const dayPay = mode === 'install' && payMode === 'day';
 
   const filteredQuotes = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return quotes;
-    return quotes.filter(p =>
-      p.projectRef.toLowerCase().includes(q) || (p.client || '').toLowerCase().includes(q)
-    );
+    const s = search.trim().toLowerCase();
+    if (!s) return quotes;
+    return quotes.filter(q =>
+      q.projectRef.toLowerCase().includes(s) || (q.client || '').toLowerCase().includes(s));
   }, [quotes, search]);
 
   const availableUnits: UnitKeyed[] = useMemo(() => {
@@ -1328,118 +1326,117 @@ function LogWorkDialog({
       return next;
     });
 
-  // fitters on holiday can never be credited, whatever tab selected them
+  // A fitter on holiday can never be credited, whichever tab selected them.
   const fitterIds = [...fitters].filter(id => !holidayIds.has(id));
   const nFitters = fitterIds.length;
-  const payingIds = fitterIds.filter(id => !onDayRate.has(id));
+
+  // Who is ineligible, and why — drives the greyed-out chips and their labels.
+  const disabledReason = (e: Employee): string | null => {
+    if (holidayIds.has(e.id)) return 'on holiday';
+    if (dayPay) {
+      if (onDayRate.has(e.id)) return 'already on day rate';
+      if (paidItemsToday.has(e.id)) return 'paid items today';
+      if (!e.dayRate) return 'no day rate';
+    }
+    return null;
+  };
+  const disabledIds = new Set(employees.filter(e => disabledReason(e) !== null).map(e => e.id));
+
+  const chipLabels: Record<string, string> = {};
+  employees.forEach(e => {
+    const reason = disabledReason(e);
+    if (reason) chipLabels[e.id] = reason;
+    else if (dayPay) chipLabels[e.id] = gbp(e.dayRate * dayFraction);
+    else if (mode === 'install' && onDayRate.has(e.id)) chipLabels[e.id] = 'day rate — £0';
+  });
+
+  const eligibleIds = fitterIds.filter(id => !disabledIds.has(id));
+  const eligibleEmps = employees.filter(e => eligibleIds.includes(e.id));
+
+  // Item-allocation payouts skip fitters already on a day rate today.
+  const payingIds = eligibleIds.filter(id => !onDayRate.has(id));
   const nPaying = payingIds.length;
 
   const chosenUnits = availableUnits.filter(u => selectedUnits.has(u.key));
   const itemsTotal = chosenUnits.reduce((s, u) => s + u.labour, 0);
   const extraAmountNum = Math.round((parseFloat(extraAmount) || 0) * 100) / 100;
+  const dayTotal = eligibleEmps.reduce((s, e) => s + Math.round(e.dayRate * dayFraction * 100) / 100, 0);
 
-  const selectedEmps = employees.filter(e => fitterIds.includes(e.id));
-  const dayChipAmounts = Object.fromEntries(
-    employees.map(e => [
-      e.id,
-      holidayIds.has(e.id) ? 'on holiday'
-      : onDayRate.has(e.id) ? 'already on day rate'
-      : paidItemsToday.has(e.id) ? 'paid items today'
-      : e.dayRate ? gbp(e.dayRate * dayFraction)
-      : 'no rate',
-    ])
-  );
-  const dayDisabledIds = new Set(
-    employees
-      .filter(e => !e.dayRate || onDayRate.has(e.id) || paidItemsToday.has(e.id) || holidayIds.has(e.id))
-      .map(e => e.id)
-  );
-  const generalDisabledIds = new Set(employees.filter(e => holidayIds.has(e.id)).map(e => e.id));
-  const itemChipAmounts = Object.fromEntries(
-    employees.map(e => [
-      e.id,
-      holidayIds.has(e.id) ? 'on holiday'
-      : onDayRate.has(e.id) ? 'day rate — £0'
-      : undefined,
-    ]).filter(([, v]) => v !== undefined)
-  ) as Record<string, string>;
-  // only fitters actually eligible in day mode count toward day totals
-  // (fixes stale selections carried over from other tabs)
-  const effectiveDayEmps = selectedEmps.filter(e => !dayDisabledIds.has(e.id));
-  const dayTotal = effectiveDayEmps.reduce((s, e) => s + Math.round(e.dayRate * dayFraction * 100) / 100, 0);
-  const fittersMissingRate = mode === 'day' ? selectedEmps.filter(e => !e.dayRate) : [];
-
-  const itemsPayout = splitEqually ? (nPaying > 0 ? itemsTotal : 0) : itemsTotal * nPaying;
-  const workTotal = mode === 'items' ? itemsTotal : mode === 'extra' ? extraAmountNum : dayTotal;
   const payoutTotal =
-    mode === 'items' ? itemsPayout
-    : mode === 'day' ? dayTotal
-    : splitEqually ? workTotal
-    : workTotal * Math.max(1, nFitters);
+    mode === 'extra'
+      ? (splitEqually ? extraAmountNum : extraAmountNum * Math.max(1, nFitters))
+      : dayPay
+      ? dayTotal
+      : (splitEqually ? (nPaying > 0 ? itemsTotal : 0) : itemsTotal * nPaying);
 
   const canSave =
-    nFitters > 0 &&
-    (mode === 'items'
-      ? !!quote && chosenUnits.length > 0
-      : mode === 'extra'
+    eligibleIds.length > 0 &&
+    (mode === 'extra'
       ? extraDesc.trim().length > 0 && extraAmountNum > 0
-      : effectiveDayEmps.length > 0 && dayTotal > 0);
+      : dayPay
+      ? dayTotal > 0                                 // windows optional on a day-rate day
+      : !!quote && chosenUnits.length > 0);
 
   const save = () => {
     const now = new Date().toISOString();
     const records: LabourAssignment[] = [];
 
-    if (mode === 'items' && quote) {
-      for (const u of chosenUnits) {
-        const payingShares = splitEqually && nPaying > 0 ? splitAmount(u.labour, nPaying) : [];
-        let payIdx = 0;
-        const shares = fitterIds.map(id => {
-          if (onDayRate.has(id)) return 0; // day rate covers it
-          if (!splitEqually) return u.labour;
-          return nPaying > 0 ? payingShares[payIdx++] : 0;
-        });
-        fitterIds.forEach((empId, i) => {
+    if (mode === 'install') {
+      // Windows installed: on a day rate they carry no cost (£0), logged only
+      // so the units are marked installed and attributed to whoever fitted them.
+      if (quote) {
+        for (const u of chosenUnits) {
+          const payingShares = !dayPay && splitEqually && nPaying > 0 ? splitAmount(u.labour, nPaying) : [];
+          let payIdx = 0;
+          const shares = eligibleIds.map(id => {
+            if (dayPay || onDayRate.has(id)) return 0;
+            if (!splitEqually) return u.labour;
+            return nPaying > 0 ? payingShares[payIdx++] : 0;
+          });
+          eligibleIds.forEach((empId, i) => {
+            records.push({
+              id: crypto.randomUUID(),
+              workDate: date,
+              kind: 'item',
+              quoteId: quote.id,
+              quoteRef: quote.projectRef,
+              clientName: quote.client,
+              lineItemId: u.lineItemId,
+              unitIndex: u.unitIndex,
+              itemDesc: u.label,
+              employeeId: empId,
+              labourAmount: shares[i],
+              createdAt: now,
+            });
+          });
+        }
+      }
+      // The day rate itself: one paid record per fitter.
+      if (dayPay) {
+        const label = dayFraction === 1 ? 'Day work' : 'Half-day work';
+        eligibleEmps.forEach(e => {
           records.push({
             id: crypto.randomUUID(),
             workDate: date,
-            kind: 'item',
-            quoteId: quote.id,
-            quoteRef: quote.projectRef,
-            clientName: quote.client,
-            lineItemId: u.lineItemId,
-            unitIndex: u.unitIndex,
-            itemDesc: u.label,
-            employeeId: empId,
-            labourAmount: shares[i],
+            kind: 'day',
+            quoteId: quote?.id ?? null,
+            quoteRef: quote?.projectRef ?? '',
+            clientName: quote?.client ?? '',
+            lineItemId: null,
+            unitIndex: null,
+            itemDesc: label,
+            employeeId: e.id,
+            labourAmount: Math.round(e.dayRate * dayFraction * 100) / 100,
             createdAt: now,
           });
         });
       }
-    } else if (mode === 'day') {
-      const linked = linkQuote ? quote : undefined;
-      const label = dayFraction === 1 ? 'Day work' : 'Half-day work';
-      effectiveDayEmps.forEach(e => {
-        records.push({
-          id: crypto.randomUUID(),
-          workDate: date,
-          kind: 'day',
-          quoteId: linked?.id ?? null,
-          quoteRef: linked?.projectRef ?? '',
-          clientName: linked?.client ?? '',
-          lineItemId: null,
-          unitIndex: null,
-          itemDesc: label,
-          employeeId: e.id,
-          labourAmount: Math.round(e.dayRate * dayFraction * 100) / 100,
-          createdAt: now,
-        });
-      });
-    } else if (mode === 'extra') {
+    } else {
       const shares = splitEqually
-        ? splitAmount(extraAmountNum, nFitters)
-        : fitterIds.map(() => extraAmountNum);
+        ? splitAmount(extraAmountNum, eligibleIds.length)
+        : eligibleIds.map(() => extraAmountNum);
       const linked = linkQuote ? quote : undefined;
-      fitterIds.forEach((empId, i) => {
+      eligibleIds.forEach((empId, i) => {
         records.push({
           id: crypto.randomUUID(),
           workDate: date,
@@ -1461,16 +1458,12 @@ function LogWorkDialog({
 
   const quotePicker = (
     <div className="space-y-1.5">
-      <Label>{mode === 'items' ? 'Won quote' : 'Link to quote (optional)'}</Label>
+      <Label>{mode === 'install' ? (dayPay ? 'Job (optional)' : 'Won quote') : 'Link to quote (optional)'}</Label>
       {quote ? (
         <div className="flex items-center justify-between border rounded-md px-3 py-2 text-sm bg-primary/5 border-primary">
-          <span className="min-w-0 truncate font-medium">
-            {quote.projectRef} — {quote.client}
-          </span>
-          <Button
-            variant="ghost" size="sm" className="gap-1 shrink-0 h-7"
-            onClick={() => { setQuoteId(''); setSelectedUnits(new Set()); setSearch(''); }}
-          >
+          <span className="min-w-0 truncate font-medium">{quote.projectRef} — {quote.client}</span>
+          <Button variant="ghost" size="sm" className="gap-1 shrink-0 h-7"
+            onClick={() => { setQuoteId(''); setSelectedUnits(new Set()); setSearch(''); }}>
             <ArrowLeft className="w-3.5 h-3.5" /> Change
           </Button>
         </div>
@@ -1478,14 +1471,10 @@ function LogWorkDialog({
         <>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by quote ref or client…"
-              className="pl-8"
-            />
+            <Input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by quote ref or client…" className="pl-8" />
           </div>
-          <ul className="border rounded-md divide-y max-h-44 overflow-y-auto">
+          <ul className="border rounded-md divide-y max-h-40 overflow-y-auto">
             {filteredQuotes.length === 0 && (
               <li className="px-3 py-2 text-sm text-muted-foreground">
                 {quotes.length === 0 ? 'No won quotes yet.' : 'No quotes match your search.'}
@@ -1493,11 +1482,8 @@ function LogWorkDialog({
             )}
             {filteredQuotes.map(q => (
               <li key={q.id}>
-                <button
-                  type="button"
-                  onClick={() => { setQuoteId(q.id); setSelectedUnits(new Set()); }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
-                >
+                <button type="button" onClick={() => { setQuoteId(q.id); setSelectedUnits(new Set()); }}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors">
                   <span className="font-medium">{q.projectRef}</span>
                   <span className="text-muted-foreground"> — {q.client}</span>
                 </button>
@@ -1509,6 +1495,8 @@ function LogWorkDialog({
     </div>
   );
 
+  const awayNames = employees.filter(e => holidayIds.has(e.id)).map(e => e.name);
+
   return (
     <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -1518,16 +1506,16 @@ function LogWorkDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={v => { setMode(v as 'items' | 'extra' | 'day'); setFitters(new Set()); }}>
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="items">Quote items</TabsTrigger>
-            <TabsTrigger value="extra" className="gap-1"><Wrench className="w-3.5 h-3.5" /> Extra</TabsTrigger>
-            <TabsTrigger value="day" className="gap-1"><Sun className="w-3.5 h-3.5" /> Day work</TabsTrigger>
+        <Tabs value={mode} onValueChange={v => setMode(v as 'install' | 'extra')}>
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="install">Windows &amp; doors</TabsTrigger>
+            <TabsTrigger value="extra" className="gap-1.5"><Wrench className="w-3.5 h-3.5" /> Extra work</TabsTrigger>
           </TabsList>
 
-          {/* ITEMS MODE */}
-          <TabsContent value="items" className="space-y-4 mt-4">
+          {/* ── INSTALL: windows selected here, paid by item OR by day rate ── */}
+          <TabsContent value="install" className="space-y-4 mt-4">
             {quotePicker}
+
             {quote && (
               <div className="space-y-1.5">
                 <Label>Items installed ({availableUnits.length} remaining on this quote)</Label>
@@ -1536,20 +1524,24 @@ function LogWorkDialog({
                     Every unit on this quote has already been logged as installed.
                   </p>
                 ) : (
-                  <ul className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                  <ul className="space-y-1 max-h-44 overflow-y-auto pr-1">
                     {availableUnits.map(u => {
                       const isOn = selectedUnits.has(u.key);
                       return (
                         <li key={u.key}>
-                          <button
-                            type="button"
-                            onClick={() => toggleUnit(u.key)}
+                          <button type="button" onClick={() => toggleUnit(u.key)}
                             className={`w-full flex items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm text-left transition-colors ${
                               isOn ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                            }`}
-                          >
+                            }`}>
                             <span className="min-w-0 truncate">{u.label}</span>
-                            <span className="font-medium shrink-0">{gbp(u.labour)}</span>
+                            {dayPay ? (
+                              <span className="shrink-0 flex items-center gap-1.5">
+                                <span className="text-xs text-muted-foreground line-through">{gbp(u.labour)}</span>
+                                <span className="font-medium">£0.00</span>
+                              </span>
+                            ) : (
+                              <span className="font-medium shrink-0">{gbp(u.labour)}</span>
+                            )}
                           </button>
                         </li>
                       );
@@ -1558,98 +1550,94 @@ function LogWorkDialog({
                 )}
               </div>
             )}
+
+            {/* how the crew is paid for this install */}
+            <div className="space-y-1.5">
+              <Label>How is the crew paid?</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setPayMode('items')}
+                  className={`border rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    payMode === 'items' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+                  }`}>
+                  Item allocation
+                </button>
+                <button type="button" onClick={() => setPayMode('day')}
+                  className={`border rounded-md px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                    payMode === 'day' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+                  }`}>
+                  <Sun className="w-3.5 h-3.5" /> Day work
+                </button>
+              </div>
+
+              {dayPay && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="grid grid-cols-2 gap-2">
+                    {([[1, 'Full day'], [0.5, 'Half day']] as const).map(([frac, label]) => (
+                      <button key={label} type="button" onClick={() => setDayFraction(frac)}
+                        className={`border rounded-md px-3 py-1.5 text-sm transition-colors ${
+                          dayFraction === frac ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+                        }`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The windows carry no cost — each fitter is paid their fixed day rate
+                    (shown on their name below) instead of the item allocation.
+                  </p>
+                </div>
+              )}
+            </div>
           </TabsContent>
 
-          {/* EXTRA MODE */}
+          {/* ── EXTRA ── */}
           <TabsContent value="extra" className="space-y-4 mt-4">
             <div className="space-y-1.5">
               <Label>Description of the work</Label>
-              <Input
-                value={extraDesc}
-                onChange={e => setExtraDesc(e.target.value)}
-                placeholder="e.g. Rebuild rotten sub-frame, extra making good…"
-              />
+              <Input value={extraDesc} onChange={e => setExtraDesc(e.target.value)}
+                placeholder="e.g. Rebuild rotten sub-frame, extra making good…" />
             </div>
             <div className="space-y-1.5">
               <Label>Labour amount (£)</Label>
-              <Input
-                value={extraAmount}
-                onChange={e => setExtraAmount(e.target.value)}
-                placeholder="0.00"
-                inputMode="decimal"
-              />
+              <Input value={extraAmount} onChange={e => setExtraAmount(e.target.value)}
+                placeholder="0.00" inputMode="decimal" />
             </div>
             <div className="flex items-center gap-2">
-              <Switch checked={linkQuote} onCheckedChange={v => { setLinkQuote(v); if (!v) { setQuoteId(''); setSearch(''); } }} id="link-quote" />
+              <Switch checked={linkQuote} id="link-quote"
+                onCheckedChange={v => { setLinkQuote(v); if (!v) { setQuoteId(''); setSearch(''); } }} />
               <Label htmlFor="link-quote" className="cursor-pointer">Link this work to a quote</Label>
-            </div>
-            {linkQuote && quotePicker}
-          </TabsContent>
-
-          {/* DAY WORK MODE */}
-          <TabsContent value="day" className="space-y-4 mt-4">
-            <div className="space-y-1.5">
-              <Label>Duration</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {([[1, 'Full day'], [0.5, 'Half day']] as const).map(([frac, label]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setDayFraction(frac)}
-                    className={`border rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      dayFraction === frac ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Press a fitter's name below — the amount on the chip is their fixed pay for this {dayFraction === 0.5 ? 'half day' : 'day'}.
-            </p>
-            <div className="flex items-center gap-2">
-              <Switch checked={linkQuote} onCheckedChange={v => { setLinkQuote(v); if (!v) { setQuoteId(''); setSearch(''); } }} id="link-quote-day" />
-              <Label htmlFor="link-quote-day" className="cursor-pointer">Link this work to a quote</Label>
             </div>
             {linkQuote && quotePicker}
           </TabsContent>
         </Tabs>
 
-        {/* FITTERS (shared) */}
+        {/* ── FITTERS (shared) ── */}
         <div className="space-y-2 pt-1">
           <Label>Fitted by {nFitters > 1 ? `(${nFitters} fitters)` : ''}</Label>
           <FitterPicker
             employees={employees}
             selected={fitters}
             onToggle={toggleFitter}
-            amounts={mode === 'day' ? dayChipAmounts : itemChipAmounts}
-            disabledIds={mode === 'day' ? dayDisabledIds : generalDisabledIds}
+            amounts={chipLabels}
+            disabledIds={disabledIds}
           />
-          {mode !== 'day' && generalDisabledIds.size > 0 && (
-            <p className="text-xs text-destructive">
-              {employees.filter(e => generalDisabledIds.has(e.id)).map(e => e.name).join(', ')} —
-              on holiday this day, not available for work.
+          {awayNames.length > 0 && (
+            <p className="text-xs text-rose-600">
+              {awayNames.join(', ')} {awayNames.length === 1 ? 'is' : 'are'} on holiday this day and can't be assigned work.
             </p>
           )}
-          {mode === 'items' && fitterIds.some(id => onDayRate.has(id)) && (
+          {dayPay && disabledIds.size > awayNames.length && (
+            <p className="text-xs text-muted-foreground">
+              Greyed-out fitters have no day rate, are already on day rate today, or were already paid for items today.
+            </p>
+          )}
+          {mode === 'install' && !dayPay && eligibleIds.some(id => onDayRate.has(id)) && (
             <p className="text-xs text-muted-foreground">
               Fitters marked "day rate" are already paid for this day — the windows are logged
-              to them for the record, but at £0{nPaying > 0 ? '; the allocation goes to the other fitters' : ''}.
+              to them at £0{nPaying > 0 ? '; the allocation goes to the other fitters' : ''}.
             </p>
           )}
-          {mode === 'day' && fittersMissingRate.length > 0 && (
-            <p className="text-xs text-destructive">
-              Set a day rate for {fittersMissingRate.map(e => e.name).join(', ')} in the Team tab first.
-            </p>
-          )}
-          {mode === 'day' && dayDisabledIds.size > 0 && fittersMissingRate.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              Greyed-out fitters are on holiday, have no day rate, are already on day
-              rate today, or have already been paid for items today.
-            </p>
-          )}
-          {mode !== 'day' && nFitters > 1 && (
+          {!dayPay && nFitters > 1 && (
             <div className="flex items-center justify-between border rounded-md px-3 py-2">
               <div className="flex items-center gap-2">
                 <Switch checked={splitEqually} onCheckedChange={setSplitEqually} id="split-eq" />
@@ -1659,8 +1647,8 @@ function LogWorkDialog({
               </div>
               <span className="text-xs text-muted-foreground">
                 {splitEqually
-                  ? `≈ ${gbp(workTotal / nFitters)} each`
-                  : `${gbp(workTotal)} each`}
+                  ? `≈ ${gbp((mode === 'install' ? itemsTotal : extraAmountNum) / Math.max(1, nPaying || nFitters))} each`
+                  : 'full each'}
               </span>
             </div>
           )}
