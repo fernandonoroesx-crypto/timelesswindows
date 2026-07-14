@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '@/lib/context';
-import type { Employee, LabourAssignment, LabourBooking, Project, QuoteLineItem } from '@/lib/types';
+import type { Employee, LabourAssignment, LabourBooking, LabourHoliday, Project, QuoteLineItem } from '@/lib/types';
 import { getItemCostBreakdown } from '@/lib/pricing';
 import {
   fetchEmployees, upsertEmployee, deleteEmployee,
   fetchLabourAssignments, insertLabourAssignments, deleteLabourAssignment,
   fetchLabourBookings, insertLabourBooking, deleteLabourBooking,
+  fetchLabourHolidays, insertLabourHoliday, deleteLabourHoliday,
 } from '@/lib/database';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, Users, HardHat,
-  Search, Wrench, Check, ArrowLeft, Sun, CalendarPlus, Filter, X,
+  Search, Wrench, Check, ArrowLeft, Sun, CalendarPlus, Filter, X, Palmtree, AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -76,6 +77,7 @@ export default function LabourPage() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [bookings, setBookings] = useState<LabourBooking[]>([]);
+  const [holidays, setHolidays] = useState<LabourHoliday[]>([]);
 
   // calendar filters
   const [filterEmp, setFilterEmp] = useState<string>('all');
@@ -91,10 +93,11 @@ export default function LabourPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [emps, asgs, bks] = await Promise.all([fetchEmployees(), fetchLabourAssignments(), fetchLabourBookings()]);
+        const [emps, asgs, bks, hols] = await Promise.all([fetchEmployees(), fetchLabourAssignments(), fetchLabourBookings(), fetchLabourHolidays()]);
         setEmployees(emps);
         setAssignments(asgs);
         setBookings(bks);
+        setHolidays(hols);
       } catch (err) {
         console.error(err);
         toast.error('Failed to load labour data');
@@ -153,6 +156,14 @@ export default function LabourPage() {
     bookings.forEach(b => { if (b.quoteRef) set.add(b.quoteRef); });
     return [...set].sort();
   }, [assignments, bookings]);
+
+  const isOnHoliday = (empId: string, date: string) =>
+    holidays.some(h => h.employeeId === empId && h.startDate <= date && date <= h.endDate);
+
+  const holidayIdsForSelectedDay = useMemo(
+    () => new Set(employees.filter(e => isOnHoliday(e.id, selectedDay)).map(e => e.id)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [employees, holidays, selectedDay]);
 
   const reportRows = useMemo(() =>
     assignments
@@ -218,6 +229,28 @@ export default function LabourPage() {
     } catch (err) {
       console.error(err);
       toast.error('Failed to remove booking');
+    }
+  };
+
+  const handleAddHoliday = async (h: LabourHoliday) => {
+    try {
+      await insertLabourHoliday(h);
+      setHolidays(prev => [...prev, h].sort((a, b) => a.startDate.localeCompare(b.startDate)));
+      toast.success('Holiday scheduled');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to schedule holiday');
+    }
+  };
+
+  const handleRemoveHoliday = async (id: string) => {
+    try {
+      await deleteLabourHoliday(id);
+      setHolidays(prev => prev.filter(h => h.id !== id));
+      toast.success('Holiday removed');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to remove holiday');
     }
   };
 
@@ -314,6 +347,7 @@ export default function LabourPage() {
         <TabsList>
           <TabsTrigger value="calendar" className="gap-1.5"><CalendarDays className="w-4 h-4" /> Calendar</TabsTrigger>
           <TabsTrigger value="team" className="gap-1.5"><Users className="w-4 h-4" /> Team</TabsTrigger>
+          <TabsTrigger value="holidays" className="gap-1.5"><Palmtree className="w-4 h-4" /> Holidays</TabsTrigger>
         </TabsList>
 
         {/* ─────────── CALENDAR TAB ─────────── */}
@@ -395,6 +429,9 @@ export default function LabourPage() {
                       displayMode === 'money' ? `${list.length} · ${gbp(val)}`
                       : displayMode === 'ref' ? summarize(list.map(a => a.quoteRef || (a.kind === 'day' ? 'Day' : 'Extra')))
                       : summarize(list.map(a => empName(a.employeeId).split(' ')[0]));
+                    const cellHolidayNames = employees
+                      .filter(e => e.active && isOnHoliday(e.id, key))
+                      .map(e => e.name.split(' ')[0]);
                     const bookedLabel =
                       displayMode === 'fitters'
                         ? summarize(booked.flatMap(b => b.employeeIds.map(id => empName(id).split(' ')[0])))
@@ -413,6 +450,13 @@ export default function LabourPage() {
                           {d.getDate()}
                         </span>
                         <span className="mt-auto flex flex-col gap-0.5 items-start">
+                          {cellHolidayNames.length > 0 && (
+                            <span className="text-[10px] leading-tight bg-rose-50 text-rose-700 border border-rose-200 rounded px-1 py-0.5 max-w-full truncate">
+                              🌴 {displayMode === 'fitters'
+                                ? cellHolidayNames.slice(0, 2).join(', ') + (cellHolidayNames.length > 2 ? ` +${cellHolidayNames.length - 2}` : '')
+                                : `${cellHolidayNames.length} away`}
+                            </span>
+                          )}
                           {booked.length > 0 && (
                             <span className="text-[10px] leading-tight border border-dashed border-amber-500 text-amber-700 bg-amber-50 rounded px-1 py-0.5 max-w-full truncate">
                               {bookedLabel}
@@ -451,6 +495,14 @@ export default function LabourPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {holidayIdsForSelectedDay.size > 0 && (
+                  <div className="mb-3 flex items-start gap-2 text-xs bg-destructive/10 text-destructive rounded-md px-2.5 py-2">
+                    <Palmtree className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      On holiday today: {employees.filter(e => holidayIdsForSelectedDay.has(e.id)).map(e => e.name).join(', ')}
+                    </span>
+                  </div>
+                )}
                 {(bookingsByDay[selectedDay] || []).length > 0 && (
                   <div className="mb-3">
                     <div className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-1.5">Booked</div>
@@ -463,6 +515,12 @@ export default function LabourPage() {
                               {b.employeeIds.length > 0 && (
                                 <div className="text-xs text-muted-foreground truncate">
                                   Crew: {b.employeeIds.map(id => empName(id)).join(', ')}
+                                </div>
+                              )}
+                              {b.employeeIds.some(id => holidayIdsForSelectedDay.has(id)) && (
+                                <div className="text-xs text-destructive flex items-center gap-1">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  {b.employeeIds.filter(id => holidayIdsForSelectedDay.has(id)).map(id => empName(id)).join(', ')} now on holiday this day
                                 </div>
                               )}
                               {b.note && <div className="text-xs text-muted-foreground truncate">{b.note}</div>}
@@ -708,6 +766,141 @@ export default function LabourPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ─────────── HOLIDAYS TAB ─────────── */}
+        <TabsContent value="holidays" className="mt-4 space-y-6">
+          <ScheduleHolidayForm employees={employees} onAdd={handleAddHoliday} />
+
+          {/* Availability chart */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="font-heading text-lg">Team availability</CardTitle>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => nav(-1)} aria-label="Previous month">
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="font-heading font-semibold w-40 text-center">{MONTHS[viewMonth]} {viewYear}</span>
+                  <Button variant="ghost" size="icon" onClick={() => nav(1)} aria-label="Next month">
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-1">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-400 inline-block" /> Holiday</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-amber-400 inline-block" /> Booked</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-primary inline-block" /> Worked</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-muted inline-block border" /> Available</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {employees.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Add employees in the Team tab first.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="border-collapse text-xs">
+                    <thead>
+                      <tr>
+                        <th className="text-left pr-2 py-1 font-medium text-muted-foreground sticky left-0 bg-background">Employee</th>
+                        {Array.from({ length: daysInMonth }, (_, i) => {
+                          const d = new Date(viewYear, viewMonth, i + 1);
+                          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                          return (
+                            <th key={i} className={`w-6 text-center font-normal py-1 ${isWeekend ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
+                              {i + 1}
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {employees.filter(e => e.active).map(emp => (
+                        <tr key={emp.id}>
+                          <td className="pr-2 py-0.5 font-medium whitespace-nowrap sticky left-0 bg-background">{emp.name}</td>
+                          {Array.from({ length: daysInMonth }, (_, i) => {
+                            const d = new Date(viewYear, viewMonth, i + 1);
+                            const key = dateKey(d);
+                            const holiday = isOnHoliday(emp.id, key);
+                            const worked = assignments.some(a => a.employeeId === emp.id && a.workDate === key);
+                            const bookedDay = bookings.some(b => b.bookDate === key && b.employeeIds.includes(emp.id));
+                            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                            const cls = holiday ? 'bg-red-400'
+                              : worked ? 'bg-primary'
+                              : bookedDay ? 'bg-amber-400'
+                              : isWeekend ? 'bg-muted/40' : 'bg-muted';
+                            const title = `${emp.name} — ${key}: ${holiday ? 'On holiday' : worked ? 'Worked' : bookedDay ? 'Booked' : 'Available'}`;
+                            return (
+                              <td key={i} className="p-0.5">
+                                <button
+                                  type="button"
+                                  title={title}
+                                  onClick={() => { setSelectedDay(key); }}
+                                  className={`w-5 h-5 rounded-sm border border-background block ${cls}`}
+                                  aria-label={title}
+                                />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Scheduled holidays table */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-heading text-lg">Scheduled holidays</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {holidays.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No holidays scheduled.</p>
+              ) : (
+                <div className="border rounded-md overflow-x-auto">
+                  <Table className="text-sm [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:h-8 [&_td]:py-1.5">
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead>Employee</TableHead>
+                        <TableHead>From</TableHead>
+                        <TableHead>To</TableHead>
+                        <TableHead className="text-center">Days</TableHead>
+                        <TableHead>Note</TableHead>
+                        <TableHead className="w-10"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {holidays.map(h => {
+                        const days = Math.round(
+                          (new Date(h.endDate + 'T00:00:00').getTime() - new Date(h.startDate + 'T00:00:00').getTime()) / 86400000
+                        ) + 1;
+                        const fmt = (d: string) =>
+                          new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+                        return (
+                          <TableRow key={h.id}>
+                            <TableCell className="font-medium whitespace-nowrap">{empName(h.employeeId)}</TableCell>
+                            <TableCell className="whitespace-nowrap">{fmt(h.startDate)}</TableCell>
+                            <TableCell className="whitespace-nowrap">{fmt(h.endDate)}</TableCell>
+                            <TableCell className="text-center">{days}</TableCell>
+                            <TableCell className="max-w-56 truncate">{h.note || '—'}</TableCell>
+                            <TableCell className="text-center">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleRemoveHoliday(h.id)} aria-label="Remove holiday">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {bookOpen && (
@@ -716,6 +909,7 @@ export default function LabourPage() {
           quotes={wonQuotes}
           employees={employees.filter(e => e.active)}
           assignedUnits={assignedUnits}
+          holidayIds={holidayIdsForSelectedDay}
           onClose={() => setBookOpen(false)}
           onSave={handleAddBooking}
         />
@@ -727,11 +921,61 @@ export default function LabourPage() {
           employees={employees.filter(e => e.active)}
           assignedUnits={assignedUnits}
           sameDay={assignments.filter(a => a.workDate === selectedDay)}
+          holidayIds={holidayIdsForSelectedDay}
           onClose={() => setAssignOpen(false)}
           onSave={handleLogAssignments}
         />
       )}
     </div>
+  );
+}
+
+
+/* ─────────── Schedule holiday form ─────────── */
+function ScheduleHolidayForm({ employees, onAdd }: {
+  employees: Employee[];
+  onAdd: (h: LabourHoliday) => void;
+}) {
+  const [employeeId, setEmployeeId] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [note, setNote] = useState('');
+
+  const canAdd = employeeId && from && to && to >= from;
+
+  const submit = () => {
+    if (!canAdd) return;
+    onAdd({
+      id: crypto.randomUUID(),
+      employeeId,
+      startDate: from,
+      endDate: to,
+      note: note.trim(),
+      createdAt: new Date().toISOString(),
+    });
+    setEmployeeId(''); setFrom(''); setTo(''); setNote('');
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="font-heading text-lg">Schedule holiday</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-wrap gap-2 items-start">
+        <Select value={employeeId} onValueChange={setEmployeeId}>
+          <SelectTrigger className="w-44"><SelectValue placeholder="Employee…" /></SelectTrigger>
+          <SelectContent>
+            {employees.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-40" />
+        <Input type="date" value={to} onChange={e => setTo(e.target.value)} min={from || undefined} className="w-40" />
+        <Input value={note} onChange={e => setNote(e.target.value)} placeholder="Note (optional)" className="flex-1 min-w-40" />
+        <Button onClick={submit} disabled={!canAdd} className="gap-1">
+          <Plus className="w-4 h-4" /> Schedule
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -863,15 +1107,19 @@ function FitterPicker({
 
 /* ─────────── Book job dialog ─────────── */
 function BookJobDialog({
-  date, quotes, employees, assignedUnits, onClose, onSave,
+  date, quotes, employees, assignedUnits, holidayIds, onClose, onSave,
 }: {
   date: string;
   quotes: Project[];
   employees: Employee[];
   assignedUnits: Set<string>;
+  holidayIds: Set<string>;
   onClose: () => void;
   onSave: (b: LabourBooking) => void;
 }) {
+  const holidayAmounts = Object.fromEntries(
+    employees.filter(e => holidayIds.has(e.id)).map(e => [e.id, 'on holiday'])
+  );
   const [search, setSearch] = useState('');
   const [quoteId, setQuoteId] = useState('');
   const [crew, setCrew] = useState<Set<string>>(new Set());
@@ -968,7 +1216,16 @@ function BookJobDialog({
 
           <div className="space-y-1.5">
             <Label>Crew (optional)</Label>
-            <FitterPicker employees={employees} selected={crew} onToggle={toggleCrew} />
+            <FitterPicker
+              employees={employees} selected={crew} onToggle={toggleCrew}
+              amounts={holidayAmounts} disabledIds={holidayIds}
+            />
+            {holidayIds.size > 0 && (
+              <p className="text-xs text-destructive">
+                {employees.filter(e => holidayIds.has(e.id)).map(e => e.name).join(', ')} —
+                on holiday this day, cannot be booked.
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -990,13 +1247,14 @@ function BookJobDialog({
 interface UnitKeyed extends UnitOption { key: string }
 
 function LogWorkDialog({
-  date, quotes, employees, assignedUnits, sameDay, onClose, onSave,
+  date, quotes, employees, assignedUnits, sameDay, holidayIds, onClose, onSave,
 }: {
   date: string;
   quotes: Project[];
   employees: Employee[];
   assignedUnits: Set<string>;
   sameDay: LabourAssignment[];
+  holidayIds: Set<string>;
   onClose: () => void;
   onSave: (assignments: LabourAssignment[]) => void;
 }) {
@@ -1070,33 +1328,45 @@ function LogWorkDialog({
       return next;
     });
 
-  const fitterIds = [...fitters];
+  // fitters on holiday can never be credited, whatever tab selected them
+  const fitterIds = [...fitters].filter(id => !holidayIds.has(id));
   const nFitters = fitterIds.length;
-  const payingIds = fitterIds;
+  const payingIds = fitterIds.filter(id => !onDayRate.has(id));
   const nPaying = payingIds.length;
 
   const chosenUnits = availableUnits.filter(u => selectedUnits.has(u.key));
   const itemsTotal = chosenUnits.reduce((s, u) => s + u.labour, 0);
   const extraAmountNum = Math.round((parseFloat(extraAmount) || 0) * 100) / 100;
 
-  const selectedEmps = employees.filter(e => fitters.has(e.id));
+  const selectedEmps = employees.filter(e => fitterIds.includes(e.id));
   const dayChipAmounts = Object.fromEntries(
     employees.map(e => [
       e.id,
-      onDayRate.has(e.id) ? 'already on day rate'
+      holidayIds.has(e.id) ? 'on holiday'
+      : onDayRate.has(e.id) ? 'already on day rate'
+      : paidItemsToday.has(e.id) ? 'paid items today'
       : e.dayRate ? gbp(e.dayRate * dayFraction)
       : 'no rate',
     ])
   );
   const dayDisabledIds = new Set(
     employees
-      .filter(e => !e.dayRate || onDayRate.has(e.id))
+      .filter(e => !e.dayRate || onDayRate.has(e.id) || paidItemsToday.has(e.id) || holidayIds.has(e.id))
       .map(e => e.id)
   );
-  const itemChipAmounts: Record<string, string> = {};
-
-  const dayAmounts = selectedEmps.map(e => Math.round(e.dayRate * dayFraction * 100) / 100);
-  const dayTotal = dayAmounts.reduce((s, v) => s + v, 0);
+  const generalDisabledIds = new Set(employees.filter(e => holidayIds.has(e.id)).map(e => e.id));
+  const itemChipAmounts = Object.fromEntries(
+    employees.map(e => [
+      e.id,
+      holidayIds.has(e.id) ? 'on holiday'
+      : onDayRate.has(e.id) ? 'day rate — £0'
+      : undefined,
+    ]).filter(([, v]) => v !== undefined)
+  ) as Record<string, string>;
+  // only fitters actually eligible in day mode count toward day totals
+  // (fixes stale selections carried over from other tabs)
+  const effectiveDayEmps = selectedEmps.filter(e => !dayDisabledIds.has(e.id));
+  const dayTotal = effectiveDayEmps.reduce((s, e) => s + Math.round(e.dayRate * dayFraction * 100) / 100, 0);
   const fittersMissingRate = mode === 'day' ? selectedEmps.filter(e => !e.dayRate) : [];
 
   const itemsPayout = splitEqually ? (nPaying > 0 ? itemsTotal : 0) : itemsTotal * nPaying;
@@ -1113,7 +1383,7 @@ function LogWorkDialog({
       ? !!quote && chosenUnits.length > 0
       : mode === 'extra'
       ? extraDesc.trim().length > 0 && extraAmountNum > 0
-      : fittersMissingRate.length === 0 && dayTotal > 0);
+      : effectiveDayEmps.length > 0 && dayTotal > 0);
 
   const save = () => {
     const now = new Date().toISOString();
@@ -1123,7 +1393,8 @@ function LogWorkDialog({
       for (const u of chosenUnits) {
         const payingShares = splitEqually && nPaying > 0 ? splitAmount(u.labour, nPaying) : [];
         let payIdx = 0;
-        const shares = fitterIds.map(() => {
+        const shares = fitterIds.map(id => {
+          if (onDayRate.has(id)) return 0; // day rate covers it
           if (!splitEqually) return u.labour;
           return nPaying > 0 ? payingShares[payIdx++] : 0;
         });
@@ -1147,7 +1418,7 @@ function LogWorkDialog({
     } else if (mode === 'day') {
       const linked = linkQuote ? quote : undefined;
       const label = dayFraction === 1 ? 'Day work' : 'Half-day work';
-      selectedEmps.forEach(e => {
+      effectiveDayEmps.forEach(e => {
         records.push({
           id: crypto.randomUUID(),
           workDate: date,
@@ -1247,7 +1518,7 @@ function LogWorkDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={v => setMode(v as 'items' | 'extra' | 'day')}>
+        <Tabs value={mode} onValueChange={v => { setMode(v as 'items' | 'extra' | 'day'); setFitters(new Set()); }}>
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="items">Quote items</TabsTrigger>
             <TabsTrigger value="extra" className="gap-1"><Wrench className="w-3.5 h-3.5" /> Extra</TabsTrigger>
@@ -1352,9 +1623,15 @@ function LogWorkDialog({
             employees={employees}
             selected={fitters}
             onToggle={toggleFitter}
-            amounts={mode === 'day' ? dayChipAmounts : mode === 'items' ? itemChipAmounts : undefined}
-            disabledIds={mode === 'day' ? dayDisabledIds : undefined}
+            amounts={mode === 'day' ? dayChipAmounts : itemChipAmounts}
+            disabledIds={mode === 'day' ? dayDisabledIds : generalDisabledIds}
           />
+          {mode !== 'day' && generalDisabledIds.size > 0 && (
+            <p className="text-xs text-destructive">
+              {employees.filter(e => generalDisabledIds.has(e.id)).map(e => e.name).join(', ')} —
+              on holiday this day, not available for work.
+            </p>
+          )}
           {mode === 'items' && fitterIds.some(id => onDayRate.has(id)) && (
             <p className="text-xs text-muted-foreground">
               Fitters marked "day rate" are already paid for this day — the windows are logged
@@ -1368,8 +1645,8 @@ function LogWorkDialog({
           )}
           {mode === 'day' && dayDisabledIds.size > 0 && fittersMissingRate.length === 0 && (
             <p className="text-xs text-muted-foreground">
-              Greyed-out fitters either have no day rate, are already on day rate today,
-              or have already been paid for items today.
+              Greyed-out fitters are on holiday, have no day rate, are already on day
+              rate today, or have already been paid for items today.
             </p>
           )}
           {mode !== 'day' && nFitters > 1 && (

@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Client, Supplier, Project, PricingData, ManagedProject, Employee, LabourAssignment, LabourBooking } from '@/lib/types';
+import type { Client, Supplier, Project, PricingData, ManagedProject, Employee, LabourAssignment, LabourBooking, LabourHoliday } from '@/lib/types';
 import { DEFAULT_PRICING } from '@/lib/context';
 import { normalizePricingData } from '@/lib/pricing-normalize';
 
@@ -333,3 +333,38 @@ export async function deleteLabourBooking(id: string): Promise<void> {
   const { error } = await supabase.from('labour_bookings' as any).delete().eq('id', id);
   if (error) throw error;
 }
+
+// ── Labour Holidays ──────────────────────────────────────
+
+export async function fetchLabourHolidays(): Promise<LabourHoliday[]> {
+  const { data, error } = await supabase
+    .from('labour_holidays' as any)
+    .select('*')
+    .order('start_date', { ascending: true });
+  if (error) throw error;
+  return ((data as any[]) || []).map((row: any) => ({
+    id: row.id,
+    employeeId: row.employee_id,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    note: row.note || '',
+    createdAt: row.created_at,
+  }));
+}
+
+export async function insertLabourHoliday(h: LabourHoliday): Promise<void> {
+  const { error } = await supabase.from('labour_holidays' as any).insert({
+    id: h.id,
+    employee_id: h.employeeId,
+    start_date: h.startDate,
+    end_date: h.endDate,
+    note: h.note,
+  } as any);
+  if (error) throw error;
+}
+
+export async function deleteLabourHoliday(id: string): Promise<void> {
+  const { error } = await supabase.from('labour_holidays' as any).delete().eq('id', id);
+  if (error) throw error;
+}
+
